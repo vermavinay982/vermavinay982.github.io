@@ -7,7 +7,7 @@
     <script defer src="face-api.min.js"></script>
     <script defer src='script.js'></script>
     <style>
-  
+        
         body{
             margin: 0;
             padding: 0;
@@ -16,14 +16,29 @@
             display: flex;
             justify-content: center;
             align-items: center;
-        }
+            background-image: url("monkey.gif");
 
+  /* Full height */
+  /*height: 100%;*/
+
+  /* Center and scale the image nicely */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+        }
         canvas{
             position: absolute;
         }
     </style>
 </head>
 <body>
-    <video id="video" width="720" height="560" autoplay muted></video>
+        <!-- <img src="monkey.gif" alt="Flowers in Chania"> -->
+                     
+             
+<!--             /*background-image: url( {{url_for('static',filename='img1.png')}}) ;*/
+            background-size: 500px 320px; -->
+            <!-- background-image: url("monkey.gif") -->
+
+    <video id="video"  width="720" height="560" autoplay muted></video>
 </body>
 </html>
