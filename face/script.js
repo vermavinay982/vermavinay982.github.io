@@ -3,8 +3,8 @@ const video = document.getElementById('video')
 Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri('https://vermavinay982.github.io/face/models/'),
     faceapi.nets.faceLandmark68Net.loadFromUri('https://vermavinay982.github.io/face/models/'),
-    // faceapi.nets.faceRecognitionNet.loadFromUri('https://vermavinay982.github.io/face/models/'),
-    // faceapi.nets.faceExpressionNet.loadFromUri('https://vermavinay982.github.io/face/models/')
+    faceapi.nets.faceRecognitionNet.loadFromUri('https://vermavinay982.github.io/face/models/'),
+    faceapi.nets.faceExpressionNet.loadFromUri('https://vermavinay982.github.io/face/models/')
 ]).then(startVideo)
 
 function startVideo(){
@@ -32,6 +32,6 @@ video.addEventListener('play', ()=> {
         canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
         faceapi.draw.drawDetections(canvas, resizedDetections)
         faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
-        // faceapi.draw.drawFaceExpressions(canvas, resizedDetections)
+        faceapi.draw.drawFaceExpressions(canvas, resizedDetections)
     },100) 
 })
