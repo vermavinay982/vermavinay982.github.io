@@ -13,8 +13,8 @@ slight blurred */
 	height:65vh;
 	/*65% of the part that is visible currently - relative to browser screen visible*/
 	opacity: 0.90;
-	/*background-image: url('dark.jpg');*/
-	background-image:url('https://ninjasfiles.s3.amazonaws.com/asset_0000000000000020_1549743985_macbook_mouse.jpg');
+	background-image: url('dark.jpg');
+	/*background-image:url('https://ninjasfiles.s3.amazonaws.com/asset_0000000000000020_1549743985_macbook_mouse.jpg');*/
 	/*background-image: url('macbook_mouse.jpg');*/
 	
 	background-size:cover;
@@ -433,13 +433,17 @@ section:nth-child(2n+1){
 	height: 100%;
 	width: 100%;
 	/*border-radius: 50%;*/
+	border:0.5px solid rgba(196,196,196,0.3);
+
+	box-shadow: 0px 0px 20px 5px rgba(196,196,196,0.9);
+
 	transition: box-shadow 1s;
 }
 
 #portfolio-image img:hover{
 	/*border-radius: 50%;*/
-	box-shadow: 0px 0px 60px -10px rgba(0,196,196,0.9);
-
+	/*box-shadow: 0px 0px 20px -10px rgba(0,196,196,0.9);*/
+	box-shadow: none;
 	transition: box-shadow 1s;
 }
 
