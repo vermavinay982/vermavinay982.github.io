@@ -1,0 +1,28 @@
+/* keyframe is representing the state of the animation
+conerting the square into circle
+all the in between states of transition */
+
+@keyframes changeShape{
+    from{
+        transform: translateY(-80px);
+    }
+    to{
+        transform: translateY(80px);
+    }
+        from{
+        transform: translateY(-80px);
+    }
+    to{
+        transform: translateY(80px);
+    }
+}
+
+div{
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    top: 20%;
+    left:20%;
+    background-color: aquamarine;
+    animation: changeShape 1s ease-in 1 ;/*infinite;*/
+}

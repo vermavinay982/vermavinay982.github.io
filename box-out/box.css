@@ -1,0 +1,24 @@
+
+
+div{
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    top: 20%;
+    left:20%;
+    background-color: aquamarine;
+    /* transition: 1s ease-in-out; */
+    transition: 0.5s steps(10,end);
+
+
+    /* transform: rotate(100deg) scale(2) translate(100px); */
+    /* transform: skewX(100px) */
+}
+
+
+div:hover{
+    background-color: green;
+    transform:  scale(0.5) translate(100px,0) rotate(360deg);
+    /* height: 400px; */
+    border-radius: 90%;
+}

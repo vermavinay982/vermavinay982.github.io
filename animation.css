@@ -1,0 +1,57 @@
+/* transform and transition */
+
+/* 
+transform the object with different property
+scale rotate translate skew */
+/* rotate was used in resume for the plane and car */
+
+/* rotate - negative in negative direction the degree is to mention in deg 120deg
+can also change  rotateX() rotateY() rotateZ() */
+
+/* scale(0.2) or 1.5 - increase the size zoom the image as we want - again horizontal and vertical scale
+scale(2,4) x and y for scaling in dimension
+ */
+
+/* cant create multiple values of transform for each attribute 
+that will result in creating or over riding the previous value of the transform
+*/
+
+/* translate - to change or move the shape or div from one position to another
+translate(x,y) it is the attribute of transform 
+again can be dropped in the line with other translate functions
+translate(10%, 100px)
+*/
+
+/* skew()  again can be used to skew the element*/
+
+
+/* TRANSITION */
+/* this is used to change the property with respect to time
+delay or perform transition at slower rate*/
+
+/* 
+div:hover no space in between  
+*/
+
+/* by default transition is all - duration, delay */
+
+
+div{
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    top: 20%;
+    left:20%;
+    background-color: aquamarine;
+    transition: 1s ease-in-out 0.1s;
+
+    /* transform: rotate(100deg) scale(2) translate(100px); */
+    /* transform: skewX(100px) */
+}
+
+
+div:hover{
+    background-color: green;
+    /* transform: rotate(100deg) scale(2) translate(100px); */
+    height: 400px;
+}
