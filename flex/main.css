@@ -13,8 +13,8 @@ slight blurred */
 	height:65vh;
 	/*65% of the part that is visible currently - relative to browser screen visible*/
 	opacity: 0.90;
-	background-image: url('dark.jpg');
-	/*background-image:url('https://ninjasfiles.s3.amazonaws.com/asset_0000000000000020_1549743985_macbook_mouse.jpg');*/
+	/*background-image: url('dark.jpg');*/
+	background-image:url('https://ninjasfiles.s3.amazonaws.com/asset_0000000000000020_1549743985_macbook_mouse.jpg');
 	/*background-image: url('macbook_mouse.jpg');*/
 	
 	background-size:cover;
@@ -62,11 +62,39 @@ nav .horizontal-list li a{
 }
 
 nav .horizontal-list li a:hover{
-	color:lightgray;
+/*	color:lightgray;
+	border-bottom: 1px solid black;*/
 	/*text-decoration: none;*/
-	border-bottom: 1px solid black;
 	/*font-weight: 100;*/
 }
+
+/**/
+
+li {
+    margin-bottom: 10px;
+}
+
+.cool-link {
+    display: inline-block;
+    color: #000;
+    text-decoration: none;
+}
+
+.cool-link::after {
+    content: '';
+    display: block;
+    width: 0;
+    height: 2px;
+    background: #fff;
+    transition: width .3s;
+}
+
+.cool-link:hover::after {
+    width: 100%;
+    //transition: width .3s;
+}
+
+/**/
 
 .text-center{
 	text-align: center;
@@ -300,12 +328,10 @@ section:nth-child(2n+1){
 }
 
 .timeline-box:nth-child(2n){
-
 	left:53%;
 	/*align-items: right;*/
 	text-align: left;
 }
-
 
 .timeline-box::after{
 	content: '';
@@ -329,7 +355,7 @@ section:nth-child(2n+1){
 .timeline-box:nth-child(2n+1) span i{
 	position: absolute;
 	top:5%;
-	left:15px;
+	left:-20%;
 	font-size: 4rem;
 	color:orange;
 }
@@ -337,7 +363,7 @@ section:nth-child(2n+1){
 .timeline-box:nth-child(2n) span i{
 	position: absolute;
 	top:5%;
-	right:15px;
+	right:-20%;
 	font-size: 4rem;
 	color:blue;
 }
@@ -345,16 +371,18 @@ section:nth-child(2n+1){
 .timeline-divider{
 	position:absolute;
 	height: 75%;
+	/*timeline length*/
 	width:0;
 	border:3px dashed #0096fa6b;
-	top:10%;
+	top:8%;
 	left:50%;
 }
 
 
 .timeline-traveller{
 	position: sticky;
-	top:20%;
+	top:25%;
+	/*where we want it to start from top*/
 	transform: rotate(90deg);
 	z-index: 2;
 	font-size: 3rem;
@@ -388,6 +416,46 @@ section:nth-child(2n+1){
 /*border shadow*/
 /*adjustment of font left*/
 
+/*max-width if screen size is small then do this*/
+/*min-width if screen size is big then do this*/
+
+@media (max-width: 800px){
+	.timeline-box{
+		margin:35px;
+		width: 60%;
+		left:5% !important;
+		text-align: right !important;
+	}
+
+/*	.timeline-box:nth-child(2n){
+	}
+*/
+	.timeline-divider{
+		left:90%;
+	}
+
+	.timeline-box:nth-child(2n+1) span i{
+		left:-20%;
+		font-size: 2rem;
+	}
+
+	.timeline-box:nth-child(2n) span i{
+		left:-20%;
+		font-size: 2rem;
+	}
+
+
+	.timeline-box:nth-child(2n+1)::after{
+		right: -33%;
+	}
+
+	.timeline-box:nth-child(2n)::after{
+		left: 130%;
+	}
+
+
+
+}
 
 .port{
 	width: 25rem;
