@@ -1,40 +1,27 @@
-@keyframes changeShape{
+@keyframes rotate_me{
     from{
-        border-radius: 0%;
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+    height: 50px;
+    width: 50px;
     }
     to{
-        border-radius: 50%;
+    transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);
+    height: 400px;
+    width: 400px;
+
     }
 }
 
-@keyframes rotateShape{
-    from{
-    transform: rotateY(0deg);
-
-    }
-    to{
-    transform: rotateY(360deg);
-    }
-}
-
-@keyframes opprotateShape{
-    from{
-    transform: rotateY(360deg);
-
-    }
-    to{
-    transform: rotateY(0deg);
-    }
-}
 
 .cube{
-    width: 100px;
-    height: 100px;
+    width: 200px;
+    height: 200px;
     position: absolute;
-    margin:100px; 
+    margin:300px; 
     transform-style: preserve-3d;
     perspective: 1000px;
-    transform: rotateX(25deg) rotateY(-25deg);
+    transition: 1s;
+    animation: rotate_me 4s ease-in-out infinite alternate;
 }
 
 .face{
@@ -43,33 +30,42 @@
     position: absolute;
     top: 20%;
     left: 20%;
-    transition: all 1s;
+    transition: all 4s;
 }
 
 .one{
     background-color: orange;
-    animation: rotateShape 4s ease-in-out infinite ;
-
+    transform: rotateY(0deg);
 }
 
 .two{
     background-color: red;
-    transform: rotateY(90deg);
-    animation: opprotateShape 4s ease-in-out infinite;
-
+    transform: rotateY(90deg) translateZ(-100px) translateX(-100px);
 }
 
-
-.one:hover{
-    transform: rotateY(90deg);
+.three{
+    background-color: lightblue;
+    transform: rotateY(90deg) translateZ(+100px) translateX(-100px);
 }
 
-.two:hover{
-    transform: rotateY(180deg);
+.four{
+    background-color: purple;
+    transform: rotateY(0deg) translateZ(+200px);
 }
 
-    /* transition: 1s ease-in-out; */
-    /*transition: 0.5s steps(10,end);*/
+.five{
+    background-color: green;
+    transform: rotateX(90deg) translateY(100px )translateZ(-100px);
+}
 
-    /* transform: rotate(100deg) scale(2) translate(100px); */
-    /* transform: skewX(100px) */
+.six{
+    background-color: blue;
+    transform: rotateX(90deg) translateY(100px) translateZ(100px);
+}
+
+.face:hover{
+    /*transform: rotateX(-25deg) rotateY(25deg);*/
+    height: 50px;
+    width: 50px;
+    transition: 1s;
+}
