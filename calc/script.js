@@ -14,3 +14,7 @@ function getResult(){
     clr();
     dis(result);
 }
+
+function negate(){
+    disp.value = disp.value*(-1);
+}

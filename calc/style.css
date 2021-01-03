@@ -1,6 +1,6 @@
 #calc{
     width: fit-content;
-    background-color:rgb(216, 194, 241);
+    background-color:rgb(35, 11, 46);
     margin: 20vh auto;
     display: flex;
     justify-content: center;
@@ -15,12 +15,15 @@
     font-weight: 900;
     text-transform: uppercase;
     font-family:Arial, Helvetica, sans-serif;
+    color: white;
 }
 
 #disp{
     width: 98%;
     height: 60px;
     margin: auto;
+    transition: 2s;
+    border-radius: 2%;
 }
 
 .btn{
@@ -31,6 +34,12 @@
     margin: 1px;
     border: none;
     border-radius: 10%;
+    transition: 0.3s;
+}
+
+.btn:hover{
+    box-shadow: 0px 0px 10px inset rgb(255, 255, 255);
+    transform: scale(0.7);
 }
 
 .opr{
