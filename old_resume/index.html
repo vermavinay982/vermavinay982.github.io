@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title> Resume </title>
+	<link rel="stylesheet" type="text/css" href="main.css">
+	<script src="https://kit.fontawesome.com/64823bb614.js" crossorigin="anonymous"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+	<header id='body-header'>
+
+		<!-- NAVIGATION BAR - TOP -->
+		<nav>
+			<ul class='horizontal-list text-center'>
+				<li><a class="cool-link show-selection" href="#">Home</a></li>
+				<li><a class="cool-link show-selection" href="#about">About</a></li>
+				<li><a class="cool-link show-selection" href="#skills">Skills</a></li>
+				<li><a class="cool-link show-selection" href="#experience">Experience</a></li>
+				<li><a class="cool-link show-selection" href="#education">Education</a></li>
+				<li><a class="cool-link show-selection" href="#portfolio">Portfolio</a></li>
+				<li><a class="cool-link show-selection" href="#contact">Contact</a></li>
+			</ul>
+		</nav>
+		<!-- NAVIGATION BAR - TOP : END -->
+
+		<!-- name and social icons container -->
+		<div id='name-social-container'>
+			<!-- name -->
+			<div class='text-center'>
+				<h1 id='my-name'>Vinay Kumar Verma</h1>
+			</div>
+			<!-- automatically the text is in center -->
+			<!-- due to the text-align center property
+			in the class text-center -->
+
+			<!-- icons -->
+			<div>
+				<ul class='horizontal-list text-center social-icons'>
+					<li>
+							<a href="https://www.linkedin.com/in/vermavinay982">
+							<i id='linkedin' class="fa fa-linkedin" aria-hidden="true"></i>
+						</a>
+					</li>
+					<li>
+						<a href="#">
+							<i id='stack' class="fa fa-stack-overflow" aria-hidden="true"></i>
+						</a>
+					</li>
+					<li>
+						<a href="mailto:vermavinay982@gmail.com">
+							<i id='google' class="fa fa-google-plus" aria-hidden="true"></i>
+						</a>
+					</li>
+					<li>
+						<a href="https://www.facebook.com/vermavinay982/">
+							<i id='facebook' class="fa fa-facebook" aria-hidden="true"></i>
+						</a>
+					</li>
+					<li>
+						<a href="#">
+							<i id='quora' class="fa fa-quora" aria-hidden="true"></i>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<!-- name and social icons container : end-->
+
+	</header>
+
+	<main>
+		<!-- Image and description -->
+		<section id='about'>
+			<div id='my-image'>
+				<img src="my-img.jpg">
+			</div>
+			<p> Working in Deep Learning specifically Computer Vision. An active hackathon participant, Won numerous hackathons including Smart India Hackathon 2018 Pune.
+				Able to tweak or overclock the voltage of CPU during Training a large data set. Thanks to my BTech in ECE and interest in Deep Learning.
+			</p>
+			<p> Currently working as Computer Vision Engineer, at Startup</p>
+		</section>
+		<!-- Image and description : END-->
+
+
+		<section id='skills'>
+			<!-- flex will be used here for skill as it changes automatically based on width - number of skills in a line -->
+			<!-- flex wrap is used for that -->
+			<!-- flex column direction will be used -->
+			<h1 class='section-heading mb75px'>
+				<span>
+					<i class='fas fa-chalkboard-teacher' aria-hidden="true"> </i>
+				</span>
+				<span>
+					SKILLS
+				</span>
+			</h1>
+
+			<div class="skills-display">
+				
+				<div class='skill-progress'>
+					<div class='eighty-five-percent mb-red'>
+						<div class='skill-name'>
+							<span>Tensorflow</span>
+						</div>
+					</div>
+				</div>
+				<div class='skill-progress'>
+					<div class='eighty-five-percent mb-blue'>
+						<div class='skill-name'>
+							<span>Deep Learning</span>
+						</div>
+					</div>
+				</div>
+
+				<div class='skill-progress'>
+					<div class='fifty-five-percent mb-orange'>
+						<div class='skill-name'>
+							<span>Pytorch</span>
+						</div>
+					</div>
+				</div>
+				
+					<div class='skill-progress'>
+					<div class='sixty-five-percent mb-blue'>
+						<div class='skill-name'>
+							<span>C++</span>
+						</div>
+					</div>
+				</div>
+				<div class='skill-progress'>
+					<div class='ninety-percent mb-orange'>
+						<div class='skill-name'>
+							<span>Python</span>
+						</div>
+					</div>
+				</div>
+
+				<div class='skill-progress'>
+					<div class='seventy-five-percent mb-green'>
+						<div class='skill-name'>
+							<span>DSA</span>
+						</div>
+					</div>
+				</div>
+
+
+
+			</div>
+
+		</section>
+
+		<section id='experience'>
+			<h1 class='section-heading mb75px'>
+				<span>
+					<i class='fas fa-briefcase' aria-hidden="true"> </i>
+				</span>
+				<span>
+					Work Experience
+				</span>
+			</h1>
+
+			<div class='timeline'>
+				<div class='timeline-box'>
+					<span class="company-logo">
+						<i class="far fa-building"></i>
+					</span>
+					<h1 class='position-name'>Computer Vision Engineer</h1>
+					<h2 class='company-name'>Wobot Intelligence</h2>
+					<h3 class='time-duration'>Aug 2012 - Present</h3>
+					<p class='job-description'> Developed One-Shot Training Architecture to make the annotation process 100x faster than human methods (with very less dataset). </p>
+					<p class='job-description'>
+						Increased average face match accuracy from 80% to 93% for Face based attendance systems implementing Arc loss with Deep Face. 
+					</p>
+				</div>
+
+				<div class='timeline-box'>
+					<span class="company-logo">
+						<i class="far fa-building"></i>
+					</span>
+					<h1 class='position-name'>AI Intern</h1>
+					<h2 class='company-name'>ET Analytics Lab</h2>
+					<h3 class='time-duration'>Jan 2019 - March 2019</h3>
+					<p class='job-description'> Developed Recommendation Engine for making adaptive exam series </p>
+				</div>
+
+				<div class='timeline-box'>
+					<span class="company-logo">
+						<i class="far fa-building"></i>
+					</span>
+					<h1 class='position-name'>Machine Learning Intern</h1>
+					<h2 class='company-name'>Analysia Edutech</h2>
+					<h3 class='time-duration'>March 2018 - July 2018</h3>
+					<p class='job-description'> Lead and Developed PDF OCR for handwritten text
+						Improved accuracy on regional languages by implementing Image Enhancement, from 50% to 89%.
+						 </p>
+				</div>
+
+				<!-- <div class='timeline-box'>
+					<span class="company-logo">
+						<i class="far fa-building"></i>
+					</span>
+					<h1 class='position-name'>Founding Member</h1>
+					<h2 class='company-name'>Coding Ninjas</h2>
+					<h3 class='time-duration'>May 2015 - May 2016</h3>
+					<p class='job-description'> Lorem ipsum has been the industry standard of dummy text since the 1500s, when an unknown printer took a gallery of type and scrambled it to make a type specimen book </p>
+				</div> -->
+
+				<div class="timeline-divider">
+					<div class='timeline-traveller'>
+						<i class="fas fa-plane"></i>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section id='education'>
+						<h1 class='section-heading mb75px'>
+				<span>
+					<i class='fas fa-book' aria-hidden="true"> </i>
+				</span>
+				<span>
+					Education
+				</span>
+			</h1>
+
+			<div class='timeline'>
+				<div class='timeline-box'>
+					<span class="company-logo">
+						<i class="far fa-building"></i>
+					</span>
+					<h1 class='position-name'>BTech</h1>
+					<h2 class='company-name'>IP University</h2>
+					<h3 class='time-duration'>May 2016 - May 2020</h3>
+					<!-- <p class='job-description'> Lorem ipsum has been the industry standard of dummy text since the 1500s, when an unknown printer took a gallery of type and scrambled it to make a type specimen book </p> -->
+				</div>
+
+				<div class='timeline-box'>
+					<span class="company-logo">
+						<i class="far fa-building"></i>
+					</span>
+					<h1 class='position-name'>12th</h1>
+					<h2 class='company-name'>CBSE</h2>
+					<h3 class='time-duration'>May 2015 - May 2016</h3>
+					<!-- <p class='job-description'> Lorem ipsum has been the industry standard of dummy text since the 1500s, when an unknown printer took a gallery of type and scrambled it to make a type specimen book </p> -->
+				</div>
+
+				<div class='timeline-box'>
+					<span class="company-logo">
+						<i class="far fa-building"></i>
+					</span>
+					<h1 class='position-name'>10th</h1>
+					<h2 class='company-name'>CBSE</h2>
+					<h3 class='time-duration'>May 2013 - May 2014</h3>
+					<!-- <p class='job-description'> Lorem ipsum has been the industry standard of dummy text since the 1500s, when an unknown printer took a gallery of type and scrambled it to make a type specimen book </p> -->
+				</div>
+<!-- 
+				<div class='timeline-box'>
+					<span class="company-logo">
+						<i class="far fa-building"></i>
+					</span>
+					<h1 class='position-name'>Founding Member</h1>
+					<h2 class='company-name'>Coding Ninjas</h2>
+					<h3 class='time-duration'>May 2015 - May 2016</h3>
+					<p class='job-description'> Lorem ipsum has been the industry standard of dummy text since the 1500s, when an unknown printer took a gallery of type and scrambled it to make a type specimen book </p>
+				</div> -->
+
+				<div class="timeline-divider">
+					<div class='timeline-traveller'>
+						<i class="fas fa-car-side"></i>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section id='portfolio'>
+			<h1 class='section-heading mb75px'>
+				<span>
+					<i class='fas fa-th-list' aria-hidden="true"> </i>
+				</span>
+				<span>
+					Portfolio
+				</span>
+			</h1>
+
+			<div class="portfolio-display">
+				<div class= 'port'>
+					<div id='portfolio-image'>
+						<img src="project1.png">
+					</div>
+				</div>
+
+				<div class= 'port'>
+					<div id='portfolio-image'>
+						<img src="project2.png">
+					</div>
+				</div>
+
+
+				<div class= 'port'>
+					<div id='portfolio-image'>
+						<img src="project3.png">
+					</div>
+				</div>
+
+				<div class= 'port'>
+					<div id='portfolio-image'>
+						<img src="project7.png">
+					</div>
+				</div>
+				
+				<div class= 'port'>
+					<div id='portfolio-image'>
+						<img src="project5.png">
+					</div>
+				</div>
+
+				<div class= 'port'>
+					<div id='portfolio-image'>
+						<img src="project8.png">
+					</div>
+				</div>
+
+				<div class= 'port'>
+					<div id='portfolio-image'>
+						<img src="project4.png">
+					</div>
+				</div>
+
+				<div class= 'port'>
+					<div id='portfolio-image'>
+						<img src="project6.png">
+					</div>
+				</div>
+			</div>
+
+		</section>
+
+<!--  -->
+
+		<section id='contact'>
+			<h1 class='section-heading mb75px' >
+				<span>
+					<i class='fas fa-chalkboard-teacher' aria-hidden="true"> </i>
+				</span>
+				<span>
+					Contact
+				</span>
+			</h1>
+
+			<div class="contact-display" >
+
+					<div id='contact-form'>
+						<div>
+						<input type="text" name="" placeholder="Your Name" class="input-box">
+						</div>
+
+						<div>
+						<input type="email" placeholder="Your Email" class="input-box">
+						</div>
+
+						<div>
+						<textarea name="experience" placeholder="Message" class="input-box"></textarea>
+						</div>
+
+						<div>
+						<button type="submit" class="submit-box">Send Message</button>
+						</div>
+
+					</div>
+					<div id='contact-details'>
+						<div>
+							<h1>Get in touch</h1>
+							For Projects and Consultations, you can contact me 
+							<h1>My Address</h1>
+							<div>
+								<i class="fas fa-street-view"></i>
+								Delhi India
+							</div>
+							<div>
+								<i class="fas fa-phone"></i>
+								9953503473
+							</div>
+							<div>
+								<i class="fas fa-envelope"></i>
+								vermavinay982@gmail.com
+							</div>
+						</div>
+					</div>
+
+		</div>
+				<!-- icons -->
+				<div>
+					<ul class='horizontal-list text-center social-icons'>
+						<li>
+							<a href="https://www.linkedin.com/in/vermavinay982">
+								<i id='linkedin' class="fa fa-linkedin" aria-hidden="true"></i>
+							</a>
+						</li>
+						<li>
+							<a href="#">
+								<i id='stack' class="fa fa-stack-overflow" aria-hidden="true"></i>
+							</a>
+						</li>
+						<li>
+							<a href="mailto:vermavinay982@gmail.com">
+								<i id='google' class="fa fa-google-plus" aria-hidden="true"></i>
+							</a>
+						</li>
+						<li>
+							<a href="https://www.facebook.com/vermavinay982/">
+								<i id='facebook' class="fa fa-facebook" aria-hidden="true"></i>
+							</a>
+						</li>
+						<li>
+							<a href="#">
+								<i id='quora' class="fa fa-quora" aria-hidden="true"></i>
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+
+			</div>
+
+		</section>
+
+
+	</main>
+</body>
+</html>
