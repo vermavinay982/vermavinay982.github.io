@@ -75,7 +75,7 @@ li {
 
 .cool-link {
     display: inline-block;
-    color: #000;
+    color: blue;
     text-decoration: none;
 }
 
@@ -84,7 +84,7 @@ li {
     display: block;
     width: 0;
     height: 2px;
-    background: #fff;
+    background: blue;
     transition: width .3s;
 }
 
