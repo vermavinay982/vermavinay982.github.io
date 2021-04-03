@@ -84,7 +84,7 @@ li {
   /*background-image: linear-gradient(gray, turquoise );*/
   /*background-image: linear-gradient(to right, rgba(255,0,0,0), rgba(255,0,0,1));*/
   color: white;
-  font-size: 30px;
+  font-size: 2rem;
 
 }
 
@@ -225,7 +225,7 @@ li a {
 
 .about p{
   	/*font-size: 18px;*/
-	width: 50%;
+	width: 80%;
 	font-style: bold;
 	font-family: sans-serif;
 	font-weight: bold;
@@ -233,10 +233,11 @@ li a {
 	font-size: 1.2rem;
 	transition: 0.5s;
 }
-
+/*
 .about img{
 	width:30%;
 }
+*/
 /*
 *{  background-color: #49455e;
 	color:white;
