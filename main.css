@@ -87,10 +87,23 @@ li {
   font-size: 2rem;
 
 }
-
-.header a {
-  text-decoration: none;
+.header p{
+  padding-top: 10px;
+  font-size: 1.5rem;
+  color:white;
 }
+
+.header a{
+  text-decoration: none;
+  color:blue;
+  transition: 1s;
+}
+
+.header a:hover{
+  text-decoration: none;
+  color:yellow;
+}
+
 
 div {
   margin: 20px;
@@ -164,6 +177,7 @@ li a {
 */
 .big img{
   width: 200px;
+  height: 150px;
 }
 
 .normal img{
