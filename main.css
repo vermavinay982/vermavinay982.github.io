@@ -113,7 +113,12 @@ li img {
 }
 
 li p {
-  font: 200 19px/1.5 Georgia, Times New Roman, serif;
+  	/*font: 200 19px/1.5 Georgia, Times New Roman, serif;*/
+	font-style: bold;
+	font-family: sans-serif;
+	font-weight: 100;
+	color:gray;
+	font-size: 1.2rem;
 }
 
 li {
@@ -216,6 +221,21 @@ li a {
 .section-btn :hover {
   color: #fffff8;
 
+}
+
+.about p{
+  	/*font-size: 18px;*/
+	width: 60%;
+	font-style: bold;
+	font-family: sans-serif;
+	font-weight: bold;
+	color:gray;
+	font-size: 1.2rem;
+	transition: 0.5s;
+}
+
+.about img{
+	width:50%;
 }
 /*
 *{  background-color: #49455e;
