@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<a href="index.html">Home</a>
+
+<h1>Installing Sublime in Ubuntu 20.04</h1>
+
+<p>Process if installing is very tedius but I have compiled all the steps that can be used to install sublime in your linux system.</p>
+<p>The Key method was not working for me so I tried other method and in the end I want the signature "subl" in sublime text to use directly in my termial.</p>
+
+<p>So here you go! </p>
+
+<pre>
+  <code>
+Download tarball as per 64 or 32 bit from here- 
+        https://www.sublimetext.com/3
+		
+Go to download folder and extract zip
+        tar vxjf sublime_text_3_build_3211_x64.tar.bz2
+        
+Move extracted binaries to opt
+        sudo mv sublime_text_3 /opt/
+        
+        
+        sudo ln -s /opt/sublime_text_3/sublime_text /usr/bin/sublime
+        
+Test if its working
+        sublime
+
+Optional - if you want to have subl alias to open sublime then
+        
+open bashrc
+        sublime ~./bashrc
+		
+Add this line in the end
+	alias subl=sublime
+        
+Source bashrc to update changes
+        source ~/.bashrc
+        
+Test now it should work
+        subl 
+
+Done
+  </code>
+</pre>
+
+<footer>
+  vermavinay982@gmail.com
+</footer>
+
+</body>
+</html>
