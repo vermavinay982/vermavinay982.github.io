@@ -1,0 +1,47 @@
+<script type="text/javascript">
+    function download(filename, text) {
+      var pom = document.createElement('a');
+      pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+      pom.setAttribute('download', filename);
+
+      pom.style.display = 'none';
+      document.body.appendChild(pom);
+
+      pom.click();
+
+      document.body.removeChild(pom);
+    }
+
+    function addTextHTML()
+    {
+        document.addtext.name.value = document.addtext.name.value + ".html"
+    }
+
+    function addTextTXT()
+    {
+        document.addtext.name.value = document.addtext.name.value + ".txt"
+    }
+
+</script>
+
+<html>
+  <head></head>
+  <body>
+
+    <form name="addtext" onsubmit="download(this['name'].value, this['text'].value)">
+        <a href="index.html">Home</a>
+        <h1>Simply Notes</h1>
+        
+        <textarea  style="width: 95vw; height: 70vh;  display: block; margin-left: auto; margin-right: auto;" name="text" placeholder="Heading of my Note is "></textarea>
+        <br>
+        <div style="width: 95vw; display: block; margin-left: auto; margin-right: auto;">
+          
+        <input type="text" name="name" value="" placeholder="File Name">
+        <input type="submit" onClick="addTextHTML();" value="Save As HTML">
+        <input type="submit" onClick="addTexttxt();" value="Save As TXT">
+
+        </div>
+
+    </form>
+  </body>
+</html>
