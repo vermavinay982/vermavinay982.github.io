@@ -1,5 +1,5 @@
 # main text of home
-name: Himanshu Sahdev
+name: Vinay Kumar Verma
 bio: A technological enthusiast, endeavouring to help the third world
 
 # twitter summary info
@@ -14,9 +14,9 @@ picture: assets/images/profile.jpg
 # and specify source (external or local).
 resume: true
 resume-external: true
-resume-url: https://drive.google.com/file/d/1S4ePourdn9olN-jjU4jKqwK4BlcXFtDH/view?usp=sharing
+resume-url: https://drive.google.com/file/d/1-AFqbm9J-LO83P7qG2LdvzCw7dqsrmh3/view?usp=sharing
 
-url: https://CunningLearner.github.io/CunningLearner
+url: http://vermavinay982.github.io/
 # your url: https://USERNAME.github.io
 
 permalink: /:title/
@@ -30,7 +30,7 @@ permalink: /:title/
 
 # if you don't want comments in your posts, leave categories empty
 disqus:
-  shortname: himanshu-sahdev # enter this from your disqus account
+  shortname: vinay-verma # enter this from your disqus account
   categories: [blog, project] # only show disqus for posts that have these categories
 
 # if you don't have any of social below, comment the line
@@ -38,10 +38,10 @@ disqus:
 #twitter: mytwitter
 # instagram: myinstagram
 # pinterest: mypinterest
-linkedin: himanshu-sahdev
+linkedin: vermavinay982
 # youtube: myyoutube
 # spotify: myspotify
-github: CunningLearner
+github: vermavinay982
 # gitlab: mygitlab
 # lastfm: mylastfm
 # stackoverflow: 7044681/mystackoverflow
@@ -50,22 +50,22 @@ github: CunningLearner
 #medium: medium
 # vimeo: myvimeo
 # lanyrd: mylanyrd
-email: sahdev.himan@gmail.com
+email: vermavinay982@gmail.com
 
 authors:
   himanshusahdev:
-    name: Himanshu Sahdev
+    name: Vinay Verma
     bio: A technological enthusiast, endeavouring to help the third world
     external-image: false
     picture: assets/images/profile.jpg
   johndoe:
-    name: John Doe
+    name: Vinay Verma
     bio: A Man who travels the world eating noodles
     external-image: false
     picture: assets/images/profile.jpg
     twitter: johndoe
   jamesfoster:
-    name: James Foster
+    name: Vinay Verma
     bio: A Man who develops software with coffee
     external-image: false
     picture: assets/images/james.jpg
@@ -74,7 +74,7 @@ authors:
 # do you want a larger site? change the option below
 # options: [normal, large] | default: normal
 # normal = 560px / large = 810px
-width: normal
+width: large
 
 # if you do/don't need pagination, toggle 'enabled' between true/false below
 pagination:
