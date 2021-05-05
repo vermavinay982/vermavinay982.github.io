@@ -15,20 +15,28 @@
 
 <pre>
   <code>
+
 import cv2
-cap = cv2.VideoCapture("my_input.mp4")
-fps= cap.get(cv2.CAP_PROP_FPS)
-fourcc = cv2.VideoWriter_fourcc(*'XVID') # 4CC
-out = cv2.VideoWriter('my_output.avi', fourcc, fps , size)
+
+cap = cv2.VideoCapture("input_video.mp4")
+fps = cap.get(cv2.CAP_PROP_FPS)
+fourcc = cv2.VideoWriter_fourcc(*'MJPG') # 4CC
+
+size=(400,200)
+target = 'output.mp4'
+
+out = cv2.VideoWriter(target, fourcc, fps , size)
 
 while True:
     ret, frame = cap.read()
     if not ret:
     	break 
+    
+    frame_copy = cv2.resize(frame, size)
     out.write(frame_copy)
+
 out.release()
 cap.release()
-
 
   </code>
 </pre>
