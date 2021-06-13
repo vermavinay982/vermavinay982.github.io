@@ -1,6 +1,6 @@
 # main text of home
 name: Vinay Kumar Verma
-bio: A technological enthusiast, endeavouring to help the third world
+bio: A Tech enthusiast, endeavouring to Enhance the world
 
 # twitter summary info
 description: A blog about technology and stuff related
@@ -14,7 +14,7 @@ picture: assets/images/profile.jpg
 # and specify source (external or local).
 resume: true
 resume-external: true
-resume-url: https://drive.google.com/file/d/1-AFqbm9J-LO83P7qG2LdvzCw7dqsrmh3/view?usp=sharing
+resume-url: https://drive.google.com/drive/folders/1IyLXyLJWVb72kOA6FgexkGOsuTSVF-1r?usp=sharing
 
 url: http://vermavinay982.github.io/
 # your url: https://USERNAME.github.io
