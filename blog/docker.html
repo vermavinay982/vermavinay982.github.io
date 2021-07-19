@@ -35,7 +35,56 @@ Thats it, your docker installation will begin and you can verify it by typing "d
 For Windows there is Direct Installer for Docker Desktop <a href="https://desktop.docker.com/win/stable/Docker%20Desktop%20Installer.exe"> Start Download for Windows </a>
 
   </code>
+
+  If want to run docker without "sudo" :P
+
+  <code>
+Error:
+  Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: 
+
+  If want to run docker without using sudo everytime - you need to add your user (who has root privileges) to docker group.
+  For this run following command
+
+    ---
+    sudo groupadd docker
+    sudo gpasswd -a $USER docker
+    newgrp docker or (logout/login your system)
+    docker run hello-world
+    ---
+    
+    <a href="https://askubuntu.com/questions/477551/how-can-i-use-docker-without-sudo">More Deep Info Here - about using docker w/o sudo</a>
+  </code>
+
+
+Analogy to remember order
+  <code>
+  port   -p your's:docker's
+  volume -v your's:docker's
+  </code>
+
+
+Few Other Important Commands 
+  <code>
+    docker exec -it <container name> bash
+    docker exec -it <container name> python3
+    docker attach <container name>
+    docker cp mycontainer:/filename.txt filename.txt
+  </code>
+
+  Saving and Loading Image - Without Internet
+  <code>
+    docker save -o <path for generated tar file> <image name>
+    docker save --output hello.tar colorapp
+    docker load --input hello.tar
+  </code>
+
+  Run Python with display
+  <code>
+    docker run --rm -it --env="DISPLAY" --volume="$HOME/.Xauthority:/root/.Xauthority:rw" python
+  </code>
+
 </pre>
+
 
 <footer>
   vermavinay982@gmail.com
