@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fable Typing Test</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 90%;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .settings {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .settings label {
+            font-weight: bold;
+        }
+
+        .settings select,
+        .settings button {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .settings button {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+            transition: background-color 0.3s ease;
+        }
+
+        .settings button:hover {
+            background-color: #2980b9;
+        }
+
+        .settings button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        #fable-text-display {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            height: 150px; /* Adjust as needed */
+            overflow-y: auto;
+            text-align: left;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            background-color: #f8f9fa;
+        }
+
+        #fable-text-display span {
+            white-space: pre-wrap; /* Handles spaces and line breaks */
+        }
+
+        #fable-text-display .current {
+            background-color: #e0f7fa;
+             border-bottom: 2px solid #007bff;
+        }
+
+        #fable-text-display .correct {
+            color: #28a745;
+        }
+
+        #fable-text-display .incorrect {
+            color: #dc3545;
+            background-color: #f8d7da;
+            text-decoration: line-through;
+        }
+
+         #typing-area {
+            width: calc(100% - 22px); /* Account for padding/border */
+            height: 100px;
+            font-size: 1.1rem;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            resize: none; /* Prevent manual resizing */
+        }
+
+        #timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+
+        #results {
+            margin-top: 20px;
+            text-align: left;
+            padding: 15px;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+            background-color: #ecf0f1;
+        }
+
+         #results h2 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        #results p {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+         #results span {
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        #faulty-words-list {
+            color: #dc3545;
+            font-style: italic;
+            max-height: 100px;
+            overflow-y: auto;
+            padding-left: 20px; /* Indent the list */
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fable Typing Test</h1>
+
+        <div class="settings">
+            <div>
+                <label for="fable-select">Choose a Fable:</label>
+                <select id="fable-select"></select>
+            </div>
+            <div>
+                <label for="duration-select">Duration:</label>
+                <select id="duration-select">
+                    <option value="60">1 Minute</option>
+                    <option value="90">1.5 Minutes</option>
+                    <option value="120">2 Minutes</option>
+                </select>
+            </div>
+            <button id="start-btn">Start Test</button>
+        </div>
+
+        <div id="timer">Time: 0s</div>
+
+        <div id="fable-text-display">Select a fable and click Start.</div>
+
+        <textarea id="typing-area" placeholder="Start typing here when the test begins..." disabled></textarea>
+
+        <div id="results" class="hidden">
+            <h2>Test Results</h2>
+            <p>Speed: <span id="wpm">0</span> WPM</p>
+            <p>Accuracy: <span id="accuracy">0</span>%</p>
+            <p>Correct Characters: <span id="correct-chars">0</span></p>
+            <p>Incorrect Characters: <span id="incorrect-chars">0</span></p>
+            <p>Faulty Words:</p>
+            <ul id="faulty-words-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        const fables = [
+            {
+                title: "The Fox and the Grapes",
+                text: "A hungry Fox saw some fine bunches of Grapes hanging from a vine that was trained along a high trellis, and did his best to reach them by jumping as high as he could into the air. But it was all in vain, for they were just out of reach: so he gave up trying, and walked away with an air of dignity and unconcern, remarking, \"I thought those Grapes were ripe, but I see now they are quite sour.\""
+            },
+            {
+                title: "The Tortoise and the Hare",
+                text: "A Hare was making fun of the Tortoise one day for being so slow. \"Do you ever get anywhere?\" he asked with a mocking laugh. \"Yes,\" replied the Tortoise, \"and I get there sooner than you think. I'll run you a race and prove it.\" The Hare was much amused at the idea of running a race with the Tortoise, but for the fun of the thing he agreed. So the Fox, who had consented to act as judge, marked the distance and started the runners off. The Hare was soon far out of sight, and to make the Tortoise feel very deeply how ridiculous it was for him to try a race with a Hare, he lay down beside the course to take a nap until the Tortoise should catch up. The Tortoise meanwhile kept going slowly but steadily, and, after a time, passed the place where the Hare was sleeping. But the Hare slept on very peacefully; and when at last he did wake up, the Tortoise was near the goal. The Hare now ran his swiftest, but he could not overtake the Tortoise in time. Slow and steady wins the race."
+            },
+            {
+                title: "The Boy Who Cried Wolf",
+                text: "There once was a shepherd boy who was bored as he sat on the hillside watching the village sheep. To amuse himself he took a great breath and sang out, \"Wolf! Wolf! The Wolf is chasing the sheep!\" The villagers came running up the hill to help the boy drive the wolf away. But when they arrived at the top of the hill, they found no wolf. The boy laughed at the sight of their angry faces. \"Don't cry 'wolf', shepherd boy,\" said an old man. \"when there's no wolf!\" The boy just grinned and watched them go grumbling down the hill again. Later, the boy again cried out, \"Wolf! Wolf!\" Again the villagers ran up the hill, and again they found no wolf. The boy roared with laughter. A few days later a real wolf came near the sheep. The shepherd boy cried out, \"Wolf! Wolf! Wolf!\" But this time the villagers did not run to help him. They thought he was playing another trick on them. So the wolf killed many of the sheep and the boy lost many of the village's animals. There's no believing a liar, even when he tells the truth!"
+            }
+        ];
+
+        const fableSelect = document.getElementById('fable-select');
+        const fableTextDisplay = document.getElementById('fable-text-display');
+        const typingArea = document.getElementById('typing-area');
+        const startBtn = document.getElementById('start-btn');
+        const timerDisplay = document.getElementById('timer');
+        const resultsDiv = document.getElementById('results');
+        const wpmDisplay = document.getElementById('wpm');
+        const accuracyDisplay = document.getElementById('accuracy');
+        const correctCharsDisplay = document.getElementById('correct-chars');
+        const incorrectCharsDisplay = document.getElementById('incorrect-chars');
+        const faultyWordsList = document.getElementById('faulty-words-list');
+        const durationSelect = document.getElementById('duration-select');
+
+        let currentFableIndex = 0;
+        let timerInterval;
+        let timeLeft;
+        let startTime;
+        let textToType = '';
+        let typedText = '';
+        let wordIndex = 0;
+        let charIndex = 0;
+        let correctChars = 0;
+        let incorrectChars = 0;
+        let faultyWords = [];
+
+        function populateFableOptions() {
+            fables.forEach((fable, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = fable.title;
+                fableSelect.appendChild(option);
+            });
+            loadFable(0); // Load the first fable by default
+        }
+
+        function loadFable(index) {
+            currentFableIndex = index;
+            textToType = fables[index].text;
+            fableTextDisplay.innerHTML = '';
+            textToType.split('').forEach(char => {
+                const span = document.createElement('span');
+                span.textContent = char;
+                fableTextDisplay.appendChild(span);
+            });
+            resetTest();
+        }
+
+        function resetTest() {
+            clearInterval(timerInterval);
+            timeLeft = parseInt(durationSelect.value);
+            timerDisplay.textContent = `Time: ${timeLeft}s`;
+            typingArea.value = '';
+            typingArea.disabled = true;
+            startBtn.disabled = false;
+            resultsDiv.classList.add('hidden');
+            wordIndex = 0;
+            charIndex = 0;
+            correctChars = 0;
+            incorrectChars = 0;
+            faultyWords = [];
+            typedText = '';
+            highlightCurrentChar();
+            const spans = fableTextDisplay.querySelectorAll('span');
+            spans.forEach(span => {
+                span.className = '';
+            });
+        }
+
+        function startTimer() {
+            startTime = new Date().getTime();
+            timerInterval = setInterval(() => {
+                const currentTime = new Date().getTime();
+                const elapsedTime = Math.floor((currentTime - startTime) / 1000);
+                timeLeft = parseInt(durationSelect.value) - elapsedTime;
+                timerDisplay.textContent = `Time: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    endTest();
+                }
+            }, 1000);
+            typingArea.disabled = false;
+            typingArea.focus();
+            startBtn.disabled = true;
+        }
+
+        function highlightCurrentChar() {
+            const spans = fableTextDisplay.querySelectorAll('span');
+            spans.forEach((span, index) => {
+                span.classList.remove('current');
+                if (index === charIndex) {
+                    span.classList.add('current');
+                }
+            });
+        }
+
+        function updateTypingProgress() {
+            const spans = fableTextDisplay.querySelectorAll('span');
+            for (let i = 0; i < spans.length; i++) {
+                if (i < typedText.length) {
+                    if (typedText[i] === textToType[i]) {
+                        spans[i].className = 'correct';
+                    } else {
+                        spans[i].className = 'incorrect';
+                    }
+                } else if (i === typedText.length) {
+                    spans[i].className = 'current';
+                } else {
+                    spans[i].className = '';
+                }
+            }
+        }
+
+        function endTest() {
+            clearInterval(timerInterval);
+            typingArea.disabled = true;
+            const wordsTyped = typedText.split(/\s+/).filter(word => word !== '').length;
+            const minutes = parseInt(durationSelect.value) / 60;
+            const wpm = minutes > 0 ? Math.round(wordsTyped / minutes) : 0;
+            const accuracy = textToType.length > 0 ? Math.round((correctChars / textToType.length) * 100) : 0;
+
+            wpmDisplay.textContent = wpm;
+            accuracyDisplay.textContent = accuracy;
+            correctCharsDisplay.textContent = correctChars;
+            incorrectCharsDisplay.textContent = incorrectChars;
+
+            faultyWordsList.innerHTML = '';
+            const incorrectWordSet = new Set();
+            const typedWords = typedText.split(/\s+/);
+            const originalWords = textToType.split(/\s+/);
+
+            typedWords.forEach((word, index) => {
+                if (originalWords[index] !== word && word !== '') {
+                    incorrectWordSet.add(word);
+                }
+            });
+
+            incorrectWordSet.forEach(word => {
+                const li = document.createElement('li');
+                li.textContent = word;
+                faultyWordsList.appendChild(li);
+            });
+
+            resultsDiv.classList.remove('hidden');
+            startBtn.disabled = false;
+        }
+
+        typingArea.addEventListener('input', () => {
+            if (!timerInterval) {
+                startTimer();
+            }
+            typedText = typingArea.value;
+            updateTypingProgress();
+            correctChars = 0;
+            incorrectChars = 0;
+            for (let i = 0; i < typedText.length; i++) {
+                if (typedText[i] === textToType[i]) {
+                    correctChars++;
+                } else {
+                    incorrectChars++;
+                }
+            }
+        });
+
+        fableSelect.addEventListener('change', (event) => {
+            loadFable(parseInt(event.target.value));
+        });
+
+        startBtn.addEventListener('click', () => {
+            loadFable(currentFableIndex); // Reload the current fable
+            startTimer();
+        });
+
+        durationSelect.addEventListener('change', resetTest);
+
+        populateFableOptions();
+    </script>
+</body>
+</html>

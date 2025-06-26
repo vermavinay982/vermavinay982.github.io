@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<a href="index.html">Home</a>
+
+<h1>Easy Video Writer using CV2 - Python</h1>
+
+<p>Video Writing is easy in opencv but most of the times we need the code to be there. We developers can remember everything. So that is taken care by this page.</p>
+<p>Just Modify your input and output names and get the video writer up and running</p>
+
+<p>So here you go! </p>
+
+<pre>
+  <code>
+
+import cv2
+
+cap = cv2.VideoCapture("input_video.mp4")
+fps = cap.get(cv2.CAP_PROP_FPS)
+fourcc = cv2.VideoWriter_fourcc(*'mp4v') # 4CC
+
+size=(400,200)
+target = 'output.mp4'
+
+out = cv2.VideoWriter(target, fourcc, fps , size)
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+    	break 
+    
+    frame_copy = cv2.resize(frame, size)
+    out.write(frame_copy)
+
+out.release()
+cap.release()
+
+  </code>
+</pre>
+
+<footer>
+  vermavinay982@gmail.com
+</footer>
+
+</body>
+</html>

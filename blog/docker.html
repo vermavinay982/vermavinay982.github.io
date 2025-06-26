@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<a href="index.html">Home</a>
+
+<h1>How to INSTALL Docker</h1>
+
+<p>Docker has changed our lives, we dont have to deal with system break or installing specific libraries again and again, and to replicate the same stuff to work on another person pc irrespective of Windows, Linux or Mac we can be sure if his/her system can run docker = he definately can run my project. </p>
+<p>But installing docker is tricky, we install it after months or years then we forget how we did it last time and thats fine. We developers work on a lot - so its fine to forget some stuff so to capture more and better stuff that we need in daily life. Okay so for those developers I am putting here the steps to setup docker easily on their system. Original documentation is also there but - phew its too long to be Read.</p>
+
+<p>So here you go! </p>
+
+<pre>
+  <code>
+<a href="https://docs.docker.com/engine/install/ubuntu/#install-using-the-convenience-script">Official Documentation: Docker Convenience Script</a>
+	
+	OR
+<ol>
+<li> <a href="https://get.docker.com/">Right Click on This and then click "save link as..."</a>
+</li>
+<li> Save the file with the name on your Desktop as "Anything.sh" (Just it should have sh as extension)
+</li>
+<li> Open Terminal on Desktop and do " sudo chmod +x Anything.sh "
+</li>
+<li> Now your file is ready to RUN.
+</li>
+<li> Simply do " ./Anything.sh "
+</li>
+Thats it, your docker installation will begin and you can verify it by typing "docker" in your terminal.
+</ol>
+
+For Windows there is Direct Installer for Docker Desktop <a href="https://desktop.docker.com/win/stable/Docker%20Desktop%20Installer.exe"> Start Download for Windows </a>
+
+  </code>
+
+  If want to run docker without "sudo" :P
+
+  <code>
+Error:
+  Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: 
+
+  If want to run docker without using sudo everytime - you need to add your user (who has root privileges) to docker group.
+  For this run following command
+
+    ---
+    sudo groupadd docker
+    sudo gpasswd -a $USER docker
+    newgrp docker or (logout/login your system)
+    docker run hello-world
+    ---
+    
+    <a href="https://askubuntu.com/questions/477551/how-can-i-use-docker-without-sudo">More Deep Info Here - about using docker w/o sudo</a>
+  </code>
+
+
+Analogy to remember order
+  <code>
+  port   -p your's:docker's
+  volume -v your's:docker's
+  </code>
+
+
+Few Other Important Commands 
+  <code>
+    docker exec -it <container name> bash
+    docker exec -it <container name> python3
+    docker attach <container name>
+    docker cp mycontainer:/filename.txt filename.txt
+  </code>
+
+  Saving and Loading Image - Without Internet
+  <code>
+    docker save -o <path for generated tar file> <image name>
+    docker save --output hello.tar colorapp
+    docker load --input hello.tar
+  </code>
+
+  Run Python with display
+  <code>
+    docker run --rm -it --env="DISPLAY" --volume="$HOME/.Xauthority:/root/.Xauthority:rw" python
+  </code>
+
+</pre>
+
+
+<footer>
+  vermavinay982@gmail.com
+</footer>
+
+</body>
+</html>

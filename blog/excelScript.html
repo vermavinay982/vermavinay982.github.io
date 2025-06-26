@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<a href="index.html">Home</a>
+
+<h1>Automatically Adding Date & Time using Google Sheet Script</h1>
+
+<p>You want to create your simple todo list, but for that you started to enter date and time for each event in the list. Slowly by getting familiar you came to know that there is a shortcut to add date and time. Date using ctrl+(;) and Time using ctrl+shift(;) </p>
+
+<p>Now you start to get lazy again, and skipped adding date and time for some of the events. Ever wished that Google should add date and time automatically as and when you add entry to the column? Great - your wish is accepted not by a genie but by a sofware developer. Lets make your work easy - </p>
+
+<p>So here you go! This script you need to add in your Tools --> Script Editor : Change the variables as per your Sheet :P </p>
+
+<pre>
+  <code>
+var SHEET_NAME = 'notes&rules';
+var DATE_HEADER = 'Date';
+var TIME_HEADER = 'Time';
+
+function getDateCol(){
+  var headers = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME).getDataRange().getValues().shift();
+  var colindex = headers.indexOf(DATE_HEADER);
+  return colindex+1;
+}
+
+function getTimeCol(){
+  var headers = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME).getDataRange().getValues().shift();
+  var colindex = headers.indexOf(TIME_HEADER);
+  return colindex+1;
+}
+
+function onEdit(e) {  
+  var ss = SpreadsheetApp.getActiveSheet();
+  var cell = ss.getActiveCell();
+  var datecell = ss.getRange(cell.getRowIndex(), getDateCol());
+  if (ss.getName() == SHEET_NAME && cell.getColumn() == 1 && !cell.isBlank() && datecell.isBlank()) {      
+    datecell.setValue(new Date()).setNumberFormat("M/d/yyyy");
+
+  }
+
+  var timecell = ss.getRange(cell.getRowIndex(), getTimeCol());
+  if (ss.getName() == SHEET_NAME && cell.getColumn() == 1 && !cell.isBlank() && timecell.isBlank()) {      
+    timecell.setValue(new Date()).setNumberFormat("hh:mm:ss AM/PM");
+
+  }
+};
+  </code>
+</pre>
+
+<footer>
+  vermavinay982@gmail.com
+</footer>
+
+</body>
+</html>

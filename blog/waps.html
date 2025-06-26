@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+	<h1>WhatsApp Number</h1>
+	<input type="text" id='box' name="">
+	<button onclick="gen()">Generate</button>
+	<button onclick="clr()">Clear</button>
+	<br>
+	<br>
+	<br>
+	<br>
+	<a id='link' href="" target='_blank'></a>
+	<br>
+	<br>
+	<br>
+	<br>
+	<br>
+	<br>
+	<br>
+	<br>
+
+	<h4>Visitor Counter</h4>
+	<a href="https://www.freecounterstat.com" title="visitor counters"><img src="https://counter2.stat.ovh/private/freecounterstat.php?c=9rbwn2aqwhy618c12z5mhf2a9tkxh3ma" border="0" title="visitor counters" alt="visitor counters"></a>
+
+	<script type="text/javascript">
+		var box = document.getElementById('box');
+		var link = document.getElementById('link');
+		var walink = '';
+
+		function gen(){
+			console.log(box.value);
+			walink = 'http://wa.me/+91'+box.value
+			console.log(walink);
+			link.href=walink;
+			link.innerText=walink; 
+		}
+
+		function clr(){
+			box.value='';
+			console.log(box.value);
+		}
+
+	</script>
+</body>
+
+</html>

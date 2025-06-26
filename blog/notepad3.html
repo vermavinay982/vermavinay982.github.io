@@ -1,0 +1,55 @@
+<script type="text/javascript">
+    function download(filename, text) {
+      var pom = document.createElement('a');
+      pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+      pom.setAttribute('download', filename);
+
+      pom.style.display = 'none';
+      document.body.appendChild(pom);
+
+      pom.click();
+
+      document.body.removeChild(pom);
+    }
+
+    function addTextHTML()
+    {
+        document.addtext.name.value = document.addtext.name.value + ".html"
+    }
+
+    function addTextTXT()
+    {
+        document.addtext.name.value = document.addtext.name.value + ".txt"
+    }
+
+</script>
+
+<html>
+  <head>
+      <link rel="stylesheet" type="text/css" href="main.css">
+  </head>
+  <body>
+
+    <form name="addtext" onsubmit="download(this['name'].value, this['text'].value)">
+        <a href="index.html">Home</a>
+        <h1>Simply Notes</h1>
+        <p>It is so Simple that <strong>Nothing is Saved on Server </strong> or Database. Once browser tab is closed everything will be lost. Download options are there if you want to save.</p>
+        <textarea  style="width: 95vw; height: 60%;  display: block; margin-left: auto; margin-right: auto;" name="text" placeholder="Heading of my Note is "></textarea>
+        <br>
+        <div style="width: 95vw; display: block; margin-left: auto; margin-right: auto;">
+          
+        <input type="text" name="name" value="" placeholder="File Name">
+        <input type="submit" onClick="addTextHTML();" value="Save As HTML">
+        <input type="submit" onClick="addTexttxt();" value="Save As TXT">
+
+        </div>
+
+    </form>
+
+    <footer>
+      vermavinay982@gmail.com
+    </footer>
+
+
+  </body>
+</html>
