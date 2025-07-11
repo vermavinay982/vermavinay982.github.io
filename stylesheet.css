@@ -260,3 +260,60 @@ a.zoom:hover {
   /* pointer-events: none; */
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
+
+*::selection {
+  background: #81e69f6b;
+  color: #000000;
+} 
+
+img {
+  user-select: none;
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* IE10+/Edge */
+  pointer-events: auto;      /* Allow clicking (keep interactivity) */
+}
+
+/* Fancy Mouse */
+
+/* Hide default cursor */
+/* body {
+  cursor: none;
+}
+
+#fancy-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle, #f09228, #ff6c00);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 15px #ff6c00aa;
+  transition: background 0.2s ease;
+}
+
+#tech-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 50px;
+  height: 50px;
+  pointer-events: none;
+  z-index: 99999;
+
+  border: 4.5px solid rgba(127, 196, 190, 0.055);
+  background: rgba(0, 255, 255, 0.05);
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 255, 255, 0.1),
+              0 0 20px rgba(0, 255, 255, 0.336) inset;
+  backdrop-filter: blur(4px);
+  transition: background 0.2s ease, transform 0.1s ease;  
+  mix-blend-mode: exclusion;
+  transform: translate(-50%, -50%);
+} */
+
+/* Fancy Mouse */

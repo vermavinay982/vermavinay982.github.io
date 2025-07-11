@@ -1,37 +1,48 @@
-
-/*pre  {
-  color:red;
-  background-color: #eee;
-  border: 1px solid #999;
-  display: block;
-  padding: 20px;
-}
-*/
+/* --- Code Styling --- */
 pre code {
-  color:red;
-  background-color: #eee;
-  border: 1px solid #999;
+  color: #2c3e50;
+  background-color: #f4f4f4;
+  border: 1px solid #ccc;
+  border-left: 4px solid #3498db;
   display: block;
-  padding: 20px;
+  padding: 16px 20px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-/*footer {
-  display: block;
-  position: absolute;
-  bottom: 0rem;
-  margin-left: auto;
-  left:40%;
+/* Optional hover effect for code blocks */
+pre code:hover {
+  background-color: #eef6fc;
+  border-left-color: #2980b9;
 }
-*/
 
-footer{
-  /*height: 400px;*/
-  /*width: 800px;*/
-  /*background: red;*/
-  position: static;
-  bottom: 1rem;
+/* --- Footer Styling --- */
+footer {
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
   text-align: center;
+  padding: 20px;
+  background: linear-gradient(145deg, #c7e6f5, #eaeaea);
+  font-size: 0.9rem;
+  color: #555;
+  border-top: 1px solid #ddd;
+  margin-top: 40px;
+  box-shadow: 0 -1px 3px rgba(0,0,0,0.05);
+}
+
+footer a {
+  color: #3498db;
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+footer a:hover {
+  color: #1c6ca8;
+  text-decoration: underline;
 }

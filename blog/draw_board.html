@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ultimate Thinking Board</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #afaba5;
+      font-family: sans-serif;
+    }
+
+    #toolbar {
+      margin-bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .color-picker {
+      width: 30px;
+      height: 30px;
+      border: 2px solid #ccc;
+      cursor: pointer;
+      border-radius: 50%;
+    }
+
+    .color-picker.selected {
+      border: 3px solid black;
+    }
+
+    .tool-button {
+      padding: 6px 12px;
+      border-radius: 5px;
+      border: none;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+    }
+
+    .tool-button:hover {
+      background-color: #222;
+    }
+
+    canvas {
+      border: 2px solid #333;
+      background-color: white;
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body>
+  <a class="navbar-brand" href="/">Home</a>
+  <h2>🎨 Ultimate Thinking Board</h2>
+
+  <div id="toolbar">
+    <div class="color-picker selected" style="background: black;" data-color="black"></div>
+    <div class="color-picker" style="background: red;" data-color="red"></div>
+    <div class="color-picker" style="background: green;" data-color="green"></div>
+    <div class="color-picker" style="background: blue;" data-color="blue"></div>
+    <div class="color-picker" style="background: orange;" data-color="orange"></div>
+    <div class="color-picker" style="background: purple;" data-color="purple"></div>
+    <div class="color-picker" style="background: pink;" data-color="pink"></div>
+    <input type="text" id="textInput" placeholder="Enter text" style="padding:5px; border-radius:5px;">
+    <button class="tool-button" onclick="enableTextMode()">🔤 Add Text</button>
+    <button class="tool-button" onclick="selectEraser()">🧽 Eraser</button>
+    <label for="toolSize">✏️ Tool Size:</label>
+    <input type="range" id="toolSize" min="1" max="50" value="3" style="vertical-align: middle;">
+  </div>
+
+  <canvas id="drawCanvas" width="1200" height="700"></canvas>
+  <div>
+    <button class="tool-button" style="background: rgb(255, 37, 37);" onclick="clearCanvas()">🪣 Clear</button>
+    <button class="tool-button" onclick="downloadImage()">💾 Download JPG</button>
+    <input type="text" id="filename" placeholder="Enter filename" style="padding:5px; border-radius:5px;">
+  </div>    
+
+  <script>
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let currentColor = 'black';
+    let isEraser = false;
+    let isTextMode = false;
+
+    // Fill background white initially
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    canvas.addEventListener('mousedown', (e) => {
+    if (isTextMode) {
+        const text = document.getElementById('textInput').value.trim();
+        if (text) {
+        ctx.fillStyle = currentColor;
+        ctx.font = "20px sans-serif";
+        ctx.fillText(text, e.offsetX, e.offsetY);
+        }
+        isTextMode = false;
+        canvas.style.cursor = 'crosshair';
+        return;
+    }
+
+    isDrawing = true;
+    ctx.beginPath();
+    ctx.moveTo(e.offsetX, e.offsetY);
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      isDrawing = false;
+      ctx.beginPath();
+    });
+
+    canvas.addEventListener('mouseout', () => {
+      isDrawing = false;
+      ctx.beginPath();
+    });
+
+    canvas.addEventListener('mousemove', draw);
+
+    const eraserSizeSlider = document.getElementById('eraserSize');
+
+    function enableTextMode() {
+        isTextMode = true;
+        canvas.style.cursor = 'text';
+    }
+
+    function draw(e) {
+    if (!isDrawing) return;
+    const toolSize = parseInt(document.getElementById('toolSize').value);
+    ctx.lineWidth = toolSize;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = isEraser ? 'white' : currentColor;
+    ctx.lineTo(e.offsetX, e.offsetY);
+    ctx.stroke();
+    ctx.moveTo(e.offsetX, e.offsetY);
+    }
+    // Color selection
+    const colorPickers = document.querySelectorAll('.color-picker');
+    colorPickers.forEach(picker => {
+      picker.addEventListener('click', () => {
+        colorPickers.forEach(p => p.classList.remove('selected'));
+        picker.classList.add('selected');
+        currentColor = picker.getAttribute('data-color');
+        isEraser = false;
+      });
+    });
+
+    // Eraser
+    function selectEraser() {
+      isEraser = true;
+      colorPickers.forEach(p => p.classList.remove('selected'));
+    }
+
+    // Clear canvas
+    function clearCanvas() {
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Download with white background
+    function downloadImage() {
+      const filename = document.getElementById('filename').value.trim() || 'drawing';
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      const tempCtx = tempCanvas.getContext('2d');
+
+      // Fill white background
+      tempCtx.fillStyle = 'white';
+      tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+      // Draw actual content on top
+      tempCtx.drawImage(canvas, 0, 0);
+
+      const link = document.createElement('a');
+      link.download = `${filename}.jpg`;
+      link.href = tempCanvas.toDataURL('image/jpeg', 1.0);
+      link.click();
+    }
+  </script>
+</body>
+</html>
