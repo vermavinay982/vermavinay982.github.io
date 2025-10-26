@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Todo List</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Use Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbars for the canvas container */
+        .canvas-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .canvas-container::-webkit-scrollbar-thumb {
+            background-color: #9ca3af; /* gray-400 */
+            border-radius: 4px;
+        }
+        .canvas-container::-webkit-scrollbar-track {
+            background-color: #e5e7eb; /* gray-200 */
+        }
+        /* Ensure canvas is crisp on all displays */
+        canvas {
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-crisp-edges;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex flex-col text-gray-800 overflow-hidden">
+
+    <!-- Header: Title & Download -->
+    <header class="bg-white border-b border-gray-200 px-4 py-3 z-10 flex-shrink-0">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-semibold text-gray-800">Visual Task Board</h1>
+            
+            <!-- Download Section -->
+            <div class="flex items-center gap-3">
+                <input type="text" id="chartTitleInput" placeholder="Enter Chart Title" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-64">
+                <button id="downloadBtn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download as JPG
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Body: Sidebar + Canvas -->
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- Sidebar: Tools & Actions -->
+        <aside class="w-60 bg-white border-r border-gray-200 p-4 flex flex-col flex-shrink-0">
+            <!-- Create Section -->
+            <div class="flex flex-col gap-3">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Create</h3>
+                <button id="addMainTaskBtn" class="flex items-center gap-2 w-full px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-blue-700 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add Main Task
+                </button>
+                <button id="addSubtaskBtn" class="flex items-center gap-2 w-full px-3 py-2 bg-white text-gray-700 text-sm font-medium border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                    </svg>
+                    Add Subtask
+                </button>
+            </div>
+            
+            <hr class="my-5 border-gray-200">
+
+            <!-- Set Status Section -->
+            <div>
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Set Status</h3>
+                <div class="flex justify-start gap-2">
+                    <button id="setColorDefaultBtn" title="Set to Default" class="w-7 h-7 bg-white border-2 border-gray-400 rounded-full shadow-sm hover:bg-gray-100 transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"></button>
+                    <button id="setColorGreenBtn" title="Set to Green" class="w-7 h-7 bg-green-500 rounded-full shadow-sm hover:bg-green-600 transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-300"></button>
+                    <button id="setColorYellowBtn" title="Set to Yellow" class="w-7 h-7 bg-yellow-500 rounded-full shadow-sm hover:bg-yellow-600 transition duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-300"></button>
+                    <button id="setColorBlueBtn" title="Set to Blue" class="w-7 h-7 bg-blue-500 rounded-full shadow-sm hover:bg-blue-600 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300"></button>
+                    <button id="setColorRedBtn" title="Set to Red" class="w-7 h-7 bg-red-500 rounded-full shadow-sm hover:bg-red-600 transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-300"></button>
+                </div>
+            </div>
+
+            <!-- Delete Section (pushed to bottom) -->
+            <div class="mt-auto">
+                 <button id="deleteNodeBtn" class="flex items-center justify-center gap-2 w-full px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-red-700 transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete Node
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content: Canvas -->
+        <main class="flex-grow relative canvas-container overflow-auto bg-gray-100">
+            <!-- Instructions -->
+            <div class="bg-blue-50 border-b border-blue-200 text-blue-800 p-2 text-center text-sm sticky top-0 z-10 shadow-sm">
+                <p><strong>Instructions:</strong> Select a node to get started. <strong>Drag</strong> to move. <strong>Double-click</strong> to edit text.</p>
+            </div>
+
+            <!-- We set a large fixed size for the canvas to allow panning/scrolling -->
+            <canvas id="todoCanvas" width="3000" height="3000" class="bg-white"></canvas>
+            
+            <!-- Hidden input for editing node text -->
+            <input type="text" id="nodeEditInput" class="absolute hidden px-2 py-1 border-2 border-blue-500 rounded-md shadow-lg z-20" style="font-family: 'Inter', sans-serif; font-size: 14px; box-sizing: border-box;">
+        </main>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('todoCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- DOM Elements ---
+        const addMainTaskBtn = document.getElementById('addMainTaskBtn');
+        const addSubtaskBtn = document.getElementById('addSubtaskBtn');
+        // Remove toggleCompleteBtn
+        const deleteNodeBtn = document.getElementById('deleteNodeBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const titleInput = document.getElementById('chartTitleInput');
+        const nodeEditInput = document.getElementById('nodeEditInput');
+
+        // Color palette buttons
+        const setColorDefaultBtn = document.getElementById('setColorDefaultBtn');
+        const setColorGreenBtn = document.getElementById('setColorGreenBtn');
+        const setColorYellowBtn = document.getElementById('setColorYellowBtn');
+        const setColorBlueBtn = document.getElementById('setColorBlueBtn');
+        const setColorRedBtn = document.getElementById('setColorRedBtn');
+
+        // --- Node Configuration ---
+        const NODE_WIDTH = 180;
+        const NODE_HEIGHT = 50;
+        const NODE_H_SPACING = 250;
+        const NODE_V_SPACING = 80;
+        const NODE_COLOR = '#ffffff'; // white (default)
+        const NODE_COLOR_GREEN = '#dcfce7'; // green-100
+        const NODE_COLOR_YELLOW = '#fef9c3'; // yellow-100
+        const NODE_COLOR_BLUE = '#dbeafe'; // blue-100
+        const NODE_COLOR_RED = '#fee2e2'; // red-100
+        const NODE_BORDER_COLOR = '#9ca3af'; // gray-400
+        const NODE_BORDER_COLOR_SELECTED = '#3b82f6'; // blue-500
+        const LINE_COLOR = '#9ca3af'; // gray-400
+        const TEXT_COLOR = '#1f2937'; // gray-800
+
+        // --- Data Structure ---
+        let initialRootNode = {
+            id: Date.now(),
+            text: 'Main Task',
+            x: 50,
+            y: 100,
+            width: NODE_WIDTH,
+            height: NODE_HEIGHT,
+            color: 'default', // Changed from 'completed'
+            parent: null,
+            children: []
+        };
+        
+        let rootNodes = [initialRootNode];
+        
+        // Flat array for easier rendering and hit detection
+        let allNodes = [initialRootNode];
+        let selectedNode = initialRootNode;
+        let editingNode = null; // Track which node is being edited
+
+        // --- Dragging State ---
+        let isDragging = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        // --- Utility Functions ---
+        
+        /**
+         * Draws a rounded rectangle.
+         */
+        function drawRoundedRect(x, y, w, h, r, fill, stroke) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+            
+            if (fill) {
+                ctx.fillStyle = fill;
+                ctx.fill();
+            }
+            if (stroke) {
+                ctx.strokeStyle = stroke.color;
+                ctx.lineWidth = stroke.width;
+                ctx.stroke();
+            }
+        }
+
+        /**
+         * Returns the correct fill color based on node state.
+         */
+        function getNodeFillColor(node) {
+            switch (node.color) {
+                case 'green': return NODE_COLOR_GREEN;
+                case 'yellow': return NODE_COLOR_YELLOW;
+                case 'blue': return NODE_COLOR_BLUE;
+                case 'red': return NODE_COLOR_RED;
+                case 'default':
+                default:
+                    return NODE_COLOR;
+            }
+        }
+
+        /**
+         * Draws a single node on the canvas.
+         */
+        function drawNode(node) {
+            // Determine colors
+            const fill = getNodeFillColor(node);
+            const stroke = {
+                color: (node === selectedNode) ? NODE_BORDER_COLOR_SELECTED : NODE_BORDER_COLOR,
+                width: (node === selectedNode) ? 3 : 1.5
+            };
+
+            // Draw the node box
+            drawRoundedRect(node.x, node.y, node.width, node.height, 8, fill, stroke);
+
+            // Draw the text
+            ctx.fillStyle = TEXT_COLOR;
+            ctx.font = '14px Inter';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Simple text clipping
+            const maxTextWidth = node.width - 20;
+            let displayText = node.text;
+            if (ctx.measureText(displayText).width > maxTextWidth) {
+                while (ctx.measureText(displayText + '...').width > maxTextWidth && displayText.length > 0) {
+                    displayText = displayText.slice(0, -1);
+                }
+                displayText += '...';
+            }
+            
+            ctx.fillText(displayText, node.x + node.width / 2, node.y + node.height / 2);
+        }
+
+        /**
+         * Draws the connection line from a node to its parent.
+         */
+        function drawConnection(node) {
+            if (node.parent) {
+                ctx.beginPath();
+                ctx.moveTo(node.parent.x + node.parent.width / 2, node.parent.y + node.parent.height / 2); // Center of parent
+                ctx.lineTo(node.x, node.y + node.height / 2); // Left-middle of child
+                ctx.strokeStyle = LINE_COLOR;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        /**
+         * Main draw function to render the entire chart.
+         */
+        function drawChart() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw connections first (so they appear behind nodes)
+            for (const node of allNodes) {
+                drawConnection(node);
+            }
+            
+            // Draw nodes
+            for (const node of allNodes) {
+                // Don't draw the node being edited, it's covered by the input
+                if (node !== editingNode) {
+                    drawNode(node);
+                }
+            }
+        }
+
+        /**
+         * Checks if a click/tap is inside any node.
+         * Iterates backwards so top nodes are hit first.
+         */
+        function getNodeAt(x, y) {
+            for (let i = allNodes.length - 1; i >= 0; i--) {
+                const node = allNodes[i];
+                if (x >= node.x && x <= node.x + node.width &&
+                    y >= node.y && y <= node.y + node.height) {
+                    return node;
+                }
+            }
+            return null;
+        }
+
+        // --- Event Handlers ---
+
+        function handleMouseDown(e) {
+            // If we are editing, a click outside the input should save and hide it
+            if (editingNode) {
+                saveNodeEdit();
+            }
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left + canvas.parentElement.scrollLeft;
+            const y = e.clientY - rect.top + canvas.parentElement.scrollTop;
+
+            const hitNode = getNodeAt(x, y); // This is correct
+            
+            if (hitNode) {
+                selectedNode = hitNode;
+                isDragging = true;
+                dragOffsetX = x - hitNode.x;
+                dragOffsetY = y - hitNode.y;
+            } else {
+                selectedNode = null;
+            }
+            // These lines were the bug, they are now removed.
+            // selectedNode.x = x - dragOffsetX;
+            // selectedNode.y = y - dragOffsetY;
+            drawChart();
+        }
+
+        function handleMouseMove(e) {
+            // This logic was missing and is now restored.
+            if (!isDragging || !selectedNode) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left + canvas.parentElement.scrollLeft;
+            const y = e.clientY - rect.top + canvas.parentElement.scrollTop;
+            
+            selectedNode.x = x - dragOffsetX;
+            selectedNode.y = y - dragOffsetY;
+            drawChart();
+        }
+
+        // This incorrect, old function is now removed.
+        /*
+        function handleDoubleClick(e) {
+            const rect = canvas.getBoundingClientRect();
+...
+            }
+        }
+        */
+
+        // --- Button Logic ---
+
+        function addMainTask() {
+            // Find the lowest point of existing root nodes to avoid overlap
+            let newY = 50;
+            if (rootNodes.length > 0) {
+                const lowestRoot = rootNodes.reduce((lowest, node) => Math.max(lowest, node.y), 0);
+                newY = lowestRoot + NODE_HEIGHT + NODE_V_SPACING;
+            }
+
+            const newNode = {
+                id: Date.now(),
+                text: 'New Main Task',
+                x: 50,
+                y: newY,
+                width: NODE_WIDTH,
+                height: NODE_HEIGHT,
+                color: 'default', // Changed from 'completed'
+                parent: null,
+                children: []
+            };
+
+            rootNodes.push(newNode);
+            allNodes.push(newNode);
+            selectedNode = newNode; // Select the new node
+            drawChart();
+        }
+
+        function addSubtask() {
+            if (!selectedNode) {
+                // Custom modal/message box would be better, but prompt is simple
+                // Using console.warn as alerts are disallowed.
+                console.warn('No node selected. Cannot add subtask.');
+                return;
+            }
+            
+            // Calculate Y position based on siblings
+            let newY = selectedNode.y;
+            if (selectedNode.children.length > 0) {
+                const lowestChild = selectedNode.children.reduce((lowest, child) => Math.max(lowest, child.y), 0);
+                newY = lowestChild + NODE_HEIGHT + (NODE_V_SPACING / 2); // Stack children closer
+            }
+
+            const newNode = {
+                id: Date.now(),
+                text: 'New Subtask',
+                x: selectedNode.x + NODE_H_SPACING,
+                y: newY,
+                width: NODE_WIDTH,
+                height: NODE_HEIGHT,
+                color: 'default', // Changed from 'completed'
+                parent: selectedNode,
+                children: []
+            };
+
+            selectedNode.children.push(newNode);
+            allNodes.push(newNode);
+            selectedNode = newNode; // Select the new node
+            drawChart();
+        }
+
+        function handleMouseUp() {
+            isDragging = false;
+        }
+
+        function handleDoubleClick(e) {
+            // Prevent dragging from starting on a double click
+            isDragging = false;
+
+            const rect = canvas.getBoundingClientRect();
+            const canvasContainer = canvas.parentElement;
+            const x = e.clientX - rect.left + canvasContainer.scrollLeft;
+            const y = e.clientY - rect.top + canvasContainer.scrollTop;
+
+            const hitNode = getNodeAt(x, y);
+
+            if (hitNode) {
+                editingNode = hitNode;
+                selectedNode = hitNode;
+                
+                // Calculate position relative to the canvas container
+                // This accounts for the container's scroll position
+                // Also account for the instruction bar height
+                const instructionBarHeight = canvasContainer.querySelector('div').offsetHeight;
+                
+                const inputX = hitNode.x - canvasContainer.scrollLeft;
+                const inputY = (hitNode.y - canvasContainer.scrollTop) + instructionBarHeight;
+
+                nodeEditInput.value = hitNode.text;
+                nodeEditInput.style.left = `${inputX}px`;
+                nodeEditInput.style.top = `${inputY}px`;
+                nodeEditInput.style.width = `${hitNode.width}px`;
+                nodeEditInput.style.height = `${hitNode.height}px`;
+                nodeEditInput.classList.remove('hidden');
+                nodeEditInput.focus();
+                nodeEditInput.select();
+                
+                // Redraw to hide the canvas version of the node
+                drawChart();
+            }
+        }
+
+        /**
+         * Saves text from the edit input, hides it, and redraws.
+         */
+        function saveNodeEdit() {
+            if (editingNode) {
+                const newText = nodeEditInput.value.trim();
+                if (newText !== '') {
+                    editingNode.text = newText;
+                    // Recalculate width based on text
+                    ctx.font = '14px Inter';
+                    const textWidth = ctx.measureText(editingNode.text).width;
+                    editingNode.width = Math.max(NODE_WIDTH, textWidth + 40);
+                }
+                
+                nodeEditInput.classList.add('hidden');
+                editingNode = null;
+                drawChart();
+            }
+        }
+
+        // --- Button Logic ---
+        
+        /**
+         * Sets the color of the selected node.
+         * @param {string} color - The color key (e.g., 'default', 'green', 'red')
+         */
+        function setNodeColor(color) {
+            if (selectedNode) {
+                selectedNode.color = color;
+                drawChart();
+            }
+        }
+        
+        // Remove the old toggleComplete function
+        /*
+        function toggleComplete() {
+            if (selectedNode) {
+                selectedNode.completed = !selectedNode.completed;
+                drawChart();
+            }
+        }
+        */
+
+        function deleteNode() {
+            if (!selectedNode) return;
+            
+            // Recursively delete node and all its children
+            function recursiveDelete(node) {
+                // Delete children first
+                [...node.children].forEach(child => recursiveDelete(child));
+                
+                // Remove from parent's children array
+                if (node.parent) {
+                    node.parent.children = node.parent.children.filter(n => n.id !== node.id);
+                } else {
+                    // It's a root node, remove from rootNodes array
+                    rootNodes = rootNodes.filter(n => n.id !== node.id);
+                }
+                
+                // Remove from global nodes array
+                allNodes = allNodes.filter(n => n.id !== node.id);
+            }
+            
+            const parent = selectedNode.parent;
+            recursiveDelete(selectedNode);
+            selectedNode = parent; // Select the parent after deletion
+            drawChart();
+        }
+
+        function downloadAsJPG() {
+            const title = titleInput.value.trim() || 'My Todo Chart';
+            
+            // 1. Find the bounds of the drawing
+            if (allNodes.length === 0) return;
+            
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            allNodes.forEach(node => {
+                minX = Math.min(minX, node.x);
+                minY = Math.min(minY, node.y);
+                maxX = Math.max(maxX, node.x + node.width);
+                maxY = Math.max(maxY, node.y + node.height);
+            });
+
+            // 2. Define padding and title height
+            const padding = 50;
+            const titleHeight = 60;
+            
+            const contentWidth = maxX - minX;
+            const contentHeight = maxY - minY;
+
+            const finalWidth = contentWidth + padding * 2;
+            const finalHeight = contentHeight + padding * 2 + titleHeight;
+
+            // 3. Create a temporary canvas
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = finalWidth;
+            tempCanvas.height = finalHeight;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // 4. Draw the background
+            tempCtx.fillStyle = '#FFFFFF'; // White background
+            tempCtx.fillRect(0, 0, finalWidth, finalHeight);
+
+            // 5. Draw the title
+            tempCtx.fillStyle = '#000000'; // Black title
+            tempCtx.font = 'bold 24px Inter';
+            tempCtx.textAlign = 'center';
+            tempCtx.textBaseline = 'top';
+            tempCtx.fillText(title, finalWidth / 2, padding / 2);
+
+            // 6. Redraw the chart, offset to fit in the new canvas
+            const offsetX = -minX + padding;
+            const offsetY = -minY + padding + titleHeight;
+            
+            // --- Re-run draw logic on temp canvas ---
+            // Draw connections
+            allNodes.forEach(node => {
+                if (node.parent) {
+                    tempCtx.beginPath();
+                    tempCtx.moveTo(node.parent.x + node.parent.width / 2 + offsetX, node.parent.y + node.parent.height / 2 + offsetY);
+                    tempCtx.lineTo(node.x + offsetX, node.y + node.height / 2 + offsetY);
+                    tempCtx.strokeStyle = LINE_COLOR;
+                    tempCtx.lineWidth = 2;
+                    tempCtx.stroke();
+                }
+            });
+
+            // Draw nodes
+            allNodes.forEach(node => {
+                const fill = getNodeFillColor(node); // Use the helper function here too
+                const stroke = {
+                    color: NODE_BORDER_COLOR, // No selection highlight in download
+                    width: 1.5
+                };
+
+                // Draw rounded rect on temp canvas
+                const x = node.x + offsetX;
+                const y = node.y + offsetY;
+                const w = node.width;
+                const h = node.height;
+                const r = 8;
+                tempCtx.beginPath();
+                tempCtx.moveTo(x + r, y);
+                tempCtx.lineTo(x + w - r, y);
+                tempCtx.quadraticCurveTo(x + w, y, x + w, y + r);
+                tempCtx.lineTo(x + w, y + h - r);
+                tempCtx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                tempCtx.lineTo(x + r, y + h);
+                tempCtx.quadraticCurveTo(x, y + h, x, y + h - r);
+                tempCtx.lineTo(x, y + r);
+                tempCtx.quadraticCurveTo(x, y, x + r, y);
+                tempCtx.closePath();
+                tempCtx.fillStyle = fill;
+                tempCtx.fill();
+                tempCtx.strokeStyle = stroke.color;
+                tempCtx.lineWidth = stroke.width;
+                tempCtx.stroke();
+                
+                // Draw text on temp canvas
+                tempCtx.fillStyle = TEXT_COLOR;
+                tempCtx.font = '14px Inter';
+                tempCtx.textAlign = 'center';
+                tempCtx.textBaseline = 'middle';
+                
+                // Simple text clipping
+                const maxTextWidth = node.width - 20;
+                let displayText = node.text;
+                if (tempCtx.measureText(displayText).width > maxTextWidth) {
+                    while (tempCtx.measureText(displayText + '...').width > maxTextWidth && displayText.length > 0) {
+                        displayText = displayText.slice(0, -1);
+                    }
+                    displayText += '...';
+                }
+                
+                tempCtx.fillText(displayText, node.x + node.width / 2 + offsetX, node.y + node.height / 2 + offsetY);
+            });
+            
+            // 7. Create download link
+            const dataURL = tempCanvas.toDataURL('image/jpeg', 0.9);
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = `${title.replace(/ /g, '_')}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- Attach Event Listeners ---
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
+        canvas.addEventListener('mouseout', handleMouseUp); // Stop dragging if mouse leaves canvas
+        canvas.addEventListener('dblclick', handleDoubleClick);
+
+        // Add listeners for the new input
+        nodeEditInput.addEventListener('blur', saveNodeEdit);
+        nodeEditInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                saveNodeEdit();
+            } else if (e.key === 'Escape') {
+                // Cancel edit
+                nodeEditInput.classList.add('hidden');
+                editingNode = null;
+                drawChart(); // Redraw to show the node again
+            }
+        });
+
+        addMainTaskBtn.addEventListener('click', addMainTask);
+        addSubtaskBtn.addEventListener('click', addSubtask);
+        
+        // Add listeners for new color buttons
+        setColorDefaultBtn.addEventListener('click', () => setNodeColor('default'));
+        setColorGreenBtn.addEventListener('click', () => setNodeColor('green'));
+        setColorYellowBtn.addEventListener('click', () => setNodeColor('yellow'));
+        setColorBlueBtn.addEventListener('click', () => setNodeColor('blue'));
+        setColorRedBtn.addEventListener('click', () => setNodeColor('red'));
+
+        deleteNodeBtn.addEventListener('click', deleteNode);
+        downloadBtn.addEventListener('click', downloadAsJPG);
+
+        // --- Initial Draw ---
+        drawChart();
+        
+    </script>
+
+</body>
+</html>
+

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Todo List</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Use Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbars for the canvas container */
+        .canvas-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .canvas-container::-webkit-scrollbar-thumb {
+            background-color: #9ca3af; /* gray-400 */
+            border-radius: 4px;
+        }
+        .canvas-container::-webkit-scrollbar-track {
+            background-color: #f3f4f6; /* gray-100 */
+        }
+        /* Ensure canvas is crisp on all displays */
+        canvas {
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-crisp-edges;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col text-gray-800">
+
+    <!-- Header & Controls -->
+    <header class="bg-white shadow-md p-4 z-10">
+        <div class="container mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h1 class="text-2xl font-bold text-blue-600">Visual Todo Chart</h1>
+            
+            <!-- Controls for Nodes -->
+            <div class="flex flex-wrap gap-2">
+                <button id="addSubtaskBtn" class="px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    Add Subtask
+                </button>
+                <button id="toggleCompleteBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-300">
+                    Toggle Complete
+                </button>
+                <button id="deleteNodeBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600 transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-300">
+                    Delete Node
+                </button>
+            </div>
+
+            <!-- Download Section -->
+            <div class="flex flex-col sm:flex-row gap-2">
+                <input type="text" id="chartTitleInput" placeholder="Enter Chart Title for Download" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 w-full sm:w-auto">
+                <button id="downloadBtn" class="px-4 py-2 bg-gray-700 text-white rounded-lg shadow hover:bg-gray-800 transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    Download as JPG
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Instructions -->
+    <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-3 text-center text-sm">
+        <p><strong>Instructions:</strong> Select a node to get started. <strong>Drag</strong> to move. <strong>Double-click</strong> to edit text.</p>
+    </div>
+
+    <!-- Main Content: Canvas -->
+    <main class="flex-grow relative canvas-container overflow-auto">
+        <!-- We set a large fixed size for the canvas to allow panning/scrolling -->
+        <canvas id="todoCanvas" width="3000" height="3000" class="bg-white"></canvas>
+        
+        <!-- Hidden input for editing node text -->
+        <input type="text" id="nodeEditInput" class="absolute hidden px-2 py-1 border-2 border-blue-500 rounded-md shadow-lg z-20" style="font-family: 'Inter', sans-serif; font-size: 14px; box-sizing: border-box;">
+    </main>
+
+    <script>
+        const canvas = document.getElementById('todoCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- DOM Elements ---
+        const addSubtaskBtn = document.getElementById('addSubtaskBtn');
+        const toggleCompleteBtn = document.getElementById('toggleCompleteBtn');
+        const deleteNodeBtn = document.getElementById('deleteNodeBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const titleInput = document.getElementById('chartTitleInput');
+        const nodeEditInput = document.getElementById('nodeEditInput');
+
+        // --- Node Configuration ---
+        const NODE_WIDTH = 180;
+        const NODE_HEIGHT = 50;
+        const NODE_H_SPACING = 250;
+        const NODE_V_SPACING = 80;
+        const NODE_COLOR = '#ffffff'; // white
+        const NODE_COLOR_COMPLETE = '#dcfce7'; // green-100
+        const NODE_BORDER_COLOR = '#9ca3af'; // gray-400
+        const NODE_BORDER_COLOR_SELECTED = '#3b82f6'; // blue-500
+        const LINE_COLOR = '#9ca3af'; // gray-400
+        const TEXT_COLOR = '#1f2937'; // gray-800
+
+        // --- Data Structure ---
+        let rootNode = {
+            id: Date.now(),
+            text: 'Main Task',
+            x: 50,
+            y: 300,
+            width: NODE_WIDTH,
+            height: NODE_HEIGHT,
+            completed: false,
+            parent: null,
+            children: []
+        };
+        
+        // Flat array for easier rendering and hit detection
+        let allNodes = [rootNode];
+        let selectedNode = rootNode;
+        let editingNode = null; // Track which node is being edited
+
+        // --- Dragging State ---
+        let isDragging = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        // --- Utility Functions ---
+        
+        /**
+         * Draws a rounded rectangle.
+         */
+        function drawRoundedRect(x, y, w, h, r, fill, stroke) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+            
+            if (fill) {
+                ctx.fillStyle = fill;
+                ctx.fill();
+            }
+            if (stroke) {
+                ctx.strokeStyle = stroke.color;
+                ctx.lineWidth = stroke.width;
+                ctx.stroke();
+            }
+        }
+
+        /**
+         * Draws a single node on the canvas.
+         */
+        function drawNode(node) {
+            // Determine colors
+            const fill = node.completed ? NODE_COLOR_COMPLETE : NODE_COLOR;
+            const stroke = {
+                color: (node === selectedNode) ? NODE_BORDER_COLOR_SELECTED : NODE_BORDER_COLOR,
+                width: (node === selectedNode) ? 3 : 1.5
+            };
+
+            // Draw the node box
+            drawRoundedRect(node.x, node.y, node.width, node.height, 8, fill, stroke);
+
+            // Draw the text
+            ctx.fillStyle = TEXT_COLOR;
+            ctx.font = '14px Inter';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Simple text clipping
+            const maxTextWidth = node.width - 20;
+            let displayText = node.text;
+            if (ctx.measureText(displayText).width > maxTextWidth) {
+                while (ctx.measureText(displayText + '...').width > maxTextWidth && displayText.length > 0) {
+                    displayText = displayText.slice(0, -1);
+                }
+                displayText += '...';
+            }
+            
+            ctx.fillText(displayText, node.x + node.width / 2, node.y + node.height / 2);
+        }
+
+        /**
+         * Draws the connection line from a node to its parent.
+         */
+        function drawConnection(node) {
+            if (node.parent) {
+                ctx.beginPath();
+                ctx.moveTo(node.parent.x + node.parent.width / 2, node.parent.y + node.parent.height / 2); // Center of parent
+                ctx.lineTo(node.x, node.y + node.height / 2); // Left-middle of child
+                ctx.strokeStyle = LINE_COLOR;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        /**
+         * Main draw function to render the entire chart.
+         */
+        function drawChart() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw connections first (so they appear behind nodes)
+            for (const node of allNodes) {
+                drawConnection(node);
+            }
+            
+            // Draw nodes
+            for (const node of allNodes) {
+                // Don't draw the node being edited, it's covered by the input
+                if (node !== editingNode) {
+                    drawNode(node);
+                }
+            }
+        }
+
+        /**
+         * Checks if a click/tap is inside any node.
+         * Iterates backwards so top nodes are hit first.
+         */
+        function getNodeAt(x, y) {
+            for (let i = allNodes.length - 1; i >= 0; i--) {
+                const node = allNodes[i];
+                if (x >= node.x && x <= node.x + node.width &&
+                    y >= node.y && y <= node.y + node.height) {
+                    return node;
+                }
+            }
+            return null;
+        }
+
+        // --- Event Handlers ---
+
+        function handleMouseDown(e) {
+            // If we are editing, a click outside the input should save and hide it
+            if (editingNode) {
+                saveNodeEdit();
+            }
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left + canvas.parentElement.scrollLeft;
+            const y = e.clientY - rect.top + canvas.parentElement.scrollTop;
+
+            const hitNode = getNodeAt(x, y); // This is correct
+            
+            if (hitNode) {
+                selectedNode = hitNode;
+                isDragging = true;
+                dragOffsetX = x - hitNode.x;
+                dragOffsetY = y - hitNode.y;
+            } else {
+                selectedNode = null;
+            }
+            // These lines were the bug, they are now removed.
+            // selectedNode.x = x - dragOffsetX;
+            // selectedNode.y = y - dragOffsetY;
+            drawChart();
+        }
+
+        function handleMouseMove(e) {
+            // This logic was missing and is now restored.
+            if (!isDragging || !selectedNode) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left + canvas.parentElement.scrollLeft;
+            const y = e.clientY - rect.top + canvas.parentElement.scrollTop;
+            
+            selectedNode.x = x - dragOffsetX;
+            selectedNode.y = y - dragOffsetY;
+            drawChart();
+        }
+
+        // This incorrect, old function is now removed.
+        /*
+        function handleDoubleClick(e) {
+            const rect = canvas.getBoundingClientRect();
+...
+            }
+        }
+        */
+
+        // --- Button Logic ---
+
+        function addSubtask() {
+            if (!selectedNode) {
+                // Custom modal/message box would be better, but prompt is simple
+                // Using console.warn as alerts are disallowed.
+                console.warn('No node selected. Cannot add subtask.');
+                return;
+            }
+
+            const newNode = {
+                id: Date.now(),
+                text: 'New Subtask',
+                x: selectedNode.x + NODE_H_SPACING,
+                y: selectedNode.y + (selectedNode.children.length * NODE_V_SPACING),
+                width: NODE_WIDTH,
+                height: NODE_HEIGHT,
+                completed: false,
+                parent: selectedNode,
+                children: []
+            };
+
+            selectedNode.children.push(newNode);
+            allNodes.push(newNode);
+            selectedNode = newNode; // Select the new node
+            drawChart();
+        }
+
+        function handleMouseUp() {
+            isDragging = false;
+        }
+
+        function handleDoubleClick(e) {
+            // Prevent dragging from starting on a double click
+            isDragging = false;
+
+            const rect = canvas.getBoundingClientRect();
+            const canvasContainer = canvas.parentElement;
+            const x = e.clientX - rect.left + canvasContainer.scrollLeft;
+            const y = e.clientY - rect.top + canvasContainer.scrollTop;
+
+            const hitNode = getNodeAt(x, y);
+
+            if (hitNode) {
+                editingNode = hitNode;
+                selectedNode = hitNode;
+                
+                // Calculate position relative to the canvas container
+                // This accounts for the container's scroll position
+                const inputX = hitNode.x - canvasContainer.scrollLeft;
+                const inputY = hitNode.y - canvasContainer.scrollTop;
+
+                nodeEditInput.value = hitNode.text;
+                nodeEditInput.style.left = `${inputX}px`;
+                nodeEditInput.style.top = `${inputY}px`;
+                nodeEditInput.style.width = `${hitNode.width}px`;
+                nodeEditInput.style.height = `${hitNode.height}px`;
+                nodeEditInput.classList.remove('hidden');
+                nodeEditInput.focus();
+                nodeEditInput.select();
+                
+                // Redraw to hide the canvas version of the node
+                drawChart();
+            }
+        }
+
+        /**
+         * Saves text from the edit input, hides it, and redraws.
+         */
+        function saveNodeEdit() {
+            if (editingNode) {
+                const newText = nodeEditInput.value.trim();
+                if (newText !== '') {
+                    editingNode.text = newText;
+                    // Recalculate width based on text
+                    ctx.font = '14px Inter';
+                    const textWidth = ctx.measureText(editingNode.text).width;
+                    editingNode.width = Math.max(NODE_WIDTH, textWidth + 40);
+                }
+                
+                nodeEditInput.classList.add('hidden');
+                editingNode = null;
+                drawChart();
+            }
+        }
+
+        // --- Button Logic ---
+        function toggleComplete() {
+            if (selectedNode) {
+                selectedNode.completed = !selectedNode.completed;
+                drawChart();
+            }
+        }
+
+        function deleteNode() {
+            if (!selectedNode) return;
+            if (selectedNode === rootNode) {
+                console.warn('Cannot delete the root node.');
+                return;
+            }
+            
+            // Recursively delete node and all its children
+            function recursiveDelete(node) {
+                // Delete children first
+                [...node.children].forEach(child => recursiveDelete(child));
+                
+                // Remove from parent's children array
+                if (node.parent) {
+                    node.parent.children = node.parent.children.filter(n => n.id !== node.id);
+                }
+                
+                // Remove from global nodes array
+                allNodes = allNodes.filter(n => n.id !== node.id);
+            }
+            
+            const parent = selectedNode.parent;
+            recursiveDelete(selectedNode);
+            selectedNode = parent; // Select the parent after deletion
+            drawChart();
+        }
+
+        function downloadAsJPG() {
+            const title = titleInput.value.trim() || 'My Todo Chart';
+            
+            // 1. Find the bounds of the drawing
+            if (allNodes.length === 0) return;
+            
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            allNodes.forEach(node => {
+                minX = Math.min(minX, node.x);
+                minY = Math.min(minY, node.y);
+                maxX = Math.max(maxX, node.x + node.width);
+                maxY = Math.max(maxY, node.y + node.height);
+            });
+
+            // 2. Define padding and title height
+            const padding = 50;
+            const titleHeight = 60;
+            
+            const contentWidth = maxX - minX;
+            const contentHeight = maxY - minY;
+
+            const finalWidth = contentWidth + padding * 2;
+            const finalHeight = contentHeight + padding * 2 + titleHeight;
+
+            // 3. Create a temporary canvas
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = finalWidth;
+            tempCanvas.height = finalHeight;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // 4. Draw the background
+            tempCtx.fillStyle = '#FFFFFF'; // White background
+            tempCtx.fillRect(0, 0, finalWidth, finalHeight);
+
+            // 5. Draw the title
+            tempCtx.fillStyle = '#000000'; // Black title
+            tempCtx.font = 'bold 24px Inter';
+            tempCtx.textAlign = 'center';
+            tempCtx.textBaseline = 'top';
+            tempCtx.fillText(title, finalWidth / 2, padding / 2);
+
+            // 6. Redraw the chart, offset to fit in the new canvas
+            const offsetX = -minX + padding;
+            const offsetY = -minY + padding + titleHeight;
+            
+            // --- Re-run draw logic on temp canvas ---
+            // Draw connections
+            allNodes.forEach(node => {
+                if (node.parent) {
+                    tempCtx.beginPath();
+                    tempCtx.moveTo(node.parent.x + node.parent.width / 2 + offsetX, node.parent.y + node.parent.height / 2 + offsetY);
+                    tempCtx.lineTo(node.x + offsetX, node.y + node.height / 2 + offsetY);
+                    tempCtx.strokeStyle = LINE_COLOR;
+                    tempCtx.lineWidth = 2;
+                    tempCtx.stroke();
+                }
+            });
+
+            // Draw nodes
+            allNodes.forEach(node => {
+                const fill = node.completed ? NODE_COLOR_COMPLETE : NODE_COLOR;
+                const stroke = {
+                    color: NODE_BORDER_COLOR, // No selection highlight in download
+                    width: 1.5
+                };
+
+                // Draw rounded rect on temp canvas
+                const x = node.x + offsetX;
+                const y = node.y + offsetY;
+                const w = node.width;
+                const h = node.height;
+                const r = 8;
+                tempCtx.beginPath();
+                tempCtx.moveTo(x + r, y);
+                tempCtx.lineTo(x + w - r, y);
+                tempCtx.quadraticCurveTo(x + w, y, x + w, y + r);
+                tempCtx.lineTo(x + w, y + h - r);
+                tempCtx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                tempCtx.lineTo(x + r, y + h);
+                tempCtx.quadraticCurveTo(x, y + h, x, y + h - r);
+                tempCtx.lineTo(x, y + r);
+                tempCtx.quadraticCurveTo(x, y, x + r, y);
+                tempCtx.closePath();
+                tempCtx.fillStyle = fill;
+                tempCtx.fill();
+                tempCtx.strokeStyle = stroke.color;
+                tempCtx.lineWidth = stroke.width;
+                tempCtx.stroke();
+                
+                // Draw text on temp canvas
+                tempCtx.fillStyle = TEXT_COLOR;
+                tempCtx.font = '14px Inter';
+                tempCtx.textAlign = 'center';
+                tempCtx.textBaseline = 'middle';
+                
+                // Simple text clipping
+                const maxTextWidth = node.width - 20;
+                let displayText = node.text;
+                if (tempCtx.measureText(displayText).width > maxTextWidth) {
+                    while (tempCtx.measureText(displayText + '...').width > maxTextWidth && displayText.length > 0) {
+                        displayText = displayText.slice(0, -1);
+                    }
+                    displayText += '...';
+                }
+                
+                tempCtx.fillText(displayText, node.x + node.width / 2 + offsetX, node.y + node.height / 2 + offsetY);
+            });
+            
+            // 7. Create download link
+            const dataURL = tempCanvas.toDataURL('image/jpeg', 0.9);
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = `${title.replace(/ /g, '_')}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- Attach Event Listeners ---
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
+        canvas.addEventListener('mouseout', handleMouseUp); // Stop dragging if mouse leaves canvas
+        canvas.addEventListener('dblclick', handleDoubleClick);
+
+        // Add listeners for the new input
+        nodeEditInput.addEventListener('blur', saveNodeEdit);
+        nodeEditInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                saveNodeEdit();
+            } else if (e.key === 'Escape') {
+                // Cancel edit
+                nodeEditInput.classList.add('hidden');
+                editingNode = null;
+                drawChart(); // Redraw to show the node again
+            }
+        });
+
+        addSubtaskBtn.addEventListener('click', addSubtask);
+        toggleCompleteBtn.addEventListener('click', toggleComplete);
+        deleteNodeBtn.addEventListener('click', deleteNode);
+        downloadBtn.addEventListener('click', downloadAsJPG);
+
+        // --- Initial Draw ---
+        drawChart();
+        
+    </script>
+
+</body>
+</html>
+
+

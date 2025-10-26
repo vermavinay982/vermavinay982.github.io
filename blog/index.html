@@ -3,61 +3,187 @@
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="initial-scale=1.0">
-  <title>My Blog</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
-
-</head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Blog & Tools</title>
+  
+  <link rel="stylesheet" type="text/css" href="../stylesheet_v2.css">
+  
+  <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+  
+  </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="#">My Blog</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
-          <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="/">Home</a>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-  <section>
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <h2> Tools </h2>
-          <ul class="list-group p-5">
-            <a href="notepad3.html" class="list-group-item list-group-item-action">Simply Notepad</a>
-            <a href="markdown.html" class="list-group-item list-group-item-action">Markdown editor</a>
-            <a href="waps.html" class="list-group-item list-group-item-action">WhatsApp Number Generator</a>
-            <a href="maskalert/index.html" class="list-group-item list-group-item-action">Mask Detection & Alert</a>
-            <a href="typewriter.html" class="list-group-item list-group-item-action">Typing Test</a>
-            <a href="draw_board.html" class="list-group-item list-group-item-action">Drawing Board</a>
-          </ul>
 
-          <h2> Blogs </h2>
-          <ul class="list-group p-5">
-            <a href="sublime.html" class="list-group-item list-group-item-action">Installing Sublime</a>
-            <a href="excelScript.html" class="list-group-item list-group-item-action">Adding DateTime in GoogleSheet using JS</a>
-            <a href="cv-video-writer.html" class="list-group-item list-group-item-action">Video Writer Snippet - OpenCV Python</a>
-            <a href="github/Github-Vinay.html" class="list-group-item list-group-item-action">Cool Github Presentation</a>
-            <a href="docker.html" class="list-group-item list-group-item-action">Easy Docker Installation</a>
-          </ul>
+  <div id="tsparticles"></div>
 
-        </div>
-      </div>
-  </section>
-    <footer class="fixed-bottom footer mt-auto py-3 bg-light">
-      <div class="container text-center">
-        <a href="mailto: vinayverma982@gmail.com">
-          <i class="fas fa-envelope px-2"></i>
-          <span class="text-muted">vinayverma982@gmail.com</span>
+  <div class="container">
+
+    <header class="blog-header" data-aos="fade-in">
+      <h1 class="name">Blog & Tools</h1>
+      <nav class="links">
+        <a href="../index.html">&larr; Back to Home</a>
+      </nav>
+    </header>
+
+    <main>
+      <section id="tools" data-aos="fade-up">
+        <h2 class="section-title">Tools</h2>
+        
+        <a href="notepad3.html" class="card-link-wrapper">
+          <article class="card small-card"><h3>Simply Notepad</h3></article>
         </a>
-      </div>
+        <a href="markdown.html" class="card-link-wrapper">
+          <article class="card small-card"><h3>Markdown editor</h3></article>
+        </a>
+        <a href="waps.html" class="card-link-wrapper">
+          <article class="card small-card"><h3>WhatsApp Number Generator</h3></article>
+        </a>
+        <a href="maskalert/index.html" class="card-link-wrapper">
+          <article class="card small-card"><h3>Mask Detection & Alert</h3></article>
+        </a>
+        <a href="typewriter.html" class="card-link-wrapper">
+          <article class="card small-card"><h3>Typing Test</h3></article>
+        </a>
+        <a href="draw_board.html" class="card-link-wrapper">
+          <article class="card small-card"><h3>Drawing Board</h3></article>
+        </a>
+        <a href="task_nodes_multi_v3.html" class="card-link-wrapper">
+          <article class="card small-card"><h3>Visual To-Do List</h3></article>
+        </a>
+      </section>
+
+      <section id="blogs" data-aos="fade-up">
+        <h2 class="section-title">Blogs</h2>
+        
+        <a href="sublime.html" class="card-link-wrapper">
+          <article class="card small-card"><h3>Installing Sublime</h3></article>
+        </a>
+        <a href="excelScript.html" class="card-link-wrapper">
+          <article class="card small-card"><h3>Adding DateTime in GoogleSheet using JS</h3></article>
+        </a>
+        <a href="cv-video-writer.html" class="card-link-wrapper">
+          <article class="card small-card"><h3>Video Writer Snippet - OpenCV Python</h3></article>
+        </a>
+        <a href="github/Github-Vinay.html" class="card-link-wrapper">
+          <article class="card small-card"><h3>Cool Github Presentation</h3></article>
+        </a>
+        <a href="docker.html" class="card-link-wrapper">
+          <article class="card small-card"><h3>Easy Docker Installation</h3></article>
+        </a>
+      </section>
+    </main>
+    
+    <footer>
+      <p><a href="mailto: vinayverma982@gmail.com">vinayverma982@gmail.com</a></p>
     </footer>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js" integrity="sha384-SR1sx49pcuLnqZUnnPwx6FCym0wLsk5JZuNx2bPPENzswTNFaQU1RDvt3wT4gWFG" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.min.js" integrity="sha384-j0CNLUeiqtyaRmlzUHCPZ+Gy5fQu0dQ6eZ/xAww941Ai1SxSY+0EQqNXNE6DZiVc" crossorigin="anonymous"></script>
+    
+  </div> <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+  <script>
+    AOS.init({
+      duration: 700,
+      once: true,
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
+  <script>
+    tsParticles.load("tsparticles", {
+      fpsLimit: 60,
+      interactivity: {
+        events: {
+          onHover: { enable: true, mode: "grab" },
+          onClick: { enable: true, mode: "push" }
+        },
+        modes: {
+          grab: { distance: 140, links: { opacity: 0.8 } },
+          push: { quantity: 4 }
+        }
+      },
+      particles: {
+        color: { value: "#64ffda" },
+        links: {
+          color: "#ffffff",
+          distance: 150,
+          enable: true,
+          opacity: 0.2,
+          width: 1
+        },
+        move: {
+          direction: "none",
+          enable: true,
+          outModes: "out",
+          random: false,
+          speed: 1,
+          straight: false
+        },
+        number: {
+          density: { enable: true, value_area: 800 },
+          value: 80
+        },
+        opacity: { value: 0.3 },
+        shape: { type: "circle" },
+        size: { value: { min: 1, max: 3 } }
+      },
+      detectRetina: true
+    });
+  </script>
+
+  <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+  <span class="icon-moon">🌙</span>
+  <span class="icon-sun">☀️</span>
+  </button>
+
+
+<script>
+    const themeToggle = document.getElementById('theme-toggle');
+    const body = document.body;
+    const themeKey = 'vinay-theme-preference';
+    let isAnimating = false;
+
+    // 1. Check for saved preference on page load
+    const currentTheme = localStorage.getItem(themeKey);
+    if (currentTheme === 'light') {
+      body.classList.add('light-mode');
+    }
+
+    // 2. Click listener
+    themeToggle.addEventListener('click', () => {
+      if (isAnimating) return;
+      isAnimating = true;
+
+      const isSwitchingToLight = !body.classList.contains('light-mode');
+
+      // Create the wave/overlay element
+      const overlay = document.createElement('div');
+      overlay.classList.add('theme-transition-overlay');
+      
+      // Assign the *target* theme color to the wave
+      if (isSwitchingToLight) {
+        overlay.classList.add('wave-to-light');
+      } else {
+        overlay.classList.add('wave-to-dark');
+      }
+
+      document.body.appendChild(overlay);
+
+      // --- THIS IS THE FIX ---
+      
+      // 1. Start the wave animation (painting over the *old* theme)
+      requestAnimationFrame(() => {
+        overlay.classList.add('expand');
+      });
+
+      // 2. Wait for the animation to finish (600ms)
+      setTimeout(() => {
+        // 3. *Now* toggle the body class to match the wave
+        body.classList.toggle('light-mode'); 
+        localStorage.setItem(themeKey, isSwitchingToLight ? 'light' : 'dark');
+        
+        // 4. Remove the wave
+        document.body.removeChild(overlay);
+        isAnimating = false;
+      }, 600); // This duration *must* match your CSS transition-duration
+    });
+  </script>
+
+</body>
+</html> 

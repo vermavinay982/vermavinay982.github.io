@@ -1,0 +1,440 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Lato:wght@400;700&display=swap');
+
+/* VARIABLES & BASIC SETUP 
+  (CSS Variables make it easy to change your theme colors)
+*/
+:root {
+  --dark-navy: #0a192f;      /* Darkest background */
+  --navy: #112240;          /* Lighter background for cards */
+  --light-navy: #233554;    /* Border / hover color */
+  --lightest-navy: #303C55;
+  --slate: #8892b0;         /* Default text color */
+  --light-slate: #a8b2d1;   /* Lighter text */
+  --lightest-slate: #ccd6f6; /* Headings */
+  --green: #64ffda;         /* The "magical" neon accent color */
+  
+  --font-sans: 'Lato', sans-serif;
+  --font-mono: 'Fira Code', monospace;
+}
+
+/* Basic body styling */
+body {
+  background-color: var(--dark-navy);
+  color: var(--slate);
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+/* Particle background styling */
+#tsparticles {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: -1; /* Puts it behind all content */
+  top: 0;
+  left: 0;
+}
+
+/* Main container to center content */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* LINKS & TEXT STYLING 
+*/
+a {
+  color: var(--green);
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+a:hover {
+  color: var(--green);
+  text-shadow: 0 0 8px var(--green); /* The "glow" effect */
+  filter: brightness(1.2);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-mono);
+  color: var(--lightest-slate);
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+h1.name {
+  color: var(--green);
+  font-size: 3.5rem;
+  margin-bottom: 10px;
+}
+
+h2.section-title {
+  font-size: 2.5rem;
+  color: var(--green);
+  margin-top: 60px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid var(--light-navy);
+  padding-bottom: 10px;
+}
+
+h3 {
+  font-size: 1.5rem;
+  color: var(--lightest-slate);
+}
+h3:hover {
+  color: var(--green);
+}
+
+p {
+  margin-bottom: 15px;
+}
+
+/* HERO / HEADER SECTION 
+  (Using Flexbox for layout)
+*/
+.hero-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 80vh;
+  padding-top: 100px;
+  margin-bottom: 100px;
+  gap: 30px;
+}
+
+.hero-text {
+  flex: 3; /* Takes up 3/5 of the space */
+}
+
+.hero-image {
+  flex: 2; /* Takes up 2/5 of the space */
+  max-width: 40%;
+  margin-top: 20px;
+}
+
+.hero-image img {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 50%;
+  border: 4px solid var(--green);
+  box-shadow: 0 0 20px 0 var(--green); /* Glow effect for the image */
+  transition: all 0.3s ease;
+}
+
+.hero-image img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px 5px var(--green);
+}
+
+p.bio {
+  font-size: 1.2rem;
+  color: var(--light-slate);
+  margin-bottom: 20px;
+}
+p.bio-static {
+  font-size: 1rem;
+}
+
+/* Style for the typing cursor */
+.typed-cursor {
+  color: var(--green);
+  font-size: 1.2rem;
+}
+
+nav.links {
+  margin-bottom: 20px;
+}
+nav.links a {
+  margin-right: 20px;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+}
+
+nav.social-links {
+  font-family: var(--font-mono);
+  color: var(--slate);
+}
+nav.social-links a {
+  font-size: 1rem;
+  font-weight: normal;
+}
+
+/* CARD STYLING 
+  (For Research, Education, Work)
+*/
+.card {
+  display: flex;
+  gap: 20px;
+  background-color: var(--navy);
+  border-radius: 8px;
+  padding: 25px;
+  margin-bottom: 25px;
+  border: 1px solid var(--light-navy);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+/* The "magical" hover effect */
+.card:hover {
+  transform: translateY(-8px); /* Lifts the card up */
+  box-shadow: 0 10px 30px -15px rgba(0,0,0,0.7);
+  border-color: var(--green);
+}
+
+.card-image {
+  flex-basis: 200px;
+  min-width: 200px;
+}
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.card-content {
+  flex: 1;
+}
+.card-content p {
+  color: var(--light-slate);
+  margin-bottom: 10px;
+}
+.card-content p.citation {
+  font-size: 0.9rem;
+  color: var(--slate);
+}
+
+.card-links a {
+  font-family: var(--font-mono);
+  font-weight: normal;
+}
+
+/* Specific styling for school/job cards (smaller images) */
+.school img, .job img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  border-radius: 4px;
+  background-color: #fff; /* White background for logos */
+  padding: 5px;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 40px 0;
+  margin-top: 100px;
+  font-family: var(--font-mono);
+  color: var(--slate);
+  font-size: 0.9rem;
+}
+
+
+/* RESPONSIVENESS (for Mobile)
+*/
+@media (max-width: 768px) {
+  h1.name {
+    font-size: 2.5rem;
+  }
+  h2.section-title {
+    font-size: 2rem;
+  }
+  
+  /* Stack hero section on mobile */
+  .hero-section {
+    flex-direction: column-reverse; /* Image on top */
+    min-height: auto;
+    padding-top: 50px;
+    margin-bottom: 50px;
+  }
+  
+  .hero-image {
+    max-width: 60%;
+    margin: 0 auto 30px auto; /* Center the image */
+  }
+  
+  /* Stack cards on mobile */
+  .card {
+    flex-direction: column;
+  }
+  .card-image {
+    max-width: 100%;
+    max-height: 250px;
+  }
+  .school img, .job img {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* STYLES FOR BLOG/TOOLS PAGE */
+
+.blog-header {
+  padding-top: 100px;
+  padding-bottom: 50px;
+  text-align: center;
+}
+
+.blog-header .name {
+  color: var(--green);
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.blog-header .links a {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+}
+
+/* Makes the whole card a clickable link */
+.card-link-wrapper {
+  text-decoration: none;
+}
+
+/* A simpler card for just links */
+.card.small-card {
+  padding: 20px 25px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card.small-card h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--lightest-slate);
+  transition: all 0.3s ease;
+}
+
+.card.small-card:hover h3 {
+  color: var(--green);
+}
+
+/* Add a cool arrow on hover */
+.card.small-card::after {
+  content: '→';
+  font-size: 2rem;
+  color: var(--slate);
+  opacity: 0;
+  transition: all 0.3s ease;
+  transform: translateX(-10px);
+}
+
+.card.small-card:hover::after {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--green);
+}
+
+
+
+/* ##################### */
+
+/* --- LIGHT/DARK MODE TOGGLE --- */
+
+/* --- CSS FIX for Light Mode Contrast --- */
+/* This update makes the main page background a light gray, 
+  so the white cards and components have better contrast and "pop."
+  It also uses a brighter, more saturated blue for the accent color.
+*/
+body.light-mode {
+  --dark-navy: #756586;     /* Page BG (Was: #f4f7fa) - Now a clearer gray */
+  --navy: #ffffff;          /* Card BG (Unchanged) */
+  --light-navy: #dee2e6;    /* Border (Was: #e6ecf1) - Now a visible border */
+  --lightest-navy: #ced4da; /* (Was: #dbe4ee) */
+  --slate: #4a5568;         /* Text (Unchanged) */
+  --light-slate: #2d3748;   /* Darker Text (Unchanged) */
+  --lightest-slate: #1a202c; /* Heading (Unchanged) */
+  --green: #0d1b2b;         /* Accent (Was: #087990) - Now a brighter blue */
+}
+
+/* 2. Style the toggle button */
+.theme-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--navy);
+  color: var(--green);
+  border: 2px solid var(--light-navy);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 1.5rem; /* Emoji size */
+  cursor: pointer;
+  z-index: 1000;
+  
+  /* Simple centering for the emoji */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--green);
+  box-shadow: 0 0 10px var(--green);
+  transform: scale(1.1);
+}
+
+/* 3. Logic to show the correct icon */
+/* By default, hide the sun (light-mode icon) */
+.theme-toggle .icon-sun {
+  display: none;
+}
+
+/* When in light-mode, hide the moon... */
+body.light-mode .theme-toggle .icon-moon {
+  display: none;
+}
+
+/* ...and show the sun */
+body.light-mode .theme-toggle .icon-sun {
+  display: block;
+}
+
+/* --- THEME TRANSITION WAVE (FIXED) --- */
+
+.theme-transition-overlay {
+  /* Sits on top of everything */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9998; /* Just under the toggle button */
+  
+  /* REMOVED default background-color */
+  
+  /* Starts as a 0-size circle at the bottom-right */
+  clip-path: circle(0% at 100% 100%);
+  
+  /* This is the "slow" animation you wanted */
+  transition: clip-path 0.6s ease-in-out;
+}
+
+/* NEW: This class sets the wave to the DARK color */
+.theme-transition-overlay.wave-to-dark {
+  background-color: #0a192f; /* Hard-coded dark mode bg */
+}
+
+/* NEW: This class sets the wave to the LIGHT color */
+.theme-transition-overlay.wave-to-light {
+  background-color: #f1f3f5; /* Hard-coded light mode bg */
+}
+
+/* This class expands the circle to cover the screen */
+.theme-transition-overlay.expand {
+  clip-path: circle(150% at 100% 100%);
+}
+
+/* Make sure the button stays on top */
+.theme-toggle {
+  z-index: 9999;
+}
