@@ -344,7 +344,7 @@ footer {
   It also uses a brighter, more saturated blue for the accent color.
 */
 body.light-mode {
-  --dark-navy: #756586;     /* Page BG (Was: #f4f7fa) - Now a clearer gray */
+  --dark-navy: #a5b6a7;     /* Page BG (Was: #f4f7fa) - Now a clearer gray */
   --navy: #ffffff;          /* Card BG (Unchanged) */
   --light-navy: #dee2e6;    /* Border (Was: #e6ecf1) - Now a visible border */
   --lightest-navy: #ced4da; /* (Was: #dbe4ee) */
