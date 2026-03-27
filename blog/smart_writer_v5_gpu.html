@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebLLM Encyclopedia Writer</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --panel-bg: #ffffff;
+            --text-color: #334155;
+            --accent-color: #cbd5e1;
+            --accent-hover: #94a3b8;
+            --border-color: #e2e8f0;
+            --caret-color: #e11d48; 
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0;
+            display: flex; height: 100vh; overflow: hidden; box-sizing: border-box;
+        }
+
+        #left-workspace { flex: 1.3; padding: 20px; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; box-sizing: border-box; }
+        #right-sidebar { flex: 0.8; padding: 20px; background: #f1f5f9; border-left: 2px solid var(--border-color); display: flex; flex-direction: column; height: 100vh; overflow-y: auto; box-sizing: border-box; box-shadow: inset 4px 0 10px rgba(0,0,0,0.02); }
+
+        .panel { background: var(--panel-bg); padding: 12px 16px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); margin-bottom: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; border: 1px solid var(--border-color); }
+        input[type="text"], input[type="number"], select, textarea { padding: 8px 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; font-family: inherit; }
+        input:focus, select:focus, textarea:focus { border-color: #94a3b8; }
+
+        button { background-color: var(--accent-color); color: #1e293b; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        button:hover { background-color: var(--accent-hover); }
+        button:disabled { background-color: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+
+        .color-circle { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; display: inline-block; transition: transform 0.1s; }
+        .color-circle:hover { transform: scale(1.1); }
+        .color-circle.selected { border-color: #333; transform: scale(1.1); }
+        .random-color-btn { background: linear-gradient(45deg, #ffb3ba, #baffc9, #bae1ff); border: 2px solid #333; }
+
+        #filter-bar { background: #f8fafc; min-height: 40px; align-items: flex-start; }
+        .filter-tag { display: flex; align-items: center; gap: 6px; background: white; padding: 4px 8px; border-radius: 20px; border: 2px solid; font-size: 13px; }
+        .filter-tag input { border: none; background: transparent; padding: 0; width: 80px; font-size: 13px; font-weight: bold; }
+        .toggle-vis { cursor: pointer; opacity: 0.7; }
+        .toggle-vis:hover { opacity: 1; }
+        .toggle-vis.hidden { text-decoration: line-through; opacity: 0.4; }
+
+        .toolbar button { background-color: #f8fafc; border: 1px solid var(--border-color); }
+        .toolbar button:hover { background-color: #e2e8f0; }
+        .undo-btn { background-color: #fee2e2 !important; color: #991b1b !important; border-color: #fca5a5 !important; }
+        .undo-btn:hover { background-color: #fecaca !important; }
+
+        #editor { flex-grow: 1; background: white; padding: 40px; border-radius: 12px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02), 0 4px 10px rgba(0,0,0,0.04); overflow-y: auto; font-size: 16px; line-height: 1.8; outline: none; border: 2px solid transparent; caret-color: var(--caret-color); }
+        #persistent-cursor { display: inline-block; width: 2px; height: 1.2em; background-color: var(--caret-color); vertical-align: middle; animation: blink 1s step-end infinite; margin: 0 -1px; pointer-events: none; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .generation-container { display: inline; transition: opacity 0.3s; }
+        .generation-container.hidden-chunk { display: none !important; }
+        .llm-chunk { border-radius: 6px; padding: 2px 4px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+
+        .ai-panel { flex-direction: column; align-items: stretch; gap: 8px; background: transparent; border: none; padding: 0; box-shadow: none; margin-bottom: 20px; }
+        #ai-prompt { resize: vertical; min-height: 80px; width: 100%; box-sizing: border-box; }
+        #suggestions-feed { flex-grow: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-right: 5px; }
+
+        .suggestion-card { background: white; border-radius: 12px; padding: 15px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 10px; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .suggestion-prompt { font-size: 13px; color: #64748b; font-style: italic; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+        .suggestion-content { font-size: 14.5px; line-height: 1.6; color: #1e293b; max-height: 300px; overflow-y: auto; outline: none; padding: 5px; border-radius: 6px; border: 1px dashed transparent; }
+        .suggestion-content:focus { border-color: #cbd5e1; background: #f8fafc; }
+        .suggestion-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 5px; }
+        .btn-insert { background-color: #10b981; color: white; }
+        .btn-insert:hover { background-color: #059669; }
+        .btn-discard { background-color: #f1f5f9; color: #64748b; }
+        .btn-discard:hover { background-color: #e2e8f0; color: #ef4444; }
+
+        .progress-bar-container { width: 100%; background-color: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 5px; display: none; }
+        .progress-bar { height: 6px; background-color: #3b82f6; width: 0%; transition: width 0.2s; }
+
+        @media print {
+            #right-sidebar, .panel, #persistent-cursor { display: none !important; }
+            #left-workspace { width: 100%; padding: 0; height: auto; overflow: visible; }
+            body { height: auto; overflow: visible; }
+            #editor { box-shadow: none; border: none; padding: 0; overflow: visible; height: auto; caret-color: transparent !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            @page { margin: 2cm; }
+        }
+    </style>
+</head>
+<body>
+    <div id="left-workspace">
+        <div class="panel toolbar">
+            <button onmousedown="event.preventDefault(); document.execCommand('bold', false, null)" title="Bold"><b>B</b></button>
+            <button onmousedown="event.preventDefault(); document.execCommand('italic', false, null)" title="Italic"><i>I</i></button>
+            <button onmousedown="event.preventDefault(); document.execCommand('underline', false, null)" title="Underline"><u>U</u></button>
+            <div style="width: 1px; height: 20px; background: #e2e8f0; margin: 0 5px;"></div>
+            <span style="font-size: 13px; font-weight: 600;">Highlight:</span>
+            <div id="hl-palette" style="display: flex; gap: 4px; align-items: center;"></div>
+            <input type="color" id="custom-hl-color" value="#ffeb3b" style="width: 24px; height: 24px; padding: 0; border: none; cursor: pointer;">
+            <button onmousedown="event.preventDefault(); saveAndHighlight()" title="Apply & Save Color">+</button>
+            <div style="width: 1px; height: 20px; background: #e2e8f0; margin: 0 5px;"></div>
+            <button onmousedown="event.preventDefault(); document.execCommand('removeFormat', false, null)">Clear</button>
+            <button class="undo-btn" onmousedown="event.preventDefault(); document.execCommand('undo', false, null)" style="margin-left: 5px;">↩ Undo</button>
+            <div style="flex-grow: 1;"></div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="text" id="export-filename" placeholder="Document Name" value="Draft" style="width: 120px;">
+                <button onclick="exportToPDF()" style="background-color: #3b82f6; color: white;">Export PDF</button>
+            </div>
+        </div>
+
+        <div class="panel" id="filter-bar">
+            <strong style="font-size: 14px; margin-top: 4px;">Sections:</strong>
+            <div id="tags-container" style="display: flex; gap: 8px; flex-wrap: wrap; flex-grow: 1;">
+                <span style="font-size: 13px; color: #94a3b8; font-style: italic; margin-top: 4px;">No sections yet...</span>
+            </div>
+        </div>
+
+        <div id="editor" contenteditable="true" placeholder="Start drafting... (Place your cursor where you want text to go)"></div>
+    </div>
+
+    <div id="right-sidebar">
+        <div class="panel" style="margin-bottom: 20px; flex-direction: column; align-items: flex-start;">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                <strong style="font-size: 14px;">In-Browser AI (WebLLM)</strong>
+                <button id="init-engine-btn" style="background-color: #3b82f6; color: white;">Load Model</button>
+            </div>
+            <div id="load-status-text" style="font-size: 12px; color: #64748b; margin-top: 4px;">Requires ~800MB download on first run. Runs entirely offline afterwards.</div>
+            <div class="progress-bar-container" id="progress-container">
+                <div class="progress-bar" id="load-progress"></div>
+            </div>
+        </div>
+
+        <div class="panel ai-panel">
+            <textarea id="ai-prompt" placeholder="Ask the AI to generate a paragraph..."></textarea>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div style="display: flex; gap: 6px; align-items: center; background: white; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div class="color-circle random-color-btn selected" id="btn-random-color" onclick="selectGenColor(null, this)"></div>
+                    <div id="gen-palette" style="display: flex; gap: 4px;"></div>
+                </div>
+                <button id="generate-btn" style="background-color: #10b981; color: white;" disabled>Generate Idea</button>
+            </div>
+        </div>
+
+        <hr style="width: 100%; border: 0; border-top: 1px solid #e2e8f0; margin: 10px 0 20px 0;">
+        <h4 style="margin: 0 0 10px 0; color: #475569; font-size: 14px;">Past Prompts & Suggestions</h4>
+        <div id="suggestions-feed">
+            <div style="text-align: center; color: #94a3b8; font-size: 13px; font-style: italic; margin-top: 20px;">
+                Generated text will appear here once the model is loaded.
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
+
+        let engine = null;
+        // Lightweight, 1 Billion Parameter model for CPU/Integrated graphics compatibility
+        const SELECTED_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC"; 
+
+        let savedRange = null;
+        const editor = document.getElementById('editor');
+        const feed = document.getElementById('suggestions-feed');
+        const pastels = ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6c9ff', '#f0e6ff', '#ffc6ff'];
+        let selectedGenColor = null; 
+        let activeTags = {}; 
+
+        // Bind functions to window so inline HTML attributes (onclick/onmousedown) can reach them
+        window.selectGenColor = (color, element) => {
+            selectedGenColor = color;
+            document.querySelectorAll('.ai-panel .color-circle').forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+        };
+
+        window.applyHighlight = (color) => {
+            if (!document.execCommand('hiliteColor', false, color)) document.execCommand('backColor', false, color);
+        };
+
+        window.saveAndHighlight = () => {
+            const color = document.getElementById('custom-hl-color').value;
+            window.applyHighlight(color);
+            const hlPalette = document.getElementById('hl-palette');
+            const newCircle = document.createElement('div');
+            newCircle.className = 'color-circle'; newCircle.style.backgroundColor = color;
+            newCircle.onmousedown = (e) => { e.preventDefault(); window.applyHighlight(color); };
+            hlPalette.appendChild(newCircle);
+        };
+
+        window.exportToPDF = () => {
+            removePersistentCursor(); 
+            const originalTitle = document.title;
+            const filename = document.getElementById('export-filename').value || 'Draft';
+            document.title = filename; 
+            window.print(); 
+            setTimeout(() => { document.title = originalTitle; insertPersistentCursor(); }, 1000); 
+        };
+
+        function initPalettes() {
+            const genPalette = document.getElementById('gen-palette');
+            const hlPalette = document.getElementById('hl-palette');
+            pastels.forEach(color => {
+                const c1 = document.createElement('div');
+                c1.className = 'color-circle'; c1.style.backgroundColor = color;
+                c1.onclick = () => window.selectGenColor(color, c1);
+                genPalette.appendChild(c1);
+
+                const c2 = document.createElement('div');
+                c2.className = 'color-circle'; c2.style.backgroundColor = color;
+                c2.onmousedown = (e) => { e.preventDefault(); window.applyHighlight(color); };
+                hlPalette.appendChild(c2);
+            });
+        }
+        initPalettes();
+
+        function removePersistentCursor() {
+            const cursor = document.getElementById('persistent-cursor');
+            if (cursor) { const parent = cursor.parentNode; parent.removeChild(cursor); parent.normalize(); }
+        }
+
+        function insertPersistentCursor() {
+            removePersistentCursor();
+            if (savedRange && !editor.contains(document.activeElement)) {
+                const cursor = document.createElement('span');
+                cursor.id = 'persistent-cursor'; cursor.contentEditable = "false";
+                const range = savedRange.cloneRange(); range.collapse(false); range.insertNode(cursor);
+            }
+        }
+
+        const saveSelection = () => {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0 && editor.contains(selection.anchorNode)) savedRange = selection.getRangeAt(0);
+        };
+
+        editor.addEventListener('keyup', saveSelection);
+        editor.addEventListener('mouseup', saveSelection);
+        editor.addEventListener('focus', removePersistentCursor);
+        editor.addEventListener('blur', () => { saveSelection(); insertPersistentCursor(); });
+
+        function createFilterTag(tagId, color) {
+            const container = document.getElementById('tags-container');
+            if (Object.keys(activeTags).length === 0) container.innerHTML = ''; 
+            
+            const tagNum = Object.keys(activeTags).length + 1;
+            activeTags[tagId] = { color: color, visible: true };
+
+            const tagDiv = document.createElement('div');
+            tagDiv.className = 'filter-tag'; tagDiv.style.borderColor = color;
+            tagDiv.innerHTML = `<span style="width: 10px; height: 10px; border-radius: 50%; background: ${color};"></span>
+                <input type="text" value="Section ${tagNum}">
+                <span class="toggle-vis" title="Toggle">👁️</span>`;
+
+            const toggleBtn = tagDiv.querySelector('.toggle-vis');
+            toggleBtn.onclick = () => {
+                activeTags[tagId].visible = !activeTags[tagId].visible;
+                toggleBtn.classList.toggle('hidden');
+                document.querySelectorAll(`.generation-container[data-tag="${tagId}"]`).forEach(container => {
+                    if (activeTags[tagId].visible) container.classList.remove('hidden-chunk');
+                    else container.classList.add('hidden-chunk');
+                });
+            };
+            container.appendChild(tagDiv);
+        }
+
+        function insertToDocument(text, finalColor, tagId) {
+            let parsed = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            parsed = parsed.replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/_(.*?)_/g, '<em>$1</em>');
+            const blocks = parsed.split(/\n/);
+            const wrappedBlocks = blocks.map(block => {
+                if (!block.trim()) return ''; 
+                return `<span class="llm-chunk" style="background-color: ${finalColor};">${block}</span>`;
+            }).filter(b => b !== '');
+            
+            const innerHTML = wrappedBlocks.join('<br><br>');
+            const finalHTML = `<span class="generation-container" data-tag="${tagId}">${innerHTML}&nbsp;</span>`;
+
+            removePersistentCursor(); editor.focus();
+            if (savedRange) { const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(savedRange); }
+
+            document.execCommand('insertHTML', false, finalHTML);
+            createFilterTag(tagId, finalColor);
+            saveSelection(); insertPersistentCursor();
+        }
+
+        // --- WebLLM Setup ---
+        document.getElementById('init-engine-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('init-engine-btn');
+            const statusText = document.getElementById('load-status-text');
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('load-progress');
+            
+            btn.disabled = true;
+            progressContainer.style.display = 'block';
+
+            const initProgressCallback = (initProgress) => {
+                const percent = Math.round(initProgress.progress * 100);
+                progressBar.style.width = `${percent}%`;
+                statusText.textContent = initProgress.text;
+            };
+
+            try {
+                engine = await CreateMLCEngine(SELECTED_MODEL, { initProgressCallback });
+                statusText.textContent = "Model Loaded & Ready!";
+                statusText.style.color = "#10b981";
+                document.getElementById('generate-btn').disabled = false;
+                btn.style.display = 'none'; // Hide load button when done
+            } catch (error) {
+                console.error("Failed to load WebLLM:", error);
+                statusText.textContent = "Failed to load model. Ensure browser supports WebGPU.";
+                statusText.style.color = "#ef4444";
+                btn.disabled = false;
+            }
+        });
+
+        // --- Generate Suggestion Card (WebLLM version) ---
+        document.getElementById('generate-btn').addEventListener('click', async () => {
+            const prompt = document.getElementById('ai-prompt').value;
+            const btn = document.getElementById('generate-btn');
+
+            if (!engine || !prompt.trim()) return;
+            if (feed.innerHTML.includes("Generated text will appear here")) feed.innerHTML = '';
+
+            btn.disabled = true; btn.textContent = "Thinking...";
+            const colorToUse = selectedGenColor || pastels[Math.floor(Math.random() * pastels.length)];
+
+            const card = document.createElement('div');
+            card.className = 'suggestion-card';
+            card.innerHTML = `
+                <div class="suggestion-prompt"><strong>Prompt:</strong> ${prompt}</div>
+                <div class="suggestion-content" contenteditable="true" style="color: #94a3b8;">Synthesizing...</div>
+                <div class="suggestion-actions">
+                    <button class="btn-discard">Delete</button>
+                    <button class="btn-insert" disabled>Insert to Document</button>
+                </div>
+            `;
+            feed.prepend(card);
+
+            const contentDiv = card.querySelector('.suggestion-content');
+            const insertBtn = card.querySelector('.btn-insert');
+            const discardBtn = card.querySelector('.btn-discard');
+
+            discardBtn.onclick = () => card.remove();
+
+            try {
+                // Formatting the request for WebLLM chat completions API
+                const messages = [
+                    { role: "system", content: "You are a concise and helpful encyclopedia writer. Provide factual, structured information." },
+                    { role: "user", content: prompt }
+                ];
+
+                const reply = await engine.chat.completions.create({ messages });
+                
+                contentDiv.style.color = '#1e293b';
+                contentDiv.innerText = reply.choices[0].message.content; 
+                insertBtn.disabled = false;
+
+                insertBtn.onclick = () => {
+                    const finalEditedText = contentDiv.innerText;
+                    const tagId = 'tag-' + Date.now();
+                    insertToDocument(finalEditedText, colorToUse, tagId);
+                    card.style.border = `2px solid ${colorToUse}`; 
+                };
+                
+            } catch (e) {
+                console.error(e);
+                contentDiv.innerText = "Error: Generation failed.";
+                contentDiv.style.color = "red";
+            } finally {
+                btn.disabled = false; btn.textContent = "Generate Idea";
+            }
+        });
+
+        document.getElementById('ai-prompt').addEventListener('keydown', e => { 
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('generate-btn').click(); }
+        });
+    </script>
+</body>
+</html>
