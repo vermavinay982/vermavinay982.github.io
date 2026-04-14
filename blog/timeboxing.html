@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Time Boxer</title>
+    <style>
+        :root {
+            --bg-color: #f2f2f7;
+            --card-bg: #ffffff;
+            --text-main: #000000;
+            --text-secondary: #8e8e93;
+            --accent-blue: #007aff;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-purple: #af52de;
+            --accent-orange: #ff9500;
+            --border-color: #c6c6c8;
+        }
+
+        /* Dark Mode Variables */
+        body.dark-mode {
+            --bg-color: #1c1c1e;
+            --card-bg: #2c2c2e;
+            --text-main: #ffffff;
+            --text-secondary: #ebebf599;
+            --border-color: #38383a;
+        }
+
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Top Bar & Branding */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: -10px;
+        }
+        .app-title {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text-main);
+        }
+        .control-btns {
+            display: flex;
+            gap: 12px;
+        }
+        .action-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Quote Section */
+        .quote-container {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+            font-style: italic;
+            position: relative;
+        }
+        .quote-text { font-size: 14px; color: var(--text-main); margin-bottom: 8px; line-height: 1.4; }
+        .quote-author { font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+        .next-quote-btn {
+            background: none; border: none; color: var(--accent-blue);
+            font-size: 12px; cursor: pointer; position: absolute; right: 10px; bottom: 10px; font-weight: 600;
+        }
+
+        /* Progress Bars */
+        .progress-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .progress-row { display: flex; align-items: center; gap: 10px; }
+        .progress-label { font-size: 11px; font-weight: 700; width: 85px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;}
+        
+        .progress-track {
+            height: 12px;
+            background-color: #e5e5ea;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-grow: 1;
+        }
+        
+        .progress-track.time { background-color: var(--accent-green); }
+        .progress-fill.time { height: 100%; background-color: var(--accent-red); transition: width 1s linear; }
+        .progress-fill.utilized { height: 100%; background-color: var(--accent-purple); transition: width 0.3s ease; }
+        .progress-fill.unallocated { height: 100%; background-color: var(--accent-orange); transition: width 0.3s ease; }
+
+        /* Headers */
+        .header { text-align: center; }
+        .header h2 { color: var(--text-secondary); font-size: 16px; margin: 0 0 5px 0; font-weight: 500; }
+        .header h1 { font-size: 48px; margin: 0; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+        .balance { font-size: 15px; font-weight: 500; margin-top: 5px; }
+
+        /* Sections */
+        .section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 0 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            color: var(--text-secondary);
+            font-size: 13px;
+            text-transform: uppercase;
+            margin: 16px 0 8px 16px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        /* Rows */
+        .row {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .row:last-child { border-bottom: none; }
+        
+        /* Inputs */
+        input[type="time"], input[type="text"] {
+            border: none;
+            background: var(--bg-color);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            color-scheme: light dark;
+        }
+        .time-row { justify-content: space-between; font-weight: 500;}
+        
+        /* Tasks */
+        .task-row { flex-direction: column; align-items: stretch; gap: 10px; }
+        .task-header { display: flex; justify-content: space-between; align-items: center; }
+        .task-name-group { display: flex; align-items: center; gap: 10px; flex-grow: 1; }
+        
+        .icon-btn {
+            background: none; border: none; padding: 0;
+            font-size: 24px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .icon-btn.done { color: var(--accent-green); }
+        .icon-btn.delete { color: var(--accent-red); font-size: 20px;}
+        
+        .task-name { font-weight: 600; font-size: 16px; }
+        .task-time { color: var(--accent-blue); font-weight: bold; }
+
+        /* Custom Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%; height: 6px; background: var(--bg-color);
+            border-radius: 5px; outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            cursor: pointer; border: 1px solid #d1d1d6;
+        }
+
+        /* Add Task */
+        .add-task-row { display: flex; gap: 10px; }
+        .add-task-row input { flex-grow: 1; background: transparent; padding: 0; }
+        .add-btn { color: var(--accent-blue); }
+        .add-btn:disabled { color: var(--border-color); cursor: default; }
+
+        /* Done Tasks Section */
+        .done-task-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            opacity: 0.7;
+        }
+        .done-task-row:last-child { border-bottom: none; }
+        .done-task-name { text-decoration: line-through; color: var(--text-secondary); font-weight: 500;}
+        .done-task-time { font-weight: 500; color: var(--text-secondary); margin-right: 15px;}
+        
+        #utilized-total {
+            color: var(--accent-purple);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* --- PRINT STYLES --- */
+        @media print {
+            body { 
+                background: white; 
+                color: black; 
+                padding: 0;
+            }
+            .container { max-width: 100%; gap: 15px; }
+            .section { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+            
+            /* Hide UI controls during print */
+            .top-bar .control-btns,
+            .quote-container .next-quote-btn,
+            .icon-btn.done,
+            .icon-btn.delete,
+            .add-task-row,
+            input[type="range"] {
+                display: none !important;
+            }
+
+            /* Format inputs to look like static text */
+            input[type="time"] {
+                background: none;
+                padding: 0;
+                font-weight: bold;
+                border: none;
+            }
+            
+            /* Ensure progress bars print their colors */
+            .progress-track, .progress-fill {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="top-bar">
+        <div class="app-title">Time Boxer</div>
+        <div class="control-btns">
+            <button class="action-btn" onclick="toggleDarkMode()" id="dark-btn">🌙 Dark</button>
+            <button class="action-btn" onclick="window.print()">📄 Export PDF</button>
+        </div>
+    </div>
+
+    <div class="quote-container">
+        <div class="quote-text" id="quote-text">"Loading inspiration..."</div>
+        <div class="quote-author" id="quote-author"></div>
+        <button class="next-quote-btn" onclick="fetchQuote()">Next ➔</button>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-row">
+            <span class="progress-label">Day Clock</span>
+            <div class="progress-track time"><div class="progress-fill time" id="progress-time"></div></div>
+        </div>
+        <div class="progress-row">
+            <span class="progress-label">Utilized</span>
+            <div class="progress-track"><div class="progress-fill utilized" id="progress-utilized"></div></div>
+        </div>
+        <div class="progress-row">
+            <span class="progress-label">Unallocated</span>
+            <div class="progress-track"><div class="progress-fill unallocated" id="progress-unallocated"></div></div>
+        </div>
+    </div>
+
+    <div class="header">
+        <h2>Total Remaining Time</h2>
+        <h1 id="countdown">00:00:00</h1>
+        <div class="balance" id="balance">Unallocated Balance: 0 min</div>
+    </div>
+
+    <div>
+        <div class="section-title">Daily Schedule</div>
+        <div class="section">
+            <div class="row time-row">
+                <span>Start Time</span>
+                <input type="time" id="start-time">
+            </div>
+            <div class="row time-row">
+                <span>End Time</span>
+                <input type="time" id="end-time">
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="section-title">Time Allocation</div>
+        <div class="section">
+            <div id="task-container"></div>
+            
+            <div class="row add-task-row">
+                <input type="text" id="new-task-name" placeholder="Enter new task..." onkeyup="checkInput(event)">
+                <button class="icon-btn add-btn" id="add-btn" onclick="addTask()" disabled>⊕</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="done-section" style="display: none;">
+        <div class="section-title">
+            <span>Completed Work</span>
+            <span id="utilized-total">0 min</span>
+        </div>
+        <div class="section" id="done-container">
+            </div>
+    </div>
+
+</div>
+
+<script>
+    // --- State ---
+    let state = {
+        startTime: "09:00",
+        endTime: "17:00",
+        tasks: [
+            { id: generateID(), name: "PhD Thesis Work", allocated: 60 },
+            { id: generateID(), name: "TA Duties", allocated: 30 },
+            { id: generateID(), name: "Story Books", allocated: 30 }
+        ],
+        doneTasks: [],
+        darkMode: false
+    };
+
+    let remainingSeconds = 0;
+
+    // --- Hardcoded Quotes Fallback ---
+    const backupQuotes = [
+        { c: "Time is what we want most, but what we use worst.", a: "William Penn" },
+        { c: "The two most powerful warriors are patience and time.", a: "Leo Tolstoy" },
+        { c: "Lost time is never found again.", a: "Benjamin Franklin" },
+        { c: "There is never enough time to do everything, but there is always enough time to do the most important thing.", a: "Brian Tracy" },
+        { c: "You may delay, but time will not.", a: "Benjamin Franklin" },
+        { c: "Yesterday is gone. Tomorrow has not yet come. We have only today. Let us begin.", a: "Mother Teresa" }
+    ];
+
+    // --- Initialization ---
+    function init() {
+        loadData();
+        applyTheme();
+        fetchQuote();
+
+        document.getElementById('start-time').value = state.startTime;
+        document.getElementById('end-time').value = state.endTime;
+
+        document.getElementById('start-time').addEventListener('change', (e) => { state.startTime = e.target.value; saveData(); tick(); });
+        document.getElementById('end-time').addEventListener('change', (e) => { state.endTime = e.target.value; saveData(); tick(); });
+
+        renderTasks();
+        renderDoneTasks();
+        tick();
+        setInterval(tick, 1000);
+    }
+
+    // --- Features ---
+    function toggleDarkMode() {
+        state.darkMode = !state.darkMode;
+        saveData();
+        applyTheme();
+    }
+
+    function applyTheme() {
+        if (state.darkMode) {
+            document.body.classList.add('dark-mode');
+            document.getElementById('dark-btn').innerText = "☀️ Light";
+        } else {
+            document.body.classList.remove('dark-mode');
+            document.getElementById('dark-btn').innerText = "🌙 Dark";
+        }
+    }
+
+    async function fetchQuote() {
+        const qEl = document.getElementById('quote-text');
+        const aEl = document.getElementById('quote-author');
+        
+        try {
+            const res = await fetch('https://api.quotable.io/random?tags=time');
+            if (!res.ok) throw new Error('API down');
+            const data = await res.json();
+            qEl.innerText = `"${data.content}"`;
+            aEl.innerText = `- ${data.author}`;
+        } catch (e) {
+            // Fallback if the public API is blocked or down
+            const random = backupQuotes[Math.floor(Math.random() * backupQuotes.length)];
+            qEl.innerText = `"${random.c}"`;
+            aEl.innerText = `- ${random.a}`;
+        }
+    }
+
+    // --- Core Logic ---
+    function tick() {
+        const now = new Date();
+        const start = parseTime(state.startTime);
+        const end = parseTime(state.endTime);
+
+        if (now >= start && now <= end) {
+            remainingSeconds = (end - now) / 1000;
+        } else if (now < start) {
+            remainingSeconds = (end - start) / 1000;
+        } else {
+            remainingSeconds = 0;
+        }
+
+        enforceLimits();
+        updateUI();
+    }
+
+    function getUnallocatedMins() {
+        const totalMinsLeft = Math.max(0, remainingSeconds / 60);
+        const allocated = state.tasks.reduce((sum, task) => sum + task.allocated, 0);
+        return Math.max(0, totalMinsLeft - allocated);
+    }
+
+    function getTotalWorkMins() {
+        const start = parseTime(state.startTime);
+        const end = parseTime(state.endTime);
+        return Math.max(0, (end - start) / 60000);
+    }
+    
+    function getUtilizedMins() {
+        return state.doneTasks.reduce((sum, task) => sum + task.allocated, 0);
+    }
+
+    function enforceLimits() {
+        const totalMinsLeft = Math.max(0, remainingSeconds / 60);
+        const allocated = state.tasks.reduce((sum, task) => sum + task.allocated, 0);
+        
+        if (allocated > totalMinsLeft && allocated > 0) {
+            const scale = totalMinsLeft / allocated;
+            state.tasks.forEach(task => task.allocated *= scale);
+            renderTasks();
+        }
+    }
+
+    // --- UI Updates ---
+    function updateUI() {
+        const countdownEl = document.getElementById('countdown');
+        countdownEl.innerText = formatTime(remainingSeconds);
+        countdownEl.style.color = remainingSeconds > 3600 ? "var(--text-main)" : "var(--accent-red)";
+
+        const totalSecs = (parseTime(state.endTime) - parseTime(state.startTime)) / 1000;
+        let timeProgress = 0;
+        if (totalSecs > 0) {
+            const elapsed = totalSecs - Math.max(0, remainingSeconds);
+            timeProgress = Math.min(100, Math.max(0, (elapsed / totalSecs) * 100));
+        }
+        document.getElementById('progress-time').style.width = `${timeProgress}%`;
+
+        const totalMins = getTotalWorkMins();
+        const utilizedMins = getUtilizedMins();
+        let utilizedProgress = 0;
+        if (totalMins > 0) {
+            utilizedProgress = Math.min(100, Math.max(0, (utilizedMins / totalMins) * 100));
+        }
+        document.getElementById('progress-utilized').style.width = `${utilizedProgress}%`;
+        document.getElementById('utilized-total').innerText = `${Math.floor(utilizedMins)} min Total`;
+
+        const unallocated = getUnallocatedMins();
+        let unallocatedProgress = 0;
+        if (totalMins > 0) {
+            unallocatedProgress = Math.min(100, Math.max(0, (unallocated / totalMins) * 100));
+        }
+        document.getElementById('progress-unallocated').style.width = `${unallocatedProgress}%`;
+
+        const balanceEl = document.getElementById('balance');
+        balanceEl.innerText = `Unallocated Balance: ${Math.floor(unallocated)} min`;
+        balanceEl.style.color = unallocated > 0 ? "var(--accent-orange)" : "#ff9500";
+
+        state.tasks.forEach(task => {
+            const slider = document.getElementById(`slider-${task.id}`);
+            const label = document.getElementById(`label-${task.id}`);
+            if (slider && label) {
+                slider.max = Math.max(1, task.allocated + unallocated);
+                slider.value = task.allocated;
+                label.innerText = `${Math.floor(task.allocated)} min`;
+            }
+        });
+    }
+
+    function renderTasks() {
+        const container = document.getElementById('task-container');
+        container.innerHTML = '';
+        
+        state.tasks.forEach(task => {
+            const row = document.createElement('div');
+            row.className = 'row task-row';
+            row.innerHTML = `
+                <div class="task-header">
+                    <div class="task-name-group">
+                        <button class="icon-btn done" onclick="markDone('${task.id}')" title="Mark as done">✓</button>
+                        <span class="task-name">${task.name}</span>
+                    </div>
+                    <span class="task-time" id="label-${task.id}">${Math.floor(task.allocated)} min</span>
+                </div>
+                <input type="range" id="slider-${task.id}" min="0" step="1" 
+                       value="${task.allocated}" 
+                       oninput="handleSlider('${task.id}', this.value)">
+            `;
+            container.appendChild(row);
+        });
+        updateUI();
+    }
+    
+    function renderDoneTasks() {
+        const doneSection = document.getElementById('done-section');
+        const container = document.getElementById('done-container');
+        container.innerHTML = '';
+        
+        if (state.doneTasks.length === 0) {
+            doneSection.style.display = 'none';
+            return;
+        }
+        
+        doneSection.style.display = 'block';
+        
+        state.doneTasks.forEach(task => {
+            const row = document.createElement('div');
+            row.className = 'done-task-row';
+            row.innerHTML = `
+                <span class="done-task-name">${task.name}</span>
+                <div style="display: flex; align-items: center;">
+                    <span class="done-task-time">${Math.floor(task.allocated)} min</span>
+                    <button class="icon-btn delete" onclick="deleteDoneTask('${task.id}')" title="Delete">✕</button>
+                </div>
+            `;
+            container.appendChild(row);
+        });
+        updateUI();
+    }
+
+    // --- Actions ---
+    function handleSlider(id, value) {
+        const task = state.tasks.find(t => t.id === id);
+        if (task) {
+            task.allocated = parseFloat(value);
+            saveData();
+            updateUI(); 
+        }
+    }
+
+    function markDone(id) {
+        const taskIndex = state.tasks.findIndex(t => t.id === id);
+        if (taskIndex > -1) {
+            const task = state.tasks.splice(taskIndex, 1)[0];
+            state.doneTasks.push(task);
+            saveData();
+            renderTasks();
+            renderDoneTasks();
+        }
+    }
+    
+    function deleteDoneTask(id) {
+        state.doneTasks = state.doneTasks.filter(t => t.id !== id);
+        saveData();
+        renderDoneTasks();
+    }
+
+    function checkInput(e) {
+        const input = document.getElementById('new-task-name');
+        document.getElementById('add-btn').disabled = input.value.trim() === '';
+        if (e.key === 'Enter') addTask();
+    }
+
+    function addTask() {
+        const input = document.getElementById('new-task-name');
+        const name = input.value.trim();
+        if (name) {
+            state.tasks.push({ id: generateID(), name: name, allocated: 0 });
+            input.value = '';
+            document.getElementById('add-btn').disabled = true;
+            saveData();
+            renderTasks();
+        }
+    }
+
+    // --- Helpers ---
+    function parseTime(timeStr) {
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const d = new Date();
+        d.setHours(hours, minutes, 0, 0);
+        return d;
+    }
+
+    function formatTime(secs) {
+        if (secs <= 0) return "00:00:00";
+        const h = String(Math.floor(secs / 3600)).padStart(2, '0');
+        const m = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
+        const s = String(Math.floor(secs % 60)).padStart(2, '0');
+        return `${h}:${m}:${s}`;
+    }
+
+    function generateID() {
+        return Math.random().toString(36).substr(2, 9);
+    }
+
+    // --- Storage ---
+    function saveData() {
+        localStorage.setItem('timeBoxerWebState', JSON.stringify(state));
+    }
+
+    function loadData() {
+        const saved = localStorage.getItem('timeBoxerWebState');
+        if (saved) {
+            try { 
+                const parsed = JSON.parse(saved);
+                state.startTime = parsed.startTime || state.startTime;
+                state.endTime = parsed.endTime || state.endTime;
+                state.tasks = parsed.tasks || state.tasks;
+                state.doneTasks = parsed.doneTasks || [];
+                state.darkMode = parsed.darkMode || false;
+            } catch (e) {}
+        }
+    }
+
+    init();
+</script>
+
+</body>
+</html>
