@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Time Boxer</title>
+    <style>
+        :root {
+            --bg-color: #f2f2f7;
+            --card-bg: #ffffff;
+            --text-main: #000000;
+            --text-secondary: #8e8e93;
+            --accent-blue: #007aff;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-purple: #af52de;
+            --accent-orange: #ff9500;
+            --border-color: #c6c6c8;
+            
+            /* Sci-Fi Colors */
+            --sf-cyan: #00f3ff;
+            --sf-orange: #ffaa00;
+            --sf-red: #ff003c;
+            --sf-bg: #05050a;
+        }
+
+        body.dark-mode {
+            --bg-color: #1c1c1e;
+            --card-bg: #2c2c2e;
+            --text-main: #ffffff;
+            --text-secondary: #ebebf599;
+            --border-color: #38383a;
+        }
+
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            transition: background-color 0.3s, color 0.3s;
+            height: 100vh;
+            overflow: hidden; 
+        }
+
+        .container { width: 100%; max-width: 500px; display: flex; flex-direction: column; height: 100%; }
+
+        /* --- STICKY HEADER --- */
+        .sticky-header {
+            background-color: var(--bg-color); padding: 20px 20px 10px 20px;
+            z-index: 100; border-bottom: 1px solid var(--border-color); flex-shrink: 0;
+            display: flex; flex-direction: column; transition: all 0.3s ease;
+        }
+
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .app-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+        .control-btns { display: flex; gap: 8px; }
+        .action-btn {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 6px 10px; border-radius: 8px;
+            font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        .action-btn:hover { filter: brightness(0.95); }
+
+        /* Quote Section */
+        .quote-container {
+            background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 15px;
+            text-align: center; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .quote-text { font-size: 13px; font-style: italic; margin-bottom: 4px; }
+        .quote-author { font-size: 11px; color: var(--text-secondary); }
+        .next-quote-btn { background: none; border: none; color: var(--accent-blue); font-size: 11px; cursor: pointer; position: absolute; right: 8px; bottom: 8px; }
+
+        /* Progress Dashboard */
+        .progress-container {
+            display: flex; flex-direction: column; gap: 8px; background: var(--card-bg);
+            padding: 12px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .progress-row { display: flex; align-items: center; gap: 8px; }
+        .progress-label { font-size: 10px; font-weight: 700; width: 75px; color: var(--text-secondary); text-transform: uppercase; }
+        .progress-track { height: 10px; background-color: #e5e5ea; border-radius: 10px; overflow: hidden; flex-grow: 1; display: flex;}
+        .progress-track.time { background-color: var(--accent-green); }
+        .progress-fill.time { height: 100%; background-color: var(--accent-red); transition: width 1s linear; }
+        .progress-fill.utilized { height: 100%; background-color: var(--accent-purple); transition: width 0.3s; }
+        .progress-fill.unallocated { height: 100%; background-color: var(--accent-orange); transition: width 0.3s; }
+
+        /* Timer Dashboard */
+        .timer-display { text-align: center; margin-bottom: 5px; display: flex; flex-direction: column; align-items: center; }
+        .timer-display h2 { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; margin: 0 0 5px 0; }
+        .timer-display h1 { font-size: 56px; margin: 0; font-variant-numeric: tabular-nums; line-height: 1; transition: font-size 0.3s ease; }
+        .countdown-mins { font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-top: 6px; }
+        .balance-pill { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; margin-top: 8px; }
+
+        /* --- SCROLLABLE CONTENT --- */
+        .scroll-content { padding: 10px 20px 40px 20px; overflow-y: auto; flex-grow: 1; }
+        .section-title { color: var(--text-secondary); font-size: 12px; text-transform: uppercase; margin: 20px 0 8px 10px; font-weight: 700; }
+        .section { background: var(--card-bg); border-radius: 12px; padding: 0 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+        .row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+        .row:last-child { border-bottom: none; }
+        
+        input[type="time"], input[type="text"] {
+            border: none; background: var(--bg-color); color: var(--text-main);
+            padding: 8px; border-radius: 8px; font-size: 15px; outline: none; color-scheme: light dark;
+        }
+
+        /* Task Specifics */
+        .task-row { flex-direction: column; align-items: stretch; gap: 8px; }
+        .task-header { display: flex; justify-content: space-between; align-items: center; }
+        .task-name { font-weight: 600; font-size: 15px;}
+        .task-time { color: var(--accent-blue); font-weight: 700; font-size: 15px;}
+        .icon-btn { background: none; border: none; cursor: pointer; display: flex; align-items: center; padding: 0;}
+        .icon-btn.done { color: var(--accent-green); font-size: 22px; margin-right: 10px; }
+        .icon-btn.start { color: var(--accent-orange); font-size: 20px; margin-right: 10px; }
+        .icon-btn.delete { color: var(--accent-red); font-size: 18px; }
+
+        /* Progress bars inside task items */
+        .mini-progress { height: 4px; background: #e5e5ea; border-radius: 2px; width: 100%; overflow: hidden; margin-top: 2px; }
+        .mini-progress-fill { height: 100%; background: var(--accent-blue); width: 0%; transition: 0.3s; }
+
+        input[type="range"].time-slider { -webkit-appearance: none; width: 100%; height: 4px; background: var(--bg-color); border-radius: 5px; }
+        input[type="range"].time-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+            background: white; border: 1px solid #c6c6c8; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        /* --- GLOBAL FOCUS MODE --- */
+        body.focus-mode { background-color: var(--bg-color); }
+        body.focus-mode .scroll-content, body.focus-mode .quote-container, 
+        body.focus-mode .app-title, body.focus-mode #dark-btn, body.focus-mode #print-btn { display: none !important; }
+        body.focus-mode .sticky-header { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh;
+            border-bottom: none; padding: 40px; background: transparent; align-items: center; justify-content: center; z-index: 999;
+        }
+        body.focus-mode .top-bar { position: absolute; top: 20px; right: 20px; width: auto; }
+        body.focus-mode .progress-container { max-width: 600px; background: transparent; box-shadow: none; margin-bottom: 40px; }
+        body.focus-mode .timer-display h1 { font-size: clamp(80px, 15vw, 150px); margin: 20px 0 0 0; }
+        body.focus-mode .countdown-mins { font-size: clamp(16px, 2.5vw, 24px); letter-spacing: 1px; margin-bottom: 20px; }
+
+        /* --- SCI-FI TASK FOCUS OVERLAY --- */
+        .sf-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: var(--sf-bg);
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 2000; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .sf-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .sf-header { text-align: center; margin-bottom: 30px; text-shadow: 0 0 10px var(--sf-cyan); }
+        .sf-header h2 { color: #fff; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; margin: 0; }
+        .sf-header p { color: var(--sf-cyan); margin: 5px 0 0 0; font-size: 14px; }
+
+        .sf-ring-container { position: relative; width: 280px; height: 280px; margin-bottom: 40px; }
+        .sf-ring { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+        .sf-ring circle { fill: none; stroke-width: 8; stroke-linecap: round; }
+        .sf-ring-bg { stroke: rgba(255,255,255,0.05); }
+        .sf-ring-fg { 
+            stroke: var(--sf-cyan); 
+            stroke-dasharray: 816.8; /* 2 * pi * r (130) */
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear, stroke 0.5s;
+            filter: drop-shadow(0 0 8px var(--sf-cyan));
+        }
+
+        /* Sci-Fi Animations */
+        @keyframes pulse-critical {
+            0% { filter: drop-shadow(0 0 5px var(--sf-red)); opacity: 1; }
+            50% { filter: drop-shadow(0 0 20px var(--sf-red)); opacity: 0.7; }
+            100% { filter: drop-shadow(0 0 5px var(--sf-red)); opacity: 1; }
+        }
+        .sf-critical .sf-ring-fg { stroke: var(--sf-red); animation: pulse-critical 1s infinite; }
+        .sf-warning .sf-ring-fg { stroke: var(--sf-orange); filter: drop-shadow(0 0 8px var(--sf-orange)); }
+
+        .sf-time-display {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .sf-countdown { font-size: 54px; font-weight: bold; color: #fff; line-height: 1; }
+        .sf-label { font-size: 12px; color: var(--text-secondary); letter-spacing: 3px; margin-top: 8px; }
+
+        .sf-controls { width: 80%; max-width: 400px; margin-bottom: 40px; }
+        .sf-controls-header { display: flex; justify-content: space-between; color: var(--sf-cyan); font-size: 14px; margin-bottom: 10px; text-transform: uppercase;}
+        
+        /* Sci-fi Range Slider */
+        input[type="range"].sf-slider {
+            -webkit-appearance: none; width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; outline: none;
+        }
+        input[type="range"].sf-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 16px; height: 24px; border-radius: 2px;
+            background: var(--sf-cyan); cursor: pointer; box-shadow: 0 0 10px var(--sf-cyan);
+        }
+
+        .sf-actions { display: flex; gap: 20px; }
+        .sf-btn {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; padding: 12px 24px; font-size: 14px; letter-spacing: 2px;
+            cursor: pointer; transition: 0.3s; text-transform: uppercase; font-family: 'Courier New', Courier, monospace;
+        }
+        .sf-btn:hover { background: rgba(255,255,255,0.1); }
+        .sf-btn-primary { border-color: var(--sf-cyan); color: var(--sf-cyan); box-shadow: 0 0 10px rgba(0, 243, 255, 0.2) inset;}
+        .sf-btn-primary:hover { background: rgba(0, 243, 255, 0.1); box-shadow: 0 0 15px rgba(0, 243, 255, 0.4) inset; }
+
+        @media print { body { display: block; } .container { max-width: 100%; display: block; } .sf-overlay { display: none !important; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="sticky-header">
+        <div class="top-bar">
+            <div class="app-title">Time Boxer</div>
+            <div class="control-btns">
+                <button class="action-btn" onclick="toggleGlobalFocusMode()" id="focus-btn">🔭 Global Focus</button>
+                <button class="action-btn" onclick="toggleDarkMode()" id="dark-btn">🌙 Dark</button>
+                <button class="action-btn" onclick="window.print()" id="print-btn">📄 Print</button>
+            </div>
+        </div>
+
+        <div class="quote-container">
+            <div class="quote-text" id="quote-text">"Loading inspiration..."</div>
+            <div class="quote-author" id="quote-author"></div>
+            <button class="next-quote-btn" onclick="fetchQuote()">Next</button>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-row" title="Day Elapsed vs Remaining">
+                <span class="progress-label">Day Clock</span>
+                <div class="progress-track time"><div class="progress-fill time" id="progress-time"></div></div>
+            </div>
+            <div class="progress-row" title="Work Completed">
+                <span class="progress-label">Utilized</span>
+                <div class="progress-track"><div class="progress-fill utilized" id="progress-utilized"></div></div>
+            </div>
+            <div class="progress-row" title="Free Time Remaining">
+                <span class="progress-label">Balance</span>
+                <div class="progress-track"><div class="progress-fill unallocated" id="progress-unallocated"></div></div>
+            </div>
+        </div>
+
+        <div class="timer-display">
+            <h2>Time Remaining Today</h2>
+            <h1 id="countdown">00:00:00</h1>
+            <div class="countdown-mins" id="countdown-mins">0 total minutes</div>
+            <div class="balance-pill" id="balance">0 min unallocated</div>
+        </div>
+    </div>
+
+    <div class="scroll-content">
+        <div class="section-title">Schedule</div>
+        <div class="section">
+            <div class="row" style="justify-content: space-between;">
+                <span style="font-weight: 500;">Start</span><input type="time" id="start-time">
+            </div>
+            <div class="row" style="justify-content: space-between;">
+                <span style="font-weight: 500;">End</span><input type="time" id="end-time">
+            </div>
+        </div>
+
+        <div class="section-title">Active Tasks</div>
+        <div class="section">
+            <div id="task-container"></div>
+            <div class="row" style="gap:10px;">
+                <input type="text" id="new-task-name" placeholder="Enter new task..." style="flex-grow:1;" onkeyup="checkInput(event)">
+                <button class="icon-btn" id="add-btn" onclick="addTask()" style="color:var(--accent-blue); font-size:26px; padding: 0 5px;" disabled>⊕</button>
+            </div>
+        </div>
+
+        <div id="done-section" style="display:none;">
+            <div class="section-title" style="display:flex; justify-content:space-between;">
+                <span>Completed Work</span><span id="utilized-total" style="color:var(--accent-purple);">0 min</span>
+            </div>
+            <div class="section" id="done-container"></div>
+        </div>
+    </div>
+</div>
+
+<div id="sf-overlay" class="sf-overlay">
+    <div class="sf-header">
+        <h2 id="sf-task-name">Task Name</h2>
+        <p id="sf-task-status">SYSTEM ACTIVE</p>
+    </div>
+
+    <div class="sf-ring-container" id="sf-ring-wrapper">
+        <svg class="sf-ring" viewBox="0 0 280 280">
+            <circle class="sf-ring-bg" cx="140" cy="140" r="130"></circle>
+            <circle id="sf-ring-progress" class="sf-ring-fg" cx="140" cy="140" r="130"></circle>
+        </svg>
+        <div class="sf-time-display">
+            <div id="sf-countdown" class="sf-countdown">00:00</div>
+            <div class="sf-label" id="sf-label">TIME REMAINING</div>
+        </div>
+    </div>
+
+    <div class="sf-controls">
+        <div class="sf-controls-header">
+            <span>Progress Upload</span>
+            <span id="sf-completion-val">0%</span>
+        </div>
+        <input type="range" class="sf-slider" id="sf-completion-slider" min="0" max="100" value="0" oninput="updateTaskCompletion(this.value)">
+    </div>
+
+    <div class="sf-actions">
+        <button class="sf-btn" onclick="stopTaskFocus()">⏸ PAUSE & EXIT</button>
+        <button class="sf-btn sf-btn-primary" onclick="finishTaskFromFocus()">✓ INITIATE COMPLETION</button>
+    </div>
+</div>
+
+<script>
+    let state = {
+        startTime: "09:00", endTime: "17:00",
+        // Tasks now track elapsed seconds and completion percentage independently
+        tasks: [
+            { id: '1', name: "PhD Thesis Work", allocated: 60, elapsed: 0, completion: 0 }, 
+            { id: '2', name: "TA Duties", allocated: 30, elapsed: 0, completion: 0 }
+        ],
+        doneTasks: [], darkMode: false, globalFocusMode: false
+    };
+
+    let remainingSecondsDay = 0;
+    let activeTaskId = null; // Tracks which task is currently in sci-fi focus mode
+
+    const backupQuotes = [
+        {c: "Time is what we want most, but what we use worst.", a: "William Penn"},
+        {c: "The two most powerful warriors are patience and time.", a: "Leo Tolstoy"},
+        {c: "Focus on being productive instead of busy.", a: "Tim Ferriss"}
+    ];
+
+    function init() {
+        loadData();
+        applyTheme();
+        state.globalFocusMode = false; 
+        applyGlobalFocusUI();
+        fetchQuote();
+
+        document.getElementById('start-time').value = state.startTime;
+        document.getElementById('end-time').value = state.endTime;
+        document.getElementById('start-time').addEventListener('change', (e) => { state.startTime = e.target.value; saveData(); tick(); });
+        document.getElementById('end-time').addEventListener('change', (e) => { state.endTime = e.target.value; saveData(); tick(); });
+        
+        renderTasks(); renderDoneTasks(); tick(); setInterval(tick, 1000);
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                if(state.globalFocusMode) { state.globalFocusMode = false; applyGlobalFocusUI(); }
+                if(activeTaskId) { stopTaskFocus(); } // Exiting fullscreen kills task focus too
+            }
+        });
+    }
+
+    // --- Core Themes & Global Focus ---
+    function toggleDarkMode() { state.darkMode = !state.darkMode; saveData(); applyTheme(); }
+    function applyTheme() {
+        document.body.classList.toggle('dark-mode', state.darkMode);
+        document.getElementById('dark-btn').innerText = state.darkMode ? "☀️ Light" : "🌙 Dark";
+    }
+
+    function toggleGlobalFocusMode() { 
+        state.globalFocusMode = !state.globalFocusMode; applyGlobalFocusUI(); 
+        handleFullscreen(state.globalFocusMode);
+    }
+    function applyGlobalFocusUI() {
+        document.body.classList.toggle('focus-mode', state.globalFocusMode);
+        document.getElementById('focus-btn').innerText = state.globalFocusMode ? "✕ Exit Focus" : "🔭 Global Focus";
+        if (state.globalFocusMode && !state.darkMode) document.body.classList.add('dark-mode');
+        else applyTheme();
+    }
+
+    function handleFullscreen(turnOn) {
+        if (turnOn && document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (!turnOn && document.exitFullscreen && document.fullscreenElement) {
+            document.exitFullscreen();
+        }
+    }
+
+    async function fetchQuote() {
+        try {
+            const res = await fetch('https://api.quotable.io/random?tags=time,productivity');
+            const data = await res.json();
+            document.getElementById('quote-text').innerText = `"${data.content}"`;
+            document.getElementById('quote-author').innerText = `- ${data.author}`;
+        } catch (e) {
+            const r = backupQuotes[Math.floor(Math.random() * backupQuotes.length)];
+            document.getElementById('quote-text').innerText = `"${r.c}"`;
+            document.getElementById('quote-author').innerText = `- ${r.a}`;
+        }
+    }
+
+    // --- Main Tick Logic ---
+    function tick() {
+        const now = new Date();
+        const start = parseTime(state.startTime), end = parseTime(state.endTime);
+        remainingSecondsDay = now >= start && now <= end ? (end - now) / 1000 : (now < start ? (end - start) / 1000 : 0);
+        
+        // Handle Active Task Ticking
+        if (activeTaskId) {
+            const task = state.tasks.find(t => t.id === activeTaskId);
+            if (task) {
+                task.elapsed += 1;
+                updateSciFiUI(task);
+            } else {
+                stopTaskFocus(); // Failsafe
+            }
+        }
+
+        enforceLimits(); 
+        updateMainUI();
+    }
+
+    // --- Sci-Fi Task Focus Logic ---
+    function startTaskFocus(taskId) {
+        const task = state.tasks.find(t => t.id === taskId);
+        if(!task) return;
+        
+        activeTaskId = taskId;
+        document.getElementById('sf-overlay').classList.add('active');
+        document.getElementById('sf-task-name').innerText = task.name;
+        document.getElementById('sf-completion-slider').value = task.completion;
+        document.getElementById('sf-completion-val').innerText = `${task.completion}%`;
+        
+        handleFullscreen(true);
+        updateSciFiUI(task);
+    }
+
+    function stopTaskFocus() {
+        activeTaskId = null;
+        document.getElementById('sf-overlay').classList.remove('active');
+        handleFullscreen(false);
+        saveData();
+        renderTasks(); // Update main UI with new elapsed/completion data
+    }
+
+    function finishTaskFromFocus() {
+        if(activeTaskId) {
+            const id = activeTaskId;
+            stopTaskFocus(); // Stops and saves
+            markDone(id);
+        }
+    }
+
+    function updateTaskCompletion(val) {
+        if(!activeTaskId) return;
+        const task = state.tasks.find(t => t.id === activeTaskId);
+        if(task) {
+            task.completion = parseInt(val);
+            document.getElementById('sf-completion-val').innerText = `${task.completion}%`;
+        }
+    }
+
+    function updateSciFiUI(task) {
+        const totalSeconds = task.allocated * 60;
+        const remaining = Math.max(0, totalSeconds - task.elapsed);
+        
+        // Text Updates
+        document.getElementById('sf-countdown').innerText = formatTime(remaining);
+        if (remaining === 0) document.getElementById('sf-label').innerText = "TIME DEPLETED";
+        else document.getElementById('sf-label').innerText = "TIME REMAINING";
+
+        // SVG Ring Update (Circumference of r=130 is ~816.8)
+        const ring = document.getElementById('sf-ring-progress');
+        const wrapper = document.getElementById('sf-ring-wrapper');
+        const dashOffset = 816.8 * (1 - (remaining / totalSeconds));
+        ring.style.strokeDashoffset = isNaN(dashOffset) ? 0 : dashOffset;
+
+        // Dynamic Color Shifts
+        const ratio = totalSeconds > 0 ? remaining / totalSeconds : 0;
+        wrapper.className = 'sf-ring-container'; // reset
+        if (ratio <= 0.2 && remaining > 0) wrapper.classList.add('sf-critical');
+        else if (ratio <= 0.5 && remaining > 0) wrapper.classList.add('sf-warning');
+        
+        if (remaining === 0) ring.style.stroke = "var(--text-secondary)"; // Gray out when dead
+        else ring.style.stroke = ""; // Clear inline to let CSS handle it
+    }
+
+    // --- Main UI Updating ---
+    function updateMainUI() {
+        document.getElementById('countdown').innerText = formatTime(remainingSecondsDay);
+        document.getElementById('countdown').style.color = remainingSecondsDay > 3600 ? "var(--text-main)" : "var(--accent-red)";
+        document.getElementById('countdown-mins').innerText = `${Math.floor(remainingSecondsDay / 60)} total minutes`;
+
+        const totalMins = Math.max(0, (parseTime(state.endTime) - parseTime(state.startTime)) / 60000);
+        const utilized = state.doneTasks.reduce((s, t) => s + t.allocated, 0);
+        const unallocated = Math.max(0, (remainingSecondsDay / 60) - state.tasks.reduce((s, t) => s + t.allocated, 0));
+
+        document.getElementById('progress-time').style.width = totalMins > 0 ? `${Math.min(100, ((totalMins*60 - remainingSecondsDay)/(totalMins*60))*100)}%` : '0%';
+        document.getElementById('progress-utilized').style.width = totalMins > 0 ? `${(utilized/totalMins)*100}%` : '0%';
+        document.getElementById('progress-unallocated').style.width = totalMins > 0 ? `${(unallocated/totalMins)*100}%` : '0%';
+
+        const bPill = document.getElementById('balance');
+        bPill.innerText = `${Math.floor(unallocated)} min unallocated balance`;
+        bPill.style.backgroundColor = unallocated > 0 ? "rgba(52, 199, 89, 0.15)" : "rgba(255, 149, 0, 0.15)";
+        bPill.style.color = unallocated > 0 ? "var(--accent-green)" : "var(--accent-orange)";
+
+        state.tasks.forEach(t => {
+            const s = document.getElementById(`slider-${t.id}`), l = document.getElementById(`label-${t.id}`);
+            if(s && l && !activeTaskId) { // Don't snap sliders while user is in focus mode
+                s.max = t.allocated + unallocated; s.value = t.allocated; l.innerText = `${Math.floor(t.allocated)} min`; 
+            }
+        });
+        document.getElementById('utilized-total').innerText = `${Math.floor(utilized)} min`;
+    }
+
+    function renderTasks() {
+        const c = document.getElementById('task-container'); c.innerHTML = '';
+        state.tasks.forEach(t => {
+            // Ensure backwards compatibility if properties are missing
+            t.elapsed = t.elapsed || 0; t.completion = t.completion || 0;
+            
+            const remainingMins = Math.max(0, t.allocated - (t.elapsed / 60));
+            const r = document.createElement('div'); r.className = 'row task-row';
+            r.innerHTML = `
+                <div class="task-header">
+                    <div style="display:flex;align-items:center;">
+                        <button class="icon-btn start" onclick="startTaskFocus('${t.id}')" title="Enter Focus Mode">▶</button>
+                        <button class="icon-btn done" onclick="markDone('${t.id}')" title="Mark Complete">✓</button>
+                        <div style="display:flex; flex-direction:column;">
+                            <span class="task-name">${t.name}</span>
+                            <span style="font-size:11px; color:var(--text-secondary)">${t.completion}% Done | ${Math.floor(remainingMins)}m left</span>
+                        </div>
+                    </div>
+                    <span class="task-time" id="label-${t.id}">${Math.floor(t.allocated)} min</span>
+                </div>
+                <div class="mini-progress"><div class="mini-progress-fill" style="width:${t.completion}%"></div></div>
+                <input type="range" class="time-slider" id="slider-${t.id}" min="0" step="1" oninput="handleSlider('${t.id}', this.value)">`;
+            c.appendChild(r);
+        });
+        updateMainUI();
+    }
+
+    function renderDoneTasks() {
+        const s = document.getElementById('done-section'), c = document.getElementById('done-container');
+        c.innerHTML = ''; s.style.display = state.doneTasks.length ? 'block' : 'none';
+        state.doneTasks.forEach(t => {
+            const r = document.createElement('div'); r.className = 'row'; r.style.justifyContent = 'space-between';
+            r.innerHTML = `
+                <span style="text-decoration:line-through;color:var(--text-secondary);font-weight:500;">${t.name}</span>
+                <div style="display:flex;align-items:center;">
+                    <span style="margin-right:15px; font-weight:600; color:var(--text-secondary);">${Math.floor(t.allocated)} min</span>
+                    <button class="icon-btn delete" onclick="deleteDone('${t.id}')">✕</button>
+                </div>`;
+            c.appendChild(r);
+        });
+    }
+
+    // --- Standard Actions & Helpers ---
+    function handleSlider(id, v) { const t = state.tasks.find(x => x.id === id); if(t) { t.allocated = parseFloat(v); saveData(); updateMainUI(); } }
+    
+    function markDone(id) { 
+        const i = state.tasks.findIndex(x => x.id === id); 
+        if(i > -1) { 
+            let t = state.tasks.splice(i, 1)[0];
+            t.completion = 100; // Force 100% when manually checking off
+            state.doneTasks.push(t); 
+            saveData(); renderTasks(); renderDoneTasks(); 
+        } 
+    }
+    
+    function deleteDone(id) { state.doneTasks = state.doneTasks.filter(x => x.id !== id); saveData(); renderDoneTasks(); updateMainUI(); }
+    function addTask() { const n = document.getElementById('new-task-name'); if(n.value.trim()){ state.tasks.push({id: Date.now().toString(), name: n.value.trim(), allocated: 0, elapsed: 0, completion: 0}); n.value = ''; saveData(); renderTasks(); } }
+    function checkInput(e) { document.getElementById('add-btn').disabled = !e.target.value.trim(); if(e.key==='Enter') addTask(); }
+    
+    function parseTime(ts) { const [h, m] = ts.split(':').map(Number); const d = new Date(); d.setHours(h, m, 0, 0); return d; }
+    function formatTime(s) { if(s<=0)return "00:00:00"; return [s/3600, (s%3600)/60, s%60].map(v => String(Math.floor(v)).padStart(2,'0')).join(':'); }
+    
+    function enforceLimits() { 
+        const rem = Math.max(0, remainingSecondsDay/60), alc = state.tasks.reduce((s,t)=>s+t.allocated, 0);
+        if(alc > rem && alc > 0) { state.tasks.forEach(t => t.allocated *= (rem/alc)); if(!activeTaskId) renderTasks(); }
+    }
+    
+    function saveData() { 
+        const stateToSave = { ...state, globalFocusMode: false }; 
+        localStorage.setItem('timeBoxerState', JSON.stringify(stateToSave)); 
+    }
+    function loadData() { 
+        const s = localStorage.getItem('timeBoxerState'); 
+        if(s) { 
+            const parsed = JSON.parse(s);
+            // Fix legacy tasks that might not have elapsed/completion
+            parsed.tasks = parsed.tasks.map(t => ({...t, elapsed: t.elapsed || 0, completion: t.completion || 0}));
+            state = { ...state, ...parsed }; 
+        } 
+    }
+
+    init();
+</script>
+</body>
+</html>
