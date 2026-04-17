@@ -32,7 +32,6 @@
             --sf-reward: #af52de; 
             
             --accent-red: #ff3b30;
-            --accent-orange: #ffcc00;
             --accent-green: #34c759;
             --golden-green: #c0ff00;
         }
@@ -44,7 +43,7 @@
             
             --bg-color: color-mix(in srgb, var(--theme-primary) 4%, var(--base-bg));
             --card-bg: color-mix(in srgb, var(--theme-primary) 6%, var(--base-card));
-            --border-color: color-mix(in srgb, var(--theme-primary) 20%, #2a2d36);
+            --border-color: color-mix(in srgb, var(--theme-primary) 15%, #242730);
             
             --text-main: rgba(255, 255, 255, 0.95);
             --text-secondary: rgba(255, 255, 255, 0.6);
@@ -101,7 +100,7 @@
         body.dark-mode .panel { box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
 
         /* Analytics Pie Charts */
-        .charts-container { display: flex; justify-content: space-around; align-items: center; gap: 10px;}
+        .charts-container { display: flex; justify-content: space-around; align-items: center; }
         .chart-box { display: flex; flex-direction: column; align-items: center; gap: 12px; }
         .pie-chart {
             width: 75px; height: 75px; border-radius: 50%;
@@ -154,9 +153,8 @@
         .schedule-row input:focus { border-color: var(--theme-primary); outline: none; }
 
         /* --- MATRIX GRID --- */
-        .scroll-content { padding: 15px 30px 100px 30px; overflow-y: auto; flex-grow: 1; }
+        .scroll-content { padding: 15px 30px 40px 30px; overflow-y: auto; flex-grow: 1; }
         .matrix-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
-        .matrix-col { display: flex; flex-direction: column; min-height: min-content; }
         
         .column-header {
             font-size: 14px; text-transform: uppercase; letter-spacing: 2px; font-weight: 800;
@@ -195,29 +193,18 @@
         .icon-btn.delete { color: var(--accent-red); font-size: 18px; opacity: 0.7;}
         .icon-btn.delete:hover { opacity: 1; }
         
-        /* Reveal Gradient Mini Progress Bar */
-        .mini-progress { height: 6px; background: var(--border-color); width: 100%; margin-top: 6px; border-radius: 3px; position: relative; overflow: hidden;}
-        .mini-progress-fill { 
-            position: absolute; top: 0; left: 0; height: 100%; width: 100%;
-            background: linear-gradient(90deg, var(--accent-red) 0%, var(--accent-orange) 50%, var(--accent-green) 100%);
-            transition: clip-path 0.3s ease;
-        }
+        .mini-progress { height: 4px; background: var(--border-color); width: 100%; margin-top: 6px; border-radius: 2px; overflow: hidden;}
+        .mini-progress-fill { height: 100%; transition: width 0.3s ease; }
+        .card-core .mini-progress-fill { background: var(--theme-primary); }
+        .card-must .mini-progress-fill { background: var(--sf-must); }
+        .card-reward .mini-progress-fill { background: var(--sf-reward); }
 
-        /* --- VISIBLE RANGE SLIDERS --- */
-        input[type="range"] { 
-            -webkit-appearance: none; width: 100%; height: 6px; 
-            background: color-mix(in srgb, var(--border-color) 80%, var(--text-secondary)); 
-            outline: none; border-radius: 3px; margin: 0;
-        }
+        input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: transparent; outline: none; margin-top: 5px;}
         input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
-            background: var(--text-main); cursor: pointer; transition: 0.2s;
-            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+            -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+            background: var(--text-secondary); cursor: pointer; transition: 0.2s;
         }
-        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); background: var(--theme-primary);}
-        
-        .slider-wrapper { display: flex; align-items: center; gap: 10px; margin-top: 8px;}
-        .slider-wrapper span { font-size: 11px; font-weight: 800; color: var(--text-secondary); font-family: monospace; }
+        input[type="range"]::-webkit-slider-thumb:hover { background: var(--text-main); transform: scale(1.2);}
 
         /* Add Task Fluid Input */
         .add-task-row { 
@@ -288,95 +275,22 @@
         }
         .sf-overlay.active { opacity: 1; pointer-events: auto; }
 
-        /* .sf-header { text-align: center; margin-bottom: 40px; z-index: 10; }
-        .sf-header h2 { font-size: 32px; text-transform: uppercase; letter-spacing: 3px; margin: 0; color: var(--text-main); text-shadow: none; }
-        .sf-header p { margin: 10px 0 0 0; font-size: 16px; letter-spacing: 3px; font-weight: bold; color: var(--text-secondary); transition: color 0.4s ease;}
+        .sf-header { text-align: center; margin-bottom: 30px; z-index: 10; }
+        .sf-header h2 { font-size: 28px; text-transform: uppercase; letter-spacing: 3px; margin: 0; color: var(--text-main); text-shadow: none; }
+        .sf-header p { margin: 8px 0 0 0; font-size: 16px; letter-spacing: 3px; font-weight: bold; color: var(--text-secondary); transition: color 0.4s ease;}
 
         .sf-eeg-group { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 100%; pointer-events: none; z-index: 0; display: flex; align-items: center; justify-content: center; }
         .sf-eeg-ring { position: absolute; border-radius: 50%; border: 1px solid var(--border-color); }
-        .r1 { width: 380px; height: 380px; border: 2px dashed var(--border-color); animation: radar 15s linear infinite; opacity: 0.5;}
-        .r2 { width: 460px; height: 460px; border: 1px dotted var(--border-color); animation: radar 20s linear infinite reverse; opacity: 0.4;}
-        .r3 { width: 540px; height: 540px; border: 3px dashed var(--border-color); animation: radar 30s linear infinite; opacity: 0.2; border-dasharray: 10 20;}
-        .r4 { width: 640px; height: 640px; border: 1px solid var(--border-color); animation: radar 40s linear infinite reverse; opacity: 0.1;}
-        @keyframes radar { 100% { transform: rotate(360deg); } } */
-
-        /* ############################### */
-
-        .sf-eeg-group { 
-            position: absolute; 
-            top: 50%; 
-            left: 50%; 
-            transform: translate(-100%, -100%); 
-            width: 100%; 
-            height: 100%; 
-            pointer-events: none; 
-            z-index: 0; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
-
-        .sf-eeg-ring { 
-            position: absolute; 
-            border-radius: 50%; 
-            border: 1px solid var(--border-color); 
-            /* Added transition for smoother state changes */
-            transition: all 0.5s ease; 
-        }
-
-        /* The "Pulse & Spin" Animation */
-        @keyframes scifi-flow {
-            0% { transform: rotate(0deg) scale(1); opacity: 0.1; }
-            50% { transform: rotate(180deg) scale(1.15); opacity: 0.5; }
-            100% { transform: rotate(360deg) scale(1); opacity: 0.1; }
-        }
-
-        /* Fast, small inner pulse */
-        .r1 { 
-            width: 380px; height: 380px; 
-            border: 2px dashed var(--theme-primary); 
-            animation: scifi-flow 8s ease-in-out infinite; 
-            filter: blur(1px);
-        }
-
-        /* Slower, counter-rotating */
-        .r2 { 
-            width: 480px; height: 480px; 
-            border: 1px dotted var(--border-color); 
-            animation: scifi-flow 25s linear infinite reverse; 
-        }
-
-        /* Large, slow, breathing ring */
-        .r3 { 
-            width: 580px; height: 580px; 
-            border: 3px dashed var(--border-color); 
-            animation: scifi-flow 15s ease-in-out infinite; 
-            border-dasharray: 20 40;
-        }
-
-        /* The outer massive energy ring */
-        .r4 { 
-            width: 750px; height: 750px; 
-            border: 1px solid var(--theme-primary); 
-            animation: scifi-flow 35s ease-in-out infinite reverse; 
-            opacity: 0.05;
-        }
-
-        /* Speed up and intensify during Prep Phase */
-        .sf-overlay.is-prep .sf-eeg-ring {
-            border-color: var(--theme-primary);
-        }
-        .sf-overlay.is-prep .r1 { animation-duration: 2s; }
-        .sf-overlay.is-prep .r2 { animation-duration: 4s; }
-
-
-        /* ############################### */
+        .r1 { width: 360px; height: 360px; border: 2px dashed var(--border-color); animation: radar 15s linear infinite; opacity: 0.5;}
+        .r2 { width: 440px; height: 440px; border: 1px dotted var(--border-color); animation: radar 20s linear infinite reverse; opacity: 0.4;}
+        .r3 { width: 520px; height: 520px; border: 3px dashed var(--border-color); animation: radar 30s linear infinite; opacity: 0.2; border-dasharray: 10 20;}
+        .r4 { width: 620px; height: 620px; border: 1px solid var(--border-color); animation: radar 40s linear infinite reverse; opacity: 0.1;}
+        @keyframes radar { 100% { transform: rotate(360deg); } }
         /* Speed up rings during prep phase */
         .sf-overlay.is-prep .r1 { animation-duration: 4s; opacity: 0.8;}
         .sf-overlay.is-prep .r2 { animation-duration: 6s; opacity: 0.7;}
 
-        /* INCREASED SIZE FOR FOCUS RING */
-        .sf-ring-container { position: relative; width: 380px; height: 380px; margin-bottom: 30px; z-index: 10;}
+        .sf-ring-container { position: relative; width: 320px; height: 320px; margin-bottom: 20px; z-index: 10;}
         .sf-ring { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
         .sf-ring circle { fill: none; stroke-linecap: round; }
         
@@ -401,8 +315,8 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .sf-countdown { font-size: 50px; font-weight: bold; color: var(--text-main); line-height: 1; transition: color 0.3s;}
-        .sf-eta { font-size: 15px; color: var(--text-secondary); letter-spacing: 2px; margin-top: 12px; background: var(--card-bg); padding: 4px 12px; border-radius: 12px; border: 1px solid var(--border-color);}
+        .sf-countdown { font-size: 64px; font-weight: bold; color: var(--text-main); line-height: 1; transition: color 0.3s;}
+        .sf-eta { font-size: 14px; color: var(--text-secondary); letter-spacing: 2px; margin-top: 10px; background: var(--card-bg); padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border-color);}
 
         .sf-controls { 
             width: 90%; max-width: 500px; margin-bottom: 40px; z-index: 10; 
@@ -412,15 +326,17 @@
         }
         .sf-controls-header { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; text-transform: uppercase; color: var(--text-main);}
         
-        /* Focus thick slider override */
         input[type="range"].sf-slider { 
-            height: 8px; margin: 20px 0 10px 0; border-radius: 4px;
+            width: 100%; height: 4px; background: color-mix(in srgb, var(--border-color) 50%, transparent); 
+            border-radius: 2px; margin: 20px 0 10px 0; display: block; outline: none;
         }
         input[type="range"].sf-slider::-webkit-slider-thumb { 
-            width: 22px; height: 34px; border-radius: 6px; 
-            background: var(--card-bg); border: 2px solid var(--theme-primary);
+            -webkit-appearance: none; width: 22px; height: 34px; border-radius: 6px; 
+            background: var(--card-bg); border: 2px solid var(--theme-primary); cursor: pointer;
             box-shadow: 0 0 12px color-mix(in srgb, var(--theme-primary) 40%, transparent);
+            transition: transform 0.2s;
         }
+        input[type="range"].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.1); }
 
         .sf-actions { display: flex; gap: 20px; z-index: 10;}
         .sf-btn {
@@ -473,8 +389,7 @@
         <div class="dashboard-grid">
             <div class="panel charts-container">
                 <div class="chart-box"><div class="chart-title">Time Split</div><div class="pie-chart" id="pie-time"></div></div>
-                <div class="chart-box"><div class="chart-title">Categories</div><div class="pie-chart" id="pie-count"></div></div>
-                <div class="chart-box"><div class="chart-title">Done</div><div class="pie-chart" id="pie-done"></div></div>
+                <div class="chart-box"><div class="chart-title">Tasks</div><div class="pie-chart" id="pie-count"></div></div>
             </div>
 
             <div class="panel progress-container">
@@ -494,7 +409,7 @@
 
             <div class="panel timer-display">
                 <div class="saved-pill" id="saved-pill" style="display: none;">Saved: 0m</div>
-                <h2>Remaining Work Time Today</h2>
+                <h2>Time Remaining Today</h2>
                 <h1 id="countdown">00:00:00</h1>
                 <div class="countdown-mins" id="countdown-mins">0 total minutes</div>
             </div>
@@ -512,7 +427,7 @@
                 <div class="column-header col-core"><span>Core Work</span><span id="core-total" style="font-size: 11px;">0 min</span></div>
                 <div class="task-list" id="list-core"></div>
                 <div class="add-task-row">
-                    <input type="text" id="new-core" placeholder="Add Core task...{reason for salary}" onkeyup="checkInput(event, 'core')">
+                    <input type="text" id="new-core" placeholder="Add Core task..." onkeyup="checkInput(event, 'core')">
                     <input type="time" id="deadline-core" class="deadline-input" title="Deadline (Optional)">
                     <button class="add-btn" id="btn-core" onclick="addTask('core')">+</button>
                 </div>
@@ -522,7 +437,7 @@
                 <div class="column-header col-must"><span>Musts & Deadlines</span><span id="must-total" style="font-size: 11px;">0 min</span></div>
                 <div class="task-list" id="list-must"></div>
                 <div class="add-task-row">
-                    <input type="text" id="new-must" placeholder="Add Must task...{important for salary}" onkeyup="checkInput(event, 'must')">
+                    <input type="text" id="new-must" placeholder="Add Must task..." onkeyup="checkInput(event, 'must')">
                     <input type="time" id="deadline-must" class="deadline-input" title="Deadline (Optional)">
                     <button class="add-btn" id="btn-must" onclick="addTask('must')">+</button>
                 </div>
@@ -532,7 +447,7 @@
                 <div class="column-header col-reward"><span>Rewards & Growth</span><span id="reward-total" style="font-size: 11px;">0 min</span></div>
                 <div class="task-list" id="list-reward"></div>
                 <div class="add-task-row">
-                    <input type="text" id="new-reward" placeholder="Add Reward...{for you}" onkeyup="checkInput(event, 'reward')">
+                    <input type="text" id="new-reward" placeholder="Add Reward..." onkeyup="checkInput(event, 'reward')">
                     <input type="time" id="deadline-reward" class="deadline-input" title="Deadline (Optional)">
                     <button class="add-btn" id="btn-reward" onclick="addTask('reward')">+</button>
                 </div>
@@ -556,13 +471,6 @@
 
     <div class="sf-ring-container" id="sf-ring-wrapper">
         <svg class="sf-ring" viewBox="0 0 280 280">
-            <defs>
-                <linearGradient id="progressGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#ff3b30" />
-                    <stop offset="50%" stop-color="#ffcc00" />
-                    <stop offset="100%" stop-color="#34c759" />
-                </linearGradient>
-            </defs>
             <circle class="sf-ring-prog-bg" cx="140" cy="140" r="130"></circle>
             <circle id="sf-ring-progress-outer" class="sf-ring-prog-fg" cx="140" cy="140" r="130"></circle>
             
@@ -625,11 +533,6 @@
             <span>Prep/Breathing Time (sec)</span>
             <input type="number" id="setting-breath" class="setting-input" min="0" max="60" value="10" onchange="updateSettings()">
         </div>
-        
-        <div class="setting-row">
-            <span>Focus Background Opacity</span>
-            <input type="range" id="setting-opacity" min="0.1" max="1" step="0.05" value="0.9" onchange="updateSettings()" style="width: 120px;">
-        </div>
     </div>
 </div>
 
@@ -642,7 +545,7 @@
             { id: '2', name: "Grade Undergrad Assignments", allocated: 45, elapsed: 0, completion: 0, category: 'must', deadline: "14:00" },
             { id: '3', name: "Read Sci-Fi Novel", allocated: 30, elapsed: 0, completion: 0, category: 'reward', deadline: null }
         ],
-        settings: { breathingDuration: 10, darkMode: true, theme: 'cyan', focusOpacity: 0.9 },
+        settings: { breathingDuration: 10, darkMode: true, theme: 'cyan' },
         globalFocusMode: false, savedSeconds: 0
     };
 
@@ -761,7 +664,6 @@
         document.getElementById('start-time').value = state.startTime;
         document.getElementById('end-time').value = state.endTime;
         document.getElementById('setting-breath').value = state.settings.breathingDuration;
-        document.getElementById('setting-opacity').value = state.settings.focusOpacity;
         
         document.getElementById('start-time').addEventListener('change', (e) => { state.startTime = e.target.value; saveData(); tick(); });
         document.getElementById('end-time').addEventListener('change', (e) => { state.endTime = e.target.value; saveData(); tick(); });
@@ -783,12 +685,7 @@
     function openSettings() { document.getElementById('settings-modal').classList.add('active'); }
     function closeSettings(e) { if(e.target.id === 'settings-modal') document.getElementById('settings-modal').classList.remove('active'); }
     function closeSettingsForce() { document.getElementById('settings-modal').classList.remove('active'); }
-    function updateSettings() { 
-        state.settings.breathingDuration = parseInt(document.getElementById('setting-breath').value) || 0; 
-        state.settings.focusOpacity = parseFloat(document.getElementById('setting-opacity').value) || 0.9;
-        saveData(); 
-        if(activeTaskId && !isPrepPhase) updateSciFiUI(state.tasks.find(t => t.id === activeTaskId));
-    }
+    function updateSettings() { state.settings.breathingDuration = parseInt(document.getElementById('setting-breath').value) || 0; saveData(); }
 
     function restoreFocusMode() {
         document.getElementById('pip-widget').style.display = 'none';
@@ -871,11 +768,6 @@
         const overlay = document.getElementById('sf-overlay');
         overlay.classList.add('is-prep');
         
-        // Use user's selected opacity during prep phase too
-        const opacity = state.settings.focusOpacity ?? (state.settings.darkMode ? 0.9 : 0.95);
-        overlay.style.backgroundColor = `color-mix(in srgb, var(--base-bg) ${opacity*100}%, transparent)`;
-        overlay.style.backgroundImage = 'none';
-
         document.getElementById('sf-controls-wrap').style.opacity = '0';
         document.getElementById('sf-controls-wrap').style.pointerEvents = 'none';
         document.getElementById('sf-complete-btn').style.display = 'none';
@@ -891,6 +783,7 @@
         document.getElementById('sf-eta').style.display = 'none';
         document.getElementById('sf-deadline').style.display = 'none';
         
+        // Hide inner ring, prep outer ring
         document.getElementById('sf-ring-progress').style.strokeDashoffset = 691.15;
         const outerRing = document.getElementById('sf-ring-progress-outer');
         outerRing.style.stroke = "var(--theme-primary)";
@@ -907,6 +800,7 @@
             if (cycle % 8 < 4) statusEl.innerText = "BREATHE IN...";
             else statusEl.innerText = "BREATHE OUT...";
 
+            // Loading snake effect mapped to outer ring
             outerRing.style.strokeDashoffset = 816.81 * (1 - (left / state.settings.breathingDuration));
 
             if (left <= 0) activateFlowState();
@@ -941,6 +835,7 @@
         statusEl.style.textShadow = '0 0 10px var(--golden-green)';
         playChime();
 
+        // Restore outer ring style to progress gradient
         const outerRing = document.getElementById('sf-ring-progress-outer');
         outerRing.style.stroke = "url(#progressGrad)";
         
@@ -1026,11 +921,11 @@
         const compOffset = 816.81 * (1 - (task.completion / 100));
         compRing.style.strokeDashoffset = isNaN(compOffset) ? 816.81 : compOffset;
 
-        // Dynamic Background Tint based on completion and user opacity setting
+        // Dynamic Background Tint based on completion
         const comp = task.completion; 
         const bgR = Math.floor(255 * (100 - comp) / 100);
         const bgG = Math.floor(255 * (comp) / 100);
-        const opacity = state.settings.focusOpacity ?? (isDark ? 0.9 : 0.95); 
+        const opacity = isDark ? 0.9 : 0.95; 
         
         const overlay = document.getElementById('sf-overlay');
         overlay.style.backgroundColor = `color-mix(in srgb, var(--base-bg) ${opacity*100}%, transparent)`;
@@ -1042,10 +937,8 @@
         document.getElementById('countdown-mins').innerText = `${Math.floor(remainingSecondsDay / 60)} total minutes`;
 
         const totalMins = Math.max(0, (parseTime(state.endTime) - parseTime(state.startTime)) / 60000);
-        
-        // Fix: Use strict number casting to prevent string concatenation math errors
-        const unallocated = Math.max(0, (remainingSecondsDay / 60) - state.tasks.filter(t => t.completion < 100).reduce((s, t) => s + Number(t.allocated), 0));
-        const utilized = state.tasks.filter(t => t.completion === 100).reduce((s, t) => s + Number(t.allocated), 0);
+        const unallocated = Math.max(0, (remainingSecondsDay / 60) - state.tasks.filter(t => t.completion < 100).reduce((s, t) => s + t.allocated, 0));
+        const utilized = state.tasks.filter(t => t.completion === 100).reduce((s, t) => s + t.allocated, 0);
 
         const dayPct = totalMins > 0 ? Math.floor(((totalMins*60 - remainingSecondsDay)/(totalMins*60))*100) : 0;
         const dayLeftPct = Math.max(0, 100 - dayPct);
@@ -1069,19 +962,9 @@
 
         state.tasks.forEach(t => {
             if(t.completion < 100) {
-                const s = document.getElementById(`slider-${t.id}`);
-                const l = document.getElementById(`label-${t.id}`);
-                const maxLabel = document.getElementById(`slider-max-${t.id}`);
-                
+                const s = document.getElementById(`slider-${t.id}`), l = document.getElementById(`label-${t.id}`);
                 if(s && l && !activeTaskId) { 
-                    const maxAllowed = Number(t.allocated) + unallocated;
-                    // Fix: Do not override slider value if the user is actively dragging it
-                    if (document.activeElement !== s) {
-                        s.max = maxAllowed; 
-                        s.value = t.allocated; 
-                    }
-                    l.innerText = `${Math.floor(t.allocated)} min`; 
-                    if(maxLabel) maxLabel.innerText = `${Math.floor(maxAllowed)}m`;
+                    s.max = t.allocated + unallocated; s.value = t.allocated; l.innerText = `${Math.floor(t.allocated)} min`; 
                 }
             }
         });
@@ -1091,21 +974,14 @@
         const cats = ['core', 'must', 'reward'];
         const colors = {'core': getCoreColor(), 'must': '#ffaa00', 'reward': '#af52de'};
         
-        // Fix: Use strict number casting
-        const totalAlc = state.tasks.reduce((s, t) => s + Number(t.allocated), 0) || 1; 
+        const totalAlc = state.tasks.reduce((s, t) => s + t.allocated, 0) || 1; 
         let timeStops = [], currPct = 0;
-        
         cats.forEach(c => {
-            const sum = state.tasks.filter(t => t.category === c).reduce((s, t) => s + Number(t.allocated), 0);
+            const sum = state.tasks.filter(t => t.category === c).reduce((s, t) => s + t.allocated, 0);
             const pct = (sum / totalAlc) * 100;
-            if(pct > 0) { 
-                timeStops.push(`${colors[c]} ${currPct}% ${currPct + pct}%`); 
-                currPct += pct; 
-            }
+            if(pct > 0) { timeStops.push(`${colors[c]} ${currPct}% ${currPct + pct}%`); currPct += pct; }
         });
-        
-        // Use background-image explicitly to force conic-gradient paint update
-        document.getElementById('pie-time').style.backgroundImage = timeStops.length ? `conic-gradient(${timeStops.join(', ')})` : 'none';
+        document.getElementById('pie-time').style.background = timeStops.length ? `conic-gradient(${timeStops.join(', ')})` : 'none';
 
         const totalCount = state.tasks.length || 1;
         let countStops = []; currPct = 0;
@@ -1114,28 +990,12 @@
             const pct = (count / totalCount) * 100;
             if(pct > 0) { countStops.push(`${colors[c]} ${currPct}% ${currPct + pct}%`); currPct += pct; }
         });
-        document.getElementById('pie-count').style.backgroundImage = countStops.length ? `conic-gradient(${countStops.join(', ')})` : 'none';
+        document.getElementById('pie-count').style.background = countStops.length ? `conic-gradient(${countStops.join(', ')})` : 'none';
 
         cats.forEach(c => {
-            const sum = state.tasks.filter(t => t.category === c && t.completion < 100).reduce((s, t) => s + Number(t.allocated), 0);
+            const sum = state.tasks.filter(t => t.category === c && t.completion < 100).reduce((s, t) => s + t.allocated, 0);
             document.getElementById(`${c}-total`).innerText = `${Math.floor(sum)} min`;
         });
-
-        // --- NEW: Done vs Total Logic ---
-        const doneCount = state.tasks.filter(t => t.completion === 100).length;
-        const pendingCount = state.tasks.length - doneCount;
-        const donePct = (doneCount / totalCount) * 100;
-        
-        // Green for Done, Gray/Border Color for Pending
-        const doneGradient = `conic-gradient(var(--accent-green) 0% ${donePct}%, var(--border-color) ${donePct}% 100%)`;
-        document.getElementById('pie-done').style.backgroundImage = totalCount > 0 ? doneGradient : 'none';
-
-        // Update the text summaries below headers
-        cats.forEach(c => {
-            const sum = state.tasks.filter(t => t.category === c && t.completion < 100).reduce((s, t) => s + Number(t.allocated), 0);
-            document.getElementById(`${c}-total`).innerText = `${Math.floor(sum)} min`;
-        });
-        
     }
 
     function renderTasks() {
@@ -1167,14 +1027,8 @@
                     </div>
                 </div>
                 ${!isDone ? `
-                    <div class="mini-progress">
-                        <div class="mini-progress-fill" style="clip-path: polygon(0 0, ${t.completion}% 0, ${t.completion}% 100%, 0 100%);"></div>
-                    </div>
-                    <div class="slider-wrapper">
-                        <span>0m</span>
-                        <input type="range" id="slider-${t.id}" min="0" step="1" oninput="handleSlider('${t.id}', this.value)">
-                        <span id="slider-max-${t.id}">Max</span>
-                    </div>
+                    <div class="mini-progress"><div class="mini-progress-fill" style="width:${t.completion}%"></div></div>
+                    <input type="range" id="slider-${t.id}" min="0" step="1" oninput="handleSlider('${t.id}', this.value)">
                 ` : ''}`;
             
             document.getElementById(`list-${t.category}`).appendChild(r);
@@ -1183,14 +1037,7 @@
         syncBalls(); 
     }
 
-    function handleSlider(id, v) { 
-        const t = state.tasks.find(x => x.id === id); 
-        if(t) { 
-            t.allocated = parseFloat(v); 
-            saveData(); 
-            updateMainUI(); 
-        } 
-    }
+    function handleSlider(id, v) { const t = state.tasks.find(x => x.id === id); if(t) { t.allocated = parseFloat(v); saveData(); updateMainUI(); } }
     
     function markDone(id) { 
         const t = state.tasks.find(x => x.id === id); 
@@ -1222,10 +1069,8 @@
         const deadline = dlInput.value;
 
         if(name){ 
-            // Fix: Add a randomized string to the timestamp to guarantee zero ID collisions even if added instantly
-            const uniqueId = Date.now().toString() + Math.random().toString(36).substr(2, 4);
             state.tasks.push({
-                id: uniqueId, 
+                id: Date.now().toString(), 
                 name: name, allocated: 0, elapsed: 0, completion: 0, 
                 category: cat, deadline: deadline || null
             }); 
@@ -1250,7 +1095,7 @@
     function enforceLimits() { 
         const rem = Math.max(0, remainingSecondsDay/60);
         const activeTasks = state.tasks.filter(t => t.completion < 100);
-        const alc = activeTasks.reduce((s,t)=>s+Number(t.allocated), 0);
+        const alc = activeTasks.reduce((s,t)=>s+t.allocated, 0);
         if(alc > rem && alc > 0) { activeTasks.forEach(t => t.allocated *= (rem/alc)); if(!activeTaskId && !isPrepPhase) renderTasks(); }
     }
     
@@ -1262,7 +1107,7 @@
         const s = localStorage.getItem('timeBoxerState'); 
         if(s) { 
             const parsed = JSON.parse(s);
-            if(!parsed.settings) parsed.settings = { breathingDuration: 10, darkMode: parsed.darkMode ?? true, theme: parsed.theme || 'cyan', focusOpacity: 0.9 };
+            if(!parsed.settings) parsed.settings = { breathingDuration: 10, darkMode: parsed.darkMode ?? true, theme: parsed.theme || 'cyan' };
             parsed.tasks = parsed.tasks.map(t => ({...t, elapsed: t.elapsed || 0, completion: t.completion || 0, category: t.category || 'core', deadline: t.deadline || null}));
             state = { ...state, ...parsed }; 
         } 
