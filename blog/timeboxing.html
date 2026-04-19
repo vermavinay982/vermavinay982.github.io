@@ -288,20 +288,6 @@
         }
         .sf-overlay.active { opacity: 1; pointer-events: auto; }
 
-        /* .sf-header { text-align: center; margin-bottom: 40px; z-index: 10; }
-        .sf-header h2 { font-size: 32px; text-transform: uppercase; letter-spacing: 3px; margin: 0; color: var(--text-main); text-shadow: none; }
-        .sf-header p { margin: 10px 0 0 0; font-size: 16px; letter-spacing: 3px; font-weight: bold; color: var(--text-secondary); transition: color 0.4s ease;}
-
-        .sf-eeg-group { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 100%; pointer-events: none; z-index: 0; display: flex; align-items: center; justify-content: center; }
-        .sf-eeg-ring { position: absolute; border-radius: 50%; border: 1px solid var(--border-color); }
-        .r1 { width: 380px; height: 380px; border: 2px dashed var(--border-color); animation: radar 15s linear infinite; opacity: 0.5;}
-        .r2 { width: 460px; height: 460px; border: 1px dotted var(--border-color); animation: radar 20s linear infinite reverse; opacity: 0.4;}
-        .r3 { width: 540px; height: 540px; border: 3px dashed var(--border-color); animation: radar 30s linear infinite; opacity: 0.2; border-dasharray: 10 20;}
-        .r4 { width: 640px; height: 640px; border: 1px solid var(--border-color); animation: radar 40s linear infinite reverse; opacity: 0.1;}
-        @keyframes radar { 100% { transform: rotate(360deg); } } */
-
-        /* ############################### */
-
         .sf-eeg-group { 
             position: absolute; 
             top: 50%; 
@@ -320,7 +306,6 @@
             position: absolute; 
             border-radius: 50%; 
             border: 1px solid var(--border-color); 
-            /* Added transition for smoother state changes */
             transition: all 0.5s ease; 
         }
 
@@ -331,7 +316,6 @@
             100% { transform: rotate(360deg) scale(1); opacity: 0.1; }
         }
 
-        /* Fast, small inner pulse */
         .r1 { 
             width: 380px; height: 380px; 
             border: 2px dashed var(--theme-primary); 
@@ -339,14 +323,12 @@
             filter: blur(1px);
         }
 
-        /* Slower, counter-rotating */
         .r2 { 
             width: 480px; height: 480px; 
             border: 1px dotted var(--border-color); 
             animation: scifi-flow 25s linear infinite reverse; 
         }
 
-        /* Large, slow, breathing ring */
         .r3 { 
             width: 580px; height: 580px; 
             border: 3px dashed var(--border-color); 
@@ -354,7 +336,6 @@
             border-dasharray: 20 40;
         }
 
-        /* The outer massive energy ring */
         .r4 { 
             width: 750px; height: 750px; 
             border: 1px solid var(--theme-primary); 
@@ -362,20 +343,10 @@
             opacity: 0.05;
         }
 
-        /* Speed up and intensify during Prep Phase */
-        .sf-overlay.is-prep .sf-eeg-ring {
-            border-color: var(--theme-primary);
-        }
-        .sf-overlay.is-prep .r1 { animation-duration: 2s; }
-        .sf-overlay.is-prep .r2 { animation-duration: 4s; }
-
-
-        /* ############################### */
-        /* Speed up rings during prep phase */
+        .sf-overlay.is-prep .sf-eeg-ring { border-color: var(--theme-primary); }
         .sf-overlay.is-prep .r1 { animation-duration: 4s; opacity: 0.8;}
         .sf-overlay.is-prep .r2 { animation-duration: 6s; opacity: 0.7;}
 
-        /* INCREASED SIZE FOR FOCUS RING */
         .sf-ring-container { position: relative; width: 380px; height: 380px; margin-bottom: 30px; z-index: 10;}
         .sf-ring { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
         .sf-ring circle { fill: none; stroke-linecap: round; }
@@ -412,7 +383,6 @@
         }
         .sf-controls-header { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; text-transform: uppercase; color: var(--text-main);}
         
-        /* Focus thick slider override */
         input[type="range"].sf-slider { 
             height: 8px; margin: 20px 0 10px 0; border-radius: 4px;
         }
@@ -432,7 +402,6 @@
         .sf-btn:hover { background: color-mix(in srgb, var(--theme-primary) 10%, var(--card-bg)); transform: translateY(-2px); }
         .sf-btn-primary { border: 2px solid; font-weight: bold; }
 
-        /* Floating PIP Widget */
         .pip-widget {
             position: fixed; bottom: 30px; right: 30px; 
             background: var(--card-bg); border: 2px solid var(--theme-primary);
@@ -651,6 +620,17 @@
     let flowTimer = null; 
     let prepInterval = null; 
     let isPrepPhase = false;
+
+    // --- NEW: Minutes Formatting Utility ---
+    function formatMins(totalMins, suffix = 'm') {
+        const mins = Math.floor(totalMins);
+        if (mins < 60) return `${mins}${suffix}`;
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        const base = m > 0 ? `${h}h ${m}m` : `${h}h`;
+        if (suffix.includes("total minutes")) return base + " total";
+        return base;
+    }
 
     // --- 2. AUDIO SYSTEM ---
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1039,7 +1019,7 @@
 
     function updateMainUI() {
         document.getElementById('countdown').innerText = formatTime(remainingSecondsDay);
-        document.getElementById('countdown-mins').innerText = `${Math.floor(remainingSecondsDay / 60)} total minutes`;
+        document.getElementById('countdown-mins').innerText = formatMins(remainingSecondsDay / 60, ' total minutes');
 
         const totalMins = Math.max(0, (parseTime(state.endTime) - parseTime(state.startTime)) / 60000);
         
@@ -1050,8 +1030,8 @@
         const dayPct = totalMins > 0 ? Math.floor(((totalMins*60 - remainingSecondsDay)/(totalMins*60))*100) : 0;
         const dayLeftPct = Math.max(0, 100 - dayPct);
         document.getElementById('val-clock').innerText = `${dayLeftPct}%`;
-        document.getElementById('val-utilized').innerText = `${Math.floor(utilized)}m`;
-        document.getElementById('val-balance').innerText = `${Math.floor(unallocated)}m`;
+        document.getElementById('val-utilized').innerText = formatMins(utilized, 'm');
+        document.getElementById('val-balance').innerText = formatMins(unallocated, 'm');
 
         document.getElementById('progress-time').style.width = totalMins > 0 ? `${dayLeftPct}%` : '0%';
         document.getElementById('progress-utilized').style.width = totalMins > 0 ? `${(utilized/totalMins)*100}%` : '0%';
@@ -1060,7 +1040,7 @@
         const savedPill = document.getElementById('saved-pill');
         if (state.savedSeconds > 0) {
             savedPill.style.display = 'block';
-            savedPill.innerText = `Saved: ${Math.floor(state.savedSeconds / 60)}m`;
+            savedPill.innerText = `Saved: ${formatMins(state.savedSeconds / 60, 'm')}`;
         } else {
             savedPill.style.display = 'none';
         }
@@ -1080,8 +1060,8 @@
                         s.max = maxAllowed; 
                         s.value = t.allocated; 
                     }
-                    l.innerText = `${Math.floor(t.allocated)} min`; 
-                    if(maxLabel) maxLabel.innerText = `${Math.floor(maxAllowed)}m`;
+                    l.innerText = formatMins(t.allocated, ' min'); 
+                    if(maxLabel) maxLabel.innerText = formatMins(maxAllowed, 'm');
                 }
             }
         });
@@ -1118,7 +1098,7 @@
 
         cats.forEach(c => {
             const sum = state.tasks.filter(t => t.category === c && t.completion < 100).reduce((s, t) => s + Number(t.allocated), 0);
-            document.getElementById(`${c}-total`).innerText = `${Math.floor(sum)} min`;
+            document.getElementById(`${c}-total`).innerText = formatMins(sum, ' min');
         });
 
         // --- NEW: Done vs Total Logic ---
@@ -1133,7 +1113,7 @@
         // Update the text summaries below headers
         cats.forEach(c => {
             const sum = state.tasks.filter(t => t.category === c && t.completion < 100).reduce((s, t) => s + Number(t.allocated), 0);
-            document.getElementById(`${c}-total`).innerText = `${Math.floor(sum)} min`;
+            document.getElementById(`${c}-total`).innerText = formatMins(sum, ' min');
         });
         
     }
@@ -1158,11 +1138,11 @@
                                   : `<button class="icon-btn undo" onclick="unmarkDone('${t.id}')" title="Undo / Re-activate">↺</button>`}
                         <div style="display:flex; flex-direction:column;">
                             <span class="task-name" style="${isDone ? 'text-decoration:line-through;' : ''}">${t.name}</span>
-                            <span class="task-meta">${t.completion}% Done | ${isDone ? 'COMPLETED' : `${Math.floor(remainingMins)}m`}${dlText}</span>
+                            <span class="task-meta">${t.completion}% Done | ${isDone ? 'COMPLETED' : formatMins(remainingMins, 'm')}${dlText}</span>
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; gap: 10px;">
-                        <span class="task-time" id="label-${t.id}">${Math.floor(t.allocated)} min</span>
+                        <span class="task-time" id="label-${t.id}">${formatMins(t.allocated, ' min')}</span>
                         <button class="icon-btn delete" onclick="deleteTask('${t.id}')">✕</button>
                     </div>
                 </div>
