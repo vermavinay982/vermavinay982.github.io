@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pac-Task Dynamics</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+        :root {
+            --bg-color: #1a1a1f;
+            --panel-bg: #25262b;
+            --card-bg: #2f3136;
+            --text-main: #f8f9fa;
+            --text-muted: #adb5bd;
+            
+            /* State Colors */
+            --pac-icy: #8be9fd;     
+            --pac-heal: #50fa7b;    
+            --pac-normal: #fbbc04;  
+            --pac-tired: #ffb86c;   
+            --pac-fire: #ff5555;    
+            --burnt: #44475a;
+
+            --ghost-family: #ff79c6; 
+            --ghost-personal: #8be9fd; 
+            --ghost-work: #50fa7b; 
+            
+            --track-color: #282a36;
+            --track-line: #6272a4;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* --- Left Side: Massive Game Workspace --- */
+        #left-panel {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            gap: 24px;
+            overflow: hidden;
+        }
+
+        #game-wrapper {
+            position: relative;
+            background: var(--panel-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+        }
+
+        canvas {
+            display: block;
+            border-radius: 8px;
+            background-color: #121214;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* Top Dashboard inside workspace */
+        .dashboard {
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .dash-col { display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: var(--text-muted); }
+        .dash-row { display: flex; justify-content: space-between; align-items: center;}
+        .dash-row strong { color: var(--text-main); font-weight: 600; font-size: 15px;}
+
+        /* Capacity Chart */
+        .capacity-section {
+            background: rgba(0,0,0,0.15);
+            padding: 12px;
+            border-radius: 8px;
+            flex-grow: 1;
+        }
+        
+        .cap-chart-container {
+            height: 12px;
+            background: var(--bg-color);
+            border-radius: 6px;
+            margin-top: 8px;
+            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+            display: flex;
+            overflow: hidden;
+        }
+
+        .cap-target-line {
+            position: absolute;
+            top: -4px;
+            bottom: -4px;
+            width: 2px;
+            background: var(--pac-icy);
+            z-index: 2;
+        }
+
+        .health-container {
+            height: 24px;
+            border-radius: 12px;
+            background: #121214;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+            margin-top: 8px;
+        }
+
+        #health-bar {
+            height: 100%;
+            width: 100%;
+            background-color: var(--ghost-work);
+            transition: width 0.2s ease, background-color 0.3s ease;
+        }
+
+        #health-text {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.8);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* --- Right Side: Google Tasks Style Side Panel --- */
+        #right-panel {
+            width: 400px;
+            min-width: 400px;
+            background: var(--panel-bg);
+            border-left: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-shadow: -4px 0 16px rgba(0,0,0,0.2);
+        }
+
+        .panel-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .input-col { display: flex; flex-direction: column; gap: 12px; }
+
+        input[type="text"], select {
+            background: var(--bg-color);
+            color: var(--text-main);
+            border: 1px solid var(--track-line);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background: var(--ghost-personal);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-weight: 800;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        button:hover { filter: brightness(1.2); }
+
+        .task-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--track-line); border-radius: 3px; }
+
+        .task-item {
+            background: var(--card-bg);
+            border-left: 4px solid;
+            padding: 16px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+
+        .cat-family { border-left-color: var(--ghost-family); }
+        .cat-personal { border-left-color: var(--ghost-personal); }
+        .cat-work { border-left-color: var(--ghost-work); }
+
+        .task-header { display: flex; align-items: flex-start; gap: 12px; font-weight: 600; font-size: 14px;}
+        
+        .task-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(0,0,0,0.15);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .slider-row { display: flex; align-items: center; gap: 12px; }
+        .slider-label { width: 80px; font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+        .slider-val { width: 30px; text-align: right; font-size: 12px; font-weight: 800; color: var(--pac-icy); }
+
+        input[type="range"].big-slider {
+            flex-grow: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            background: var(--bg-color);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+        input[type="range"].big-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: var(--text-main);
+            border: 2px solid var(--ghost-personal);
+        }
+
+        input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--ghost-personal); margin-top: 2px;}
+
+        .game-over {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(26, 26, 31, 0.95);
+            border-radius: 16px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .game-over h2 { color: var(--pac-fire); margin: 0 0 16px 0; font-size: 48px; text-transform: uppercase;}
+    </style>
+</head>
+<body>
+
+    <div id="left-panel">
+        <div class="dashboard">
+            <div class="dash-col">
+                <div class="dash-row">
+                    <span>State:</span> <strong id="val-state" style="color: var(--pac-icy);">SLEEPY / ICY</strong>
+                </div>
+                <div class="dash-row">
+                    <span>Pac-Speed:</span> <strong id="val-pspeed">0.0 px/s</strong>
+                </div>
+                <div class="dash-row">
+                    <span>Snake Speed:</span> <strong id="val-gspeed">0.0 px/s</strong>
+                </div>
+            </div>
+
+            <div class="dash-col">
+                <div class="dash-row">
+                    <span>Vitality (Health):</span> <strong id="val-vitality" style="color: var(--pac-heal);">100%</strong>
+                </div>
+                <div class="health-container" title="Vitality Meter">
+                    <div id="health-bar"></div>
+                    <div id="health-text">100%</div>
+                </div>
+            </div>
+
+            <div class="dash-col">
+                <div class="capacity-section">
+                    <div class="dash-row" style="margin-bottom: 0;">
+                        <span>Load Breakdown (<strong style="color:var(--pac-icy)">Max: 150</strong>)</span>
+                        <strong id="val-load">0</strong>
+                    </div>
+                    <div class="cap-chart-container" id="cap-chart">
+                        <div class="cap-target-line" style="left: 50%;" title="Comfortable Max (150)"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-wrapper">
+            <canvas id="game-canvas" width="800" height="550"></canvas>
+            <div id="game-over-screen" class="game-over">
+                <h2>Total Burnout</h2>
+                <p style="color: #aaa; margin-bottom: 24px; font-size: 18px;">Deadlines Caught You.</p>
+                <button onclick="revive()" style="width: auto;">Resurrect & Rest</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="right-panel">
+        <div class="panel-header">
+            <div class="slider-row" style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                <span class="slider-label" style="width: 100px; color: var(--pac-normal);">Safe Margin<br><small style="text-transform:none;font-size:9px;">Buffer limit</small></span>
+                <input type="range" id="safe-dist-slider" class="big-slider" min="150" max="800" value="400">
+                <span class="slider-val" id="val-safe-dist" style="color: var(--pac-normal);">400</span>
+            </div>
+
+            <div class="input-col">
+                <input type="text" id="task-name" placeholder="E.g., Accept extra work..." autocomplete="off">
+                <div style="display: flex; gap: 8px;">
+                    <select id="task-category" style="flex-grow: 1;">
+                        <option value="work">Work</option>
+                        <option value="personal">Personal</option>
+                        <option value="family">Family / Friends</option>
+                    </select>
+                    <button onclick="addTask()" style="width: 80px;">Add</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="task-list" id="task-list"></div>
+    </div>
+
+<script>
+    // --- SETUP & STATE ---
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+
+    const theme = {
+        family: '#ff79c6', personal: '#8be9fd', work: '#50fa7b',
+        icy: '#8be9fd', heal: '#50fa7b', normal: '#fbbc04', tired: '#ffb86c', fire: '#ff5555', burnt: '#44475a',
+        trackBg: '#282a36', trackLine: '#6272a4'
+    };
+
+    // Scaled up track to fit the 800x550 canvas
+    const track = { x: 60, y: 60, w: 680, h: 430 };
+    const perimeter = (track.w * 2) + (track.h * 2); // 2220
+
+    let globalLoad = 0;
+    let isGameOver = false;
+
+    // Core Constants
+    const PAC_BASE_SPEED = 4.0; 
+    const PAC_MAX_SPEED = 9.0;   
+    const LOAD_EQUIVALENCE = 150; 
+    const DANGER_DIST = 120;     
+
+    let player = {
+        dist: 1100, 
+        radius: 16,
+        health: 100,
+        speed: 0,
+        state: 'RESTING', 
+        fleeing: false,
+        mouthOpen: 0, mouthDir: 1, zzTimer: 0
+    };
+
+    let snakeHeadDist = 0; 
+    let snakeSpeed = 0;
+    let isHealingLock = false; // HYSTERESIS LOCK
+
+    // --- LOCAL STORAGE INIT ---
+    const savedTasks = localStorage.getItem('pacTasks');
+    let tasks = savedTasks ? JSON.parse(savedTasks) : [
+        { id: 1, name: 'Prep for Applied Scientist Interview', category: 'personal', load: 60, decay: -0.1, active: true },
+        { id: 2, name: 'Draft HRI 2026 Paper LBR', category: 'work', load: 80, decay: 0.0, active: true }
+    ];
+
+    // Helper to persist tasks to Local Storage
+    function saveTasks() {
+        localStorage.setItem('pacTasks', JSON.stringify(tasks));
+    }
+
+    const safeSlider = document.getElementById('safe-dist-slider');
+    const safeValText = document.getElementById('val-safe-dist');
+    safeSlider.addEventListener('input', (e) => { safeValText.innerText = e.target.value; });
+
+    function getTrackPos(distance) {
+        let d = (distance % perimeter + perimeter) % perimeter; 
+        if (d < track.w) return { x: track.x + d, y: track.y, angle: 0 };
+        d -= track.w;
+        if (d < track.h) return { x: track.x + track.w, y: track.y + d, angle: Math.PI/2 };
+        d -= track.h;
+        if (d < track.w) return { x: track.x + track.w - d, y: track.y + track.h, angle: Math.PI };
+        d -= track.w;
+        return { x: track.x, y: track.y + track.h - d, angle: -Math.PI/2 };
+    }
+
+    function addTask() {
+        const nameInput = document.getElementById('task-name');
+        if (!nameInput.value.trim()) return;
+        tasks.push({
+            id: Date.now(), name: nameInput.value,
+            category: document.getElementById('task-category').value,
+            load: 50, decay: 0, active: true
+        });
+        nameInput.value = '';
+        saveTasks(); // Save after adding
+        renderTasks();
+    }
+
+    function toggleTask(id) {
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+            task.active = !task.active;
+            saveTasks(); // Save after toggling state
+        }
+        renderTasks();
+    }
+
+    function removeTask(id) {
+        tasks = tasks.filter(t => t.id !== id);
+        saveTasks(); // Save after removing
+        renderTasks();
+    }
+
+    function updateTaskParam(id, param, val) {
+        const task = tasks.find(t => t.id === id);
+        if (task) { 
+            task[param] = parseFloat(val); 
+            if(param === 'load') document.getElementById(`val-load-${id}`).innerText = task.load.toFixed(0);
+            if(param === 'decay') document.getElementById(`val-decay-${id}`).innerText = task.decay.toFixed(1);
+            saveTasks(); // Save after sliding parameters
+            calculateGlobalLoad(); 
+        }
+    }
+
+    function renderTasks() {
+        const list = document.getElementById('task-list');
+        list.innerHTML = '';
+        tasks.forEach(task => {
+            const div = document.createElement('div');
+            div.className = `task-item cat-${task.category}`;
+            div.style.opacity = task.active ? '1' : '0.4';
+            div.innerHTML = `
+                <div class="task-header">
+                    <input type="checkbox" ${task.active ? 'checked' : ''} onchange="toggleTask(${task.id})">
+                    <span style="flex-grow:1; ${!task.active ? 'text-decoration: line-through;' : ''}">${task.name}</span>
+                    <button style="padding: 4px 8px; font-size: 10px; width: auto;" onclick="removeTask(${task.id})">DONE</button>
+                </div>
+                <div class="task-controls">
+                    <div class="slider-row">
+                        <span class="slider-label">Load</span>
+                        <input type="range" class="big-slider" min="0" max="100" value="${task.load}" step="1" oninput="updateTaskParam(${task.id}, 'load', this.value)" ${!task.active ? 'disabled' : ''}>
+                        <span class="slider-val" id="val-load-${task.id}">${Math.floor(task.load)}</span>
+                    </div>
+                    <div class="slider-row">
+                        <span class="slider-label">Decay</span>
+                        <input type="range" class="big-slider" min="-0.5" max="0.5" value="${task.decay}" step="0.1" oninput="updateTaskParam(${task.id}, 'decay', this.value)" ${!task.active ? 'disabled' : ''}>
+                        <span class="slider-val" id="val-decay-${task.id}">${task.decay.toFixed(1)}</span>
+                    </div>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+        calculateGlobalLoad();
+    }
+
+    function calculateGlobalLoad() {
+        let loadWork = 0, loadPers = 0, loadFam = 0;
+        globalLoad = 0;
+        
+        tasks.filter(t => t.active).forEach(t => {
+            globalLoad += t.load;
+            if(t.category === 'work') loadWork += t.load;
+            if(t.category === 'personal') loadPers += t.load;
+            if(t.category === 'family') loadFam += t.load;
+        });
+
+        document.getElementById('val-load').innerText = globalLoad.toFixed(0);
+        
+        // Multi-color Load Chart
+        const maxVisualScale = LOAD_EQUIVALENCE * 2;
+        const wPct = (loadWork / maxVisualScale) * 100;
+        const pPct = (loadPers / maxVisualScale) * 100;
+        const fPct = (loadFam / maxVisualScale) * 100;
+
+        const chart = document.getElementById('cap-chart');
+        chart.innerHTML = `
+            <div style="width: ${wPct}%; background-color: ${theme.work}; height: 100%;"></div>
+            <div style="width: ${pPct}%; background-color: ${theme.personal}; height: 100%;"></div>
+            <div style="width: ${fPct}%; background-color: ${theme.family}; height: 100%;"></div>
+            <div class="cap-target-line" style="left: 50%;" title="Comfortable Max (150)"></div>
+        `;
+
+        const activeCount = tasks.filter(t => t.active).length;
+        snakeSpeed = activeCount === 0 ? 0 : 0.5 + (globalLoad / LOAD_EQUIVALENCE) * (PAC_BASE_SPEED - 0.5);
+        document.getElementById('val-gspeed').innerText = snakeSpeed.toFixed(1);
+    }
+
+    function updatePhysics() {
+        if (isGameOver) return;
+
+        const SAFE_DIST = parseInt(safeSlider.value);
+        const activeCount = tasks.filter(t => t.active).length;
+        snakeHeadDist = (snakeHeadDist + snakeSpeed) % perimeter;
+        let distBehind = (player.dist - snakeHeadDist + perimeter) % perimeter;
+
+        // Catch Condition
+        if (activeCount > 0 && distBehind < player.radius * 2.5) {
+            isGameOver = true;
+            player.state = 'BURNOUT';
+            document.getElementById('game-over-screen').style.display = 'flex';
+            updateDashboard();
+            return;
+        }
+
+        // --- HYSTERESIS LOCK LOGIC ---
+        if (player.health < 10) isHealingLock = true;
+        if (player.health >= 30) isHealingLock = false;
+
+        if (activeCount > 0) {
+            // Trigger Fleeing
+            if (distBehind < DANGER_DIST) player.fleeing = true;
+            if (distBehind > SAFE_DIST) player.fleeing = false;
+
+            if (player.fleeing) {
+                if (isHealingLock) {
+                    // Locked in Healing Run
+                    player.speed = Math.min(Math.max(PAC_BASE_SPEED * 0.4, player.speed - 0.3), PAC_BASE_SPEED * 0.5);
+                    player.state = 'HEALING_RUN';
+                } else if (player.health > 70 && distBehind < DANGER_DIST + 40) {
+                    // Super Boost
+                    player.speed = Math.min(player.speed + 0.2, PAC_MAX_SPEED);
+                    player.state = 'BURSTING';
+                } else if (player.health <= 30) {
+                    // Tired Mode
+                    player.speed = Math.min(Math.max(PAC_BASE_SPEED * 0.7, player.speed - 0.2), PAC_BASE_SPEED * 0.8);
+                    player.state = 'TIRED';
+                } else {
+                    // Normal Run
+                    player.speed = Math.min(Math.max(PAC_BASE_SPEED, player.speed - 0.1), PAC_BASE_SPEED + 1);
+                    player.state = 'RUNNING';
+                }
+            } else {
+                // Safe Distance Reached -> Stop
+                player.speed = Math.max(0, player.speed - 0.2);
+                if (player.speed === 0) {
+                    player.state = isHealingLock ? 'HEALING_REST' : 'RESTING';
+                }
+            }
+
+            // Lap Prevention
+            const snakeLength = activeCount * 22; 
+            if (distBehind > perimeter - snakeLength - 40) {
+                player.fleeing = false;
+                player.speed = 0;
+                player.state = isHealingLock ? 'HEALING_REST' : 'RESTING';
+                player.dist = (snakeHeadDist - snakeLength - 40 + perimeter) % perimeter;
+            }
+
+        } else {
+            // No tasks
+            player.speed = Math.max(0, player.speed - 0.2);
+            if(player.speed === 0) player.state = isHealingLock ? 'HEALING_REST' : 'RESTING';
+        }
+
+        // Apply Stamina Drain/Recovery based on locked/current states
+        if (player.state === 'RESTING') player.health = Math.min(100, player.health + 0.25); 
+        else if (player.state === 'HEALING_REST') player.health = Math.min(100, player.health + 0.3); 
+        else if (player.state === 'HEALING_RUN') player.health = Math.min(100, player.health + 0.08); // Recovers slowly while running
+        else if (player.state === 'BURSTING') player.health = Math.max(0, player.health - 0.25); 
+        else if (player.state === 'RUNNING') player.health = Math.max(0, player.health - 0.0); 
+        else if (player.state === 'TIRED') player.health = Math.max(0, player.health - 0.0); // 0.04
+
+        if (player.health <= 0) {
+            isGameOver = true;
+            player.state = 'BURNOUT';
+            document.getElementById('game-over-screen').style.display = 'flex';
+        }
+
+        player.dist = (player.dist + player.speed) % perimeter;
+        updateDashboard();
+    }
+
+    function drawGame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Track
+        ctx.strokeStyle = theme.trackBg;
+        ctx.lineWidth = 36;
+        ctx.lineJoin = 'round';
+        ctx.strokeRect(track.x, track.y, track.w, track.h);
+        
+        ctx.strokeStyle = theme.trackLine;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([12, 18]);
+        ctx.strokeRect(track.x, track.y, track.w, track.h);
+        ctx.setLineDash([]);
+
+        // Draw Snake
+        let activeIndex = 0;
+        tasks.forEach(task => {
+            if (!task.active) return;
+            let ghostDist = (snakeHeadDist - (activeIndex * 24) + perimeter) % perimeter;
+            const pos = getTrackPos(ghostDist);
+            ctx.save(); ctx.translate(pos.x, pos.y); ctx.rotate(pos.angle);
+            
+            ctx.fillStyle = theme[task.category];
+            ctx.beginPath(); ctx.arc(0, -3, 12, Math.PI, 0); 
+            ctx.lineTo(12, 12); ctx.lineTo(6, 9); ctx.lineTo(0, 12);
+            ctx.lineTo(-6, 9); ctx.lineTo(-12, 12); ctx.fill();
+            
+            ctx.fillStyle = "#fff";
+            ctx.beginPath(); ctx.arc(5, -4, 3, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(5, 4, 3, 0, Math.PI*2); ctx.fill();
+            ctx.restore(); activeIndex++;
+        });
+
+        // Draw Pacman
+        const pPos = getTrackPos(player.dist);
+        ctx.save();
+        ctx.translate(pPos.x, pPos.y);
+        ctx.rotate(pPos.angle);
+
+        if (player.state === 'BURNOUT') {
+            ctx.fillStyle = theme.burnt;
+            ctx.beginPath(); ctx.arc(0, 0, player.radius, 0, 2 * Math.PI); ctx.fill();
+            ctx.strokeStyle = "#ff5555"; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(3, -8); ctx.lineTo(9, -2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(9, -8); ctx.lineTo(3, -2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(3, 8); ctx.lineTo(9, 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(9, 8); ctx.lineTo(3, 2); ctx.stroke();
+            
+        } else if (player.state === 'RESTING' || player.state === 'HEALING_REST') {
+            ctx.fillStyle = player.state === 'HEALING_REST' ? theme.heal : theme.icy;
+            ctx.beginPath(); ctx.arc(0, 0, player.radius, 0, 2 * Math.PI); ctx.fill();
+            ctx.strokeStyle = "#121214"; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(5, -8); ctx.lineTo(12, -8); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(5, 8); ctx.lineTo(12, 8); ctx.stroke();
+
+            player.zzTimer++;
+            if(player.zzTimer % 60 < 30) {
+                ctx.fillStyle = player.state === 'HEALING_REST' ? "#fff" : "rgba(255,255,255,0.7)";
+                ctx.font = "bold 14px sans-serif"; ctx.fillText(player.state === 'HEALING_REST' ? "+" : "Z", -12, -18);
+                ctx.font = "bold 10px sans-serif"; ctx.fillText(player.state === 'HEALING_REST' ? "+" : "z", -22, -12);
+            }
+        } else {
+            // Running States
+            player.mouthOpen += (player.speed > 0 ? 0.2 : 0) * player.mouthDir;
+            if (player.mouthOpen >= 0.7 || player.mouthOpen <= 0) player.mouthDir *= -1;
+            
+            if (player.state === 'BURSTING') {
+                ctx.fillStyle = "rgba(255, 85, 85, 0.6)";
+                ctx.beginPath(); ctx.moveTo(-player.radius + 2, -player.radius + 2);
+                ctx.lineTo(-player.radius - 20 - Math.random()*15, -10); ctx.lineTo(-player.radius + 2, 0);
+                ctx.lineTo(-player.radius - 25 - Math.random()*15, 0); ctx.lineTo(-player.radius + 2, 10);
+                ctx.lineTo(-player.radius - 20 - Math.random()*15, 10); ctx.fill();
+            }
+
+            ctx.beginPath();
+            const mouth = player.mouthOpen * Math.PI; 
+            ctx.arc(0, 0, player.radius, mouth/2, 2 * Math.PI - mouth/2); ctx.lineTo(0, 0);
+            
+            if (player.state === 'BURSTING') ctx.fillStyle = theme.fire;
+            else if (player.state === 'TIRED') ctx.fillStyle = theme.tired;
+            else if (player.state === 'HEALING_RUN') ctx.fillStyle = theme.heal;
+            else ctx.fillStyle = theme.normal;
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    function updateDashboard() {
+        const stateEl = document.getElementById('val-state');
+        let stateText = player.state.replace('_', ' ');
+        let color = theme.normal;
+        
+        if (player.state === 'RESTING') color = theme.icy;
+        if (player.state === 'HEALING_REST' || player.state === 'HEALING_RUN') { stateText += " (LOCKED)"; color = theme.heal; }
+        if (player.state === 'TIRED') color = theme.tired;
+        if (player.state === 'BURSTING') { stateText = 'SUPER BOOST'; color = theme.fire; }
+        if (player.state === 'BURNOUT') color = theme.fire;
+        
+        stateEl.innerText = stateText;
+        stateEl.style.color = color;
+        
+        document.getElementById('val-pspeed').innerText = player.speed.toFixed(1) + ' px/s';
+        document.getElementById('val-vitality').innerText = player.health.toFixed(0) + '%';
+        
+        const hb = document.getElementById('health-bar');
+        const ht = document.getElementById('health-text');
+        hb.style.width = player.health + '%';
+        ht.innerText = player.health.toFixed(0) + '%';
+
+        if (player.health > 70) { hb.style.backgroundColor = theme.heal; document.getElementById('val-vitality').style.color = theme.heal; }
+        else if (player.health > 30) { hb.style.backgroundColor = theme.normal; document.getElementById('val-vitality').style.color = theme.normal; }
+        else if (player.health > 10) { hb.style.backgroundColor = theme.tired; document.getElementById('val-vitality').style.color = theme.tired; }
+        else { hb.style.backgroundColor = theme.fire; document.getElementById('val-vitality').style.color = theme.fire; }
+    }
+
+    function revive() {
+        isGameOver = false;
+        player.health = 100;
+        player.state = 'RESTING';
+        isHealingLock = false;
+        document.getElementById('game-over-screen').style.display = 'none';
+        player.dist = (snakeHeadDist + perimeter / 2) % perimeter; 
+    }
+
+    // Auto-Decay Loop
+    setInterval(() => {
+        let changed = false;
+        tasks.forEach(t => {
+            if (t.active && t.decay !== 0) {
+                let nextVal = t.load + t.decay;
+                t.load = Math.max(0, Math.min(100, nextVal));
+                const slider = document.querySelector(`.task-item input[type="range"][value="${Math.floor(t.load - t.decay)}"]`);
+                if(slider) slider.value = t.load;
+                const txt = document.getElementById(`val-load-${t.id}`);
+                if(txt) txt.innerText = Math.floor(t.load);
+                changed = true;
+            }
+        });
+        if (changed) {
+            saveTasks(); // Save any auto-decay updates
+            calculateGlobalLoad();
+        }
+    }, 1000);
+
+    renderTasks();
+    function loop() {
+        updatePhysics();
+        drawGame();
+        requestAnimationFrame(loop);
+    }
+    loop();
+
+</script>
+</body>
+</html>

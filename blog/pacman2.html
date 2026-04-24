@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIFE.EXE — Responsibility Engine</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --neon-yellow: #FFE000;
+    --neon-cyan: #00FFFF;
+    --neon-green: #00FF41;
+    --neon-orange: #FF6600;
+    --neon-red: #FF0033;
+    --bg-dark: #000308;
+    --bg-panel: #020b14;
+    --border-glow: #003366;
+    --cat-family: #FF4488;
+    --cat-personal: #00CCFF;
+    --cat-work: #FFAA00;
+    --cat-other: #AA44FF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-dark);
+    color: var(--neon-cyan);
+    font-family: 'Share Tech Mono', monospace;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,255,0.012) 2px, rgba(0,255,255,0.012) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  #arena-panel {
+    flex: 1; display: flex; flex-direction: column;
+    padding: 12px; gap: 10px; min-width: 0;
+  }
+
+  #hud {
+    display: flex; align-items: center; gap: 14px;
+    padding: 8px 14px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-glow);
+    box-shadow: 0 0 20px rgba(0,255,255,0.08);
+    flex-wrap: wrap;
+  }
+
+  .hud-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px; color: var(--neon-yellow);
+    text-shadow: 0 0 10px var(--neon-yellow);
+    letter-spacing: 2px; margin-right: 4px;
+  }
+
+  .hud-stat { display: flex; flex-direction: column; gap: 2px; }
+  .hud-label { color: #446688; font-size: 7px; text-transform: uppercase; letter-spacing: 1px; }
+  .hud-value { font-size: 10px; color: var(--neon-cyan); }
+
+  #status-badge {
+    padding: 3px 8px; font-size: 7px;
+    font-family: 'Press Start 2P', monospace;
+    border: 1px solid; letter-spacing: 1px;
+  }
+  .s-rest  { color: var(--neon-green);  border-color: var(--neon-green);  box-shadow: 0 0 8px rgba(0,255,65,0.4); }
+  .s-run   { color: var(--neon-yellow); border-color: var(--neon-yellow); box-shadow: 0 0 8px rgba(255,224,0,0.4); }
+  .s-danger{ color: var(--neon-red);    border-color: var(--neon-red);    box-shadow: 0 0 8px rgba(255,0,51,0.4); animation: blink .4s infinite; }
+  .s-dead  { color: #555; border-color: #333; }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+  #health-container { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .health-label { font-size: 7px; color: #446688; text-transform: uppercase; }
+  #health-bar { width: 130px; height: 14px; background: #060606; border: 1px solid #222; overflow: hidden; position: relative; }
+  #health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff0033 0%, #ff6600 35%, #ffaa00 65%, #00ff41 100%);
+    background-size: 130px 100%;
+    transition: width .25s;
+  }
+  #health-fill::after {
+    content: ''; position: absolute; top:0; left:0; right:0; height:40%;
+    background: rgba(255,255,255,.12);
+  }
+  .health-pct { font-size: 9px; color: var(--neon-green); min-width: 36px; }
+
+  #canvas-wrapper { flex: 1; position: relative; overflow: hidden; }
+  #game-canvas {
+    display: block; width: 100%; height: 100%;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-glow);
+    box-shadow: 0 0 30px rgba(0,50,100,.4), inset 0 0 60px rgba(0,0,20,.8);
+  }
+
+  #death-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.88);
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column; gap: 18px; z-index: 100;
+  }
+  #death-overlay.show { display: flex; }
+  .death-title {
+    font-family: 'Press Start 2P', monospace; font-size: 20px;
+    color: var(--neon-red); text-shadow: 0 0 20px var(--neon-red);
+    animation: glitch .35s infinite;
+  }
+  @keyframes glitch {
+    0%,100%{transform:translate(0)} 20%{transform:translate(-2px,1px)}
+    40%{transform:translate(2px,-1px)} 60%{transform:translate(-1px,2px)} 80%{transform:translate(1px,-2px)}
+  }
+  .death-sub { font-size: 9px; color: #777; text-align: center; line-height: 2; }
+  .btn-restart {
+    font-family: 'Press Start 2P', monospace; font-size: 8px;
+    padding: 10px 22px; background: transparent;
+    border: 2px solid var(--neon-yellow); color: var(--neon-yellow);
+    cursor: pointer; text-shadow: 0 0 8px var(--neon-yellow);
+    transition: all .2s;
+  }
+  .btn-restart:hover { background: rgba(255,224,0,.1); box-shadow: 0 0 25px rgba(255,224,0,.6); }
+
+  /* TASK PANEL */
+  #task-panel {
+    width: 350px; min-width: 330px;
+    background: var(--bg-panel);
+    border-left: 1px solid var(--border-glow);
+    box-shadow: -5px 0 30px rgba(0,50,100,.3);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+
+  #panel-header {
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid #0a2040;
+    background: linear-gradient(180deg,#010e1c,var(--bg-panel));
+  }
+  #panel-title {
+    font-family: 'Press Start 2P', monospace; font-size: 8px;
+    color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan);
+    letter-spacing: 2px; margin-bottom: 7px;
+  }
+  .total-load-bar { display: flex; align-items: center; gap: 8px; font-size: 8px; color: #446688; }
+  #total-load-track { flex:1; height: 8px; background: #050f18; border: 1px solid #0a2040; overflow:hidden; }
+  #total-load-fill {
+    height: 100%;
+    background: linear-gradient(90deg,var(--neon-green),var(--neon-yellow),var(--neon-red));
+    background-size: 300px 100%; transition: width .4s; width: 0%;
+  }
+  #total-load-pct { color: var(--neon-yellow); min-width: 32px; }
+
+  /* live speed strip */
+  #speed-strip {
+    padding: 5px 14px;
+    border-bottom: 1px solid #0a2040;
+    background: rgba(0,0,0,.4);
+    display: flex; gap: 10px; align-items: center;
+    font-size: 8px;
+  }
+  .ss-lbl { color: #335566; }
+  .ss-you { color: var(--neon-yellow); font-size: 9px; }
+  .ss-snake { color: #ff6688; font-size: 9px; }
+  .ss-sep { color: #112233; }
+  .ss-gap { color: var(--neon-green); font-size: 9px; }
+  .ss-hprate { font-size: 9px; }
+
+  #categories {
+    flex: 1; overflow-y: auto; padding: 10px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  #categories::-webkit-scrollbar { width: 4px; }
+  #categories::-webkit-scrollbar-track { background: #010a14; }
+  #categories::-webkit-scrollbar-thumb { background: #002244; border-radius: 2px; }
+
+  .category { border: 1px solid; overflow: hidden; transition: border-color .3s; }
+  .cat-family  { border-color: rgba(255,68,136,.3); }
+  .cat-personal{ border-color: rgba(0,204,255,.3); }
+  .cat-work    { border-color: rgba(255,170,0,.3); }
+  .cat-other   { border-color: rgba(170,68,255,.3); }
+  .cat-family:hover  { border-color: rgba(255,68,136,.7); }
+  .cat-personal:hover{ border-color: rgba(0,204,255,.7); }
+  .cat-work:hover    { border-color: rgba(255,170,0,.7); }
+  .cat-other:hover   { border-color: rgba(170,68,255,.7); }
+
+  .cat-header {
+    padding: 8px 12px; display: flex; align-items: center;
+    gap: 8px; cursor: pointer; user-select: none; background: rgba(0,0,0,.4);
+  }
+  .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 8px currentColor; }
+  .cat-family  .cat-dot  { background: var(--cat-family);  color: var(--cat-family); }
+  .cat-personal .cat-dot { background: var(--cat-personal); color: var(--cat-personal); }
+  .cat-work    .cat-dot  { background: var(--cat-work);    color: var(--cat-work); }
+  .cat-other   .cat-dot  { background: var(--cat-other);   color: var(--cat-other); }
+
+  .cat-name { font-family: 'Press Start 2P', monospace; font-size: 7px; letter-spacing: 1px; flex: 1; }
+  .cat-family  .cat-name  { color: var(--cat-family); }
+  .cat-personal .cat-name { color: var(--cat-personal); }
+  .cat-work    .cat-name  { color: var(--cat-work); }
+  .cat-other   .cat-name  { color: var(--cat-other); }
+
+  .cat-load-chip { font-size: 7px; padding: 2px 5px; border: 1px solid currentColor; opacity:.8; }
+  .cat-family  .cat-load-chip  { color: var(--cat-family); }
+  .cat-personal .cat-load-chip { color: var(--cat-personal); }
+  .cat-work    .cat-load-chip  { color: var(--cat-work); }
+  .cat-other   .cat-load-chip  { color: var(--cat-other); }
+
+  .cat-chevron { font-size: 9px; color: #446688; transition: transform .2s; }
+  .cat-body { display: flex; flex-direction: column; }
+  .cat-collapsed .cat-body { display: none; }
+  .cat-collapsed .cat-chevron { transform: rotate(-90deg); }
+
+  .add-task-row {
+    display: flex; gap: 4px; padding: 6px 10px;
+    border-top: 1px solid #0a1a28; background: rgba(0,0,0,.3);
+  }
+  .add-task-input {
+    flex: 1; background: #020d18; border: 1px solid #0a2040;
+    color: var(--neon-cyan); font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; padding: 4px 8px; outline: none; transition: border-color .2s;
+  }
+  .add-task-input:focus { border-color: var(--neon-cyan); }
+  .add-task-input::placeholder { color: #1a3a5a; }
+  .add-task-btn {
+    background: transparent; border: 1px solid #0a3060;
+    color: var(--neon-cyan); font-size: 14px; cursor: pointer;
+    padding: 4px 9px; transition: all .2s;
+  }
+  .add-task-btn:hover { background: rgba(0,255,255,.1); border-color: var(--neon-cyan); }
+
+  .task-item { padding: 8px 12px; border-bottom: 1px solid #050f1a; }
+  .task-item.done { opacity: .3; }
+  .task-item.done .task-name { text-decoration: line-through; }
+
+  .task-top { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+
+  .task-checkbox {
+    width: 12px; height: 12px; border: 1px solid #446688;
+    background: transparent; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; color: var(--neon-green); transition: all .2s;
+  }
+  .task-checkbox.checked { background: rgba(0,255,65,.15); border-color: var(--neon-green); }
+  .task-active-toggle {
+    width: 11px; height: 11px; border-radius: 50%;
+    border: 1px solid #446688; background: transparent;
+    cursor: pointer; flex-shrink: 0; transition: all .2s;
+  }
+  .task-active-toggle.active { background: var(--neon-yellow); border-color: var(--neon-yellow); box-shadow: 0 0 6px var(--neon-yellow); }
+  .task-name { flex:1; font-size: 9px; color: #aaccdd; line-height: 1.3; word-break: break-word; }
+  .task-delete { font-size: 9px; color: #333; cursor: pointer; padding: 0 2px; transition: color .2s; flex-shrink: 0; }
+  .task-delete:hover { color: var(--neon-red); }
+
+  /* SLIDER */
+  .task-slider-row { display: flex; align-items: center; gap: 6px; }
+  .slider-label { font-size: 7px; color: #335566; min-width: 22px; }
+
+  .slider-wrap {
+    flex: 1; position: relative; height: 20px;
+    display: flex; align-items: center;
+  }
+  /* Center tick = player speed (slider value 50) */
+  .slider-center-tick {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    width: 1px; height: 20px; background: rgba(255,224,0,0.45);
+    top: 0; pointer-events: none; z-index: 2;
+  }
+  .slider-center-label {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    bottom: -1px; font-size: 6px; color: rgba(255,224,0,0.5);
+    white-space: nowrap; pointer-events: none; z-index: 3;
+    font-family: 'Share Tech Mono', monospace; letter-spacing: 0;
+  }
+  .task-slider {
+    width: 100%; -webkit-appearance: none; appearance: none;
+    height: 3px; background: #0a1a2a; outline: none; cursor: pointer;
+    position: relative; z-index: 1;
+  }
+  .cat-family  .task-slider::-webkit-slider-thumb { -webkit-appearance:none; width:10px; height:10px; background:var(--cat-family);  border:1px solid var(--cat-family);  cursor:pointer; border-radius:0; }
+  .cat-personal .task-slider::-webkit-slider-thumb { -webkit-appearance:none; width:10px; height:10px; background:var(--cat-personal); border:1px solid var(--cat-personal); cursor:pointer; border-radius:0; }
+  .cat-work    .task-slider::-webkit-slider-thumb { -webkit-appearance:none; width:10px; height:10px; background:var(--cat-work);    border:1px solid var(--cat-work);    cursor:pointer; border-radius:0; }
+  .cat-other   .task-slider::-webkit-slider-thumb { -webkit-appearance:none; width:10px; height:10px; background:var(--cat-other);   border:1px solid var(--cat-other);   cursor:pointer; border-radius:0; }
+
+  .slider-val { font-size: 8px; min-width: 36px; text-align: right; }
+  .cat-family  .slider-val  { color: var(--cat-family); }
+  .cat-personal .slider-val { color: var(--cat-personal); }
+  .cat-work    .slider-val  { color: var(--cat-work); }
+  .cat-other   .slider-val  { color: var(--cat-other); }
+
+  .speed-hint {
+    font-size: 7px; color: #335566; margin-top: 2px; padding-left: 28px;
+  }
+  .speed-hint.faster { color: var(--neon-red); }
+  .speed-hint.slower { color: var(--neon-green); }
+  .speed-hint.equal  { color: var(--neon-orange); }
+
+  /* bottom */
+  #ghost-legend {
+    padding: 6px 12px; border-top: 1px solid #0a1a28;
+    display: flex; gap: 12px; flex-wrap: wrap; background: rgba(0,0,0,.3);
+  }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 7px; color: #446688; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  #speed-panel {
+    padding: 7px 12px; border-top: 1px solid #0a1a28;
+    background: #010a14; display: flex; gap: 14px; flex-wrap: wrap;
+  }
+  .speed-stat { display: flex; flex-direction: column; gap: 2px; }
+  .speed-label { font-size: 7px; color: #335566; text-transform: uppercase; }
+  .speed-val { font-size: 10px; }
+  .sv-p { color: var(--neon-yellow); text-shadow: 0 0 6px var(--neon-yellow); }
+  .sv-e { color: #ff6688; }
+  .sv-l { color: var(--neon-orange); }
+  .sv-h { color: var(--neon-green); }
+  .sv-g { color: #aaccdd; }
+</style>
+</head>
+<body>
+
+<div id="arena-panel">
+  <div id="hud">
+    <div class="hud-title">LIFE.EXE</div>
+    <div class="hud-stat">
+      <div class="hud-label">STATUS</div>
+      <div id="status-badge" class="s-rest hud-value">RESTING</div>
+    </div>
+    <div class="hud-stat">
+      <div class="hud-label">SCORE</div>
+      <div id="score-val" class="hud-value">000000</div>
+    </div>
+    <div class="hud-stat">
+      <div class="hud-label">THREATS</div>
+      <div id="enemy-count" class="hud-value">0</div>
+    </div>
+    <div class="hud-stat">
+      <div class="hud-label">SNAKE</div>
+      <div id="snake-len" class="hud-value">0 segs</div>
+    </div>
+    <div id="health-container">
+      <div class="health-label">VITALITY</div>
+      <div id="health-bar"><div id="health-fill"></div></div>
+      <div id="health-pct" class="health-pct">100%</div>
+    </div>
+  </div>
+
+  <div id="canvas-wrapper">
+    <canvas id="game-canvas"></canvas>
+    <div id="death-overlay">
+      <div class="death-title">BURNOUT.EXE</div>
+      <div class="death-sub">RESPONSIBILITIES CAUGHT UP.<br>SYSTEM OVERLOADED. HEALTH = 0.</div>
+      <button class="btn-restart" onclick="restartGame()">[ RESPAWN ]</button>
+    </div>
+  </div>
+</div>
+
+<div id="task-panel">
+  <div id="panel-header">
+    <div id="panel-title">RESPONSIBILITIES</div>
+    <div class="total-load-bar">
+      <span>SNAKE LOAD:</span>
+      <div id="total-load-track"><div id="total-load-fill"></div></div>
+      <span id="total-load-pct">0%</span>
+    </div>
+  </div>
+
+  <div id="speed-strip">
+    <div class="ss-lbl">YOU</div><div id="ss-you" class="ss-you">—</div>
+    <div class="ss-sep">│</div>
+    <div class="ss-lbl">SNAKE</div><div id="ss-snake" class="ss-snake">—</div>
+    <div class="ss-sep">│</div>
+    <div class="ss-lbl">GAP</div><div id="ss-gap" class="ss-gap">—</div>
+    <div class="ss-sep">│</div>
+    <div class="ss-lbl">HP</div><div id="ss-hp" class="ss-hprate">—</div>
+  </div>
+
+  <div id="categories">
+    <div class="category cat-family" id="cat-family">
+      <div class="cat-header" onclick="toggleCat('family')">
+        <div class="cat-dot"></div><div class="cat-name">FAMILY</div>
+        <div class="cat-load-chip" id="load-family">0%</div><div class="cat-chevron">▼</div>
+      </div>
+      <div class="cat-body" id="body-family">
+        <div class="add-task-row">
+          <input class="add-task-input" id="input-family" placeholder="add responsibility..." onkeydown="if(event.key==='Enter')addTask('family')">
+          <button class="add-task-btn" onclick="addTask('family')">+</button>
+        </div>
+        <div id="tasks-family"></div>
+      </div>
+    </div>
+
+    <div class="category cat-personal" id="cat-personal">
+      <div class="cat-header" onclick="toggleCat('personal')">
+        <div class="cat-dot"></div><div class="cat-name">PERSONAL</div>
+        <div class="cat-load-chip" id="load-personal">0%</div><div class="cat-chevron">▼</div>
+      </div>
+      <div class="cat-body" id="body-personal">
+        <div class="add-task-row">
+          <input class="add-task-input" id="input-personal" placeholder="add responsibility..." onkeydown="if(event.key==='Enter')addTask('personal')">
+          <button class="add-task-btn" onclick="addTask('personal')">+</button>
+        </div>
+        <div id="tasks-personal"></div>
+      </div>
+    </div>
+
+    <div class="category cat-work" id="cat-work">
+      <div class="cat-header" onclick="toggleCat('work')">
+        <div class="cat-dot"></div><div class="cat-name">WORK</div>
+        <div class="cat-load-chip" id="load-work">0%</div><div class="cat-chevron">▼</div>
+      </div>
+      <div class="cat-body" id="body-work">
+        <div class="add-task-row">
+          <input class="add-task-input" id="input-work" placeholder="add responsibility..." onkeydown="if(event.key==='Enter')addTask('work')">
+          <button class="add-task-btn" onclick="addTask('work')">+</button>
+        </div>
+        <div id="tasks-work"></div>
+      </div>
+    </div>
+
+    <div class="category cat-other" id="cat-other">
+      <div class="cat-header" onclick="toggleCat('other')">
+        <div class="cat-dot"></div><div class="cat-name">OTHERS' ASKS</div>
+        <div class="cat-load-chip" id="load-other">0%</div><div class="cat-chevron">▼</div>
+      </div>
+      <div class="cat-body" id="body-other">
+        <div class="add-task-row">
+          <input class="add-task-input" id="input-other" placeholder="add responsibility..." onkeydown="if(event.key==='Enter')addTask('other')">
+          <button class="add-task-btn" onclick="addTask('other')">+</button>
+        </div>
+        <div id="tasks-other"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ghost-legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#FF4488;box-shadow:0 0 5px #FF4488"></div>FAMILY</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00CCFF;box-shadow:0 0 5px #00CCFF"></div>PERSONAL</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#FFAA00;box-shadow:0 0 5px #FFAA00"></div>WORK</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#AA44FF;box-shadow:0 0 5px #AA44FF"></div>OTHERS</div>
+    <div class="legend-item" style="margin-left:auto"><div class="legend-dot" style="background:#FFE000;box-shadow:0 0 5px #FFE000;border-radius:0;width:6px;height:12px"></div>= YOU speed</div>
+  </div>
+
+  <div id="speed-panel">
+    <div class="speed-stat"><div class="speed-label">Your Speed</div><div id="sv-p" class="speed-val sv-p">—</div></div>
+    <div class="speed-stat"><div class="speed-label">Snake Speed</div><div id="sv-e" class="speed-val sv-e">—</div></div>
+    <div class="speed-stat"><div class="speed-label">Avg Load</div><div id="sv-l" class="speed-val sv-l">0%</div></div>
+    <div class="speed-stat"><div class="speed-label">HP Rate</div><div id="sv-h" class="speed-val sv-h">—</div></div>
+    <div class="speed-stat"><div class="speed-label">Gap</div><div id="sv-g" class="speed-val sv-g">—</div></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════════════════
+
+// Player base speed (perimeter fraction per ms)
+const PLAYER_BASE_SPEED = 0.00015;
+
+// Slider 0   → ghost speed = 0.30× player  (very slow, easy)
+// Slider 50  → ghost speed = 1.00× player  (center mark = YOU)
+// Slider 100 → ghost speed = 2.20× player  (very fast, dangerous)
+function sliderToSpeed(v) {
+  if (v <= 50) return PLAYER_BASE_SPEED * (0.30 + (v/50)*0.70);
+  return PLAYER_BASE_SPEED * (1.00 + ((v-50)/50)*1.20);
+}
+
+function computeSnakeSpeed() {
+  const active = getAllActive();
+  if (!active.length) return 0;
+  return active.reduce((s,t)=>s+sliderToSpeed(t.load),0) / active.length;
+}
+
+function getAllActive() {
+  const out = [];
+  for (const cat of CATS) tasks[cat].forEach(t=>{ if(t.active&&!t.done) out.push(t); });
+  return out;
+}
+
+const CATS = ['family','personal','work','other'];
+const COLORS = { family:'#FF4488', personal:'#00CCFF', work:'#FFAA00', other:'#AA44FF' };
+
+// Rest thresholds (fraction of perimeter)
+const THRESH_REST  = 0.28; // player stops if gap > this
+const THRESH_WAKE  = 0.16; // player wakes up if gap < this
+const THRESH_DANGER= 0.07; // panic sprint if gap < this
+
+// Segment spacing on perimeter (fraction)
+const SEG_SPACING  = 30;   // pixels between snake segments
+
+// ══════════════════════════════════════════════════════
+// TASK SYSTEM
+// ══════════════════════════════════════════════════════
+let tasks = { family:[], personal:[], work:[], other:[] };
+let taskIdCounter = 0;
+
+function addTask(cat) {
+  const inp = document.getElementById(`input-${cat}`);
+  const name = inp.value.trim(); if (!name) return;
+  tasks[cat].push({ id:taskIdCounter++, name, load:30, active:true, done:false, cat });
+  inp.value='';
+  renderTasks(cat); updateTotalLoad();
+}
+
+function renderTasks(cat) {
+  const con = document.getElementById(`tasks-${cat}`);
+  con.innerHTML='';
+  tasks[cat].forEach(t => {
+    const spd = sliderToSpeed(t.load);
+    const ratio = spd / PLAYER_BASE_SPEED;
+    const pct = Math.round(ratio*100);
+    const faster = ratio > 1.05, slower = ratio < 0.95;
+    const hintTxt = faster ? `▲ ${ratio.toFixed(2)}× — FASTER than you!` : slower ? `▼ ${ratio.toFixed(2)}× — manageable` : `≈ same as your speed`;
+    const hintCls = faster?'faster': slower?'slower':'equal';
+
+    const d = document.createElement('div');
+    d.className=`task-item${t.done?' done':''}`;
+    d.innerHTML=`
+      <div class="task-top">
+        <div class="task-checkbox ${t.done?'checked':''}" onclick="toggleDone(${t.id},'${cat}')">${t.done?'✓':''}</div>
+        <div class="task-active-toggle ${t.active&&!t.done?'active':''}" onclick="toggleActive(${t.id},'${cat}')"></div>
+        <div class="task-name">${t.name}</div>
+        <div class="task-delete" onclick="deleteTask(${t.id},'${cat}')">✕</div>
+      </div>
+      <div class="task-slider-row">
+        <div class="slider-label">SPD</div>
+        <div class="slider-wrap">
+          <div class="slider-center-label">YOU</div>
+          <div class="slider-center-tick"></div>
+          <input type="range" class="task-slider" min="0" max="100" value="${t.load}"
+            oninput="setLoad(${t.id},'${cat}',this.value)" ${t.done?'disabled':''}>
+        </div>
+        <div class="slider-val" id="slv-${t.id}">${pct}% spd</div>
+      </div>
+      <div class="speed-hint ${hintCls}" id="hint-${t.id}">${hintTxt}</div>
+    `;
+    con.appendChild(d);
+  });
+}
+
+function toggleDone(id,cat) {
+  const t=tasks[cat].find(x=>x.id===id); if(!t)return;
+  t.done=!t.done; if(t.done)t.active=false;
+  renderTasks(cat); updateTotalLoad();
+}
+function toggleActive(id,cat) {
+  const t=tasks[cat].find(x=>x.id===id); if(!t||t.done)return;
+  t.active=!t.active; renderTasks(cat); updateTotalLoad();
+}
+function deleteTask(id,cat) {
+  tasks[cat]=tasks[cat].filter(x=>x.id!==id); renderTasks(cat); updateTotalLoad();
+}
+function setLoad(id,cat,val) {
+  const t=tasks[cat].find(x=>x.id===id); if(!t)return;
+  t.load=parseInt(val); renderTasks(cat); updateTotalLoad();
+}
+
+function getAvgLoad() {
+  const a=getAllActive(); if(!a.length)return 0;
+  return a.reduce((s,t)=>s+t.load,0)/a.length;
+}
+
+function updateTotalLoad() {
+  const avg=getAvgLoad();
+  document.getElementById('total-load-fill').style.width=avg+'%';
+  document.getElementById('total-load-pct').textContent=Math.round(avg)+'%';
+  document.getElementById('sv-l').textContent=Math.round(avg)+'%';
+  for(const cat of CATS){
+    const arr=tasks[cat].filter(t=>t.active&&!t.done);
+    const ca=arr.length?arr.reduce((s,t)=>s+t.load,0)/arr.length:0;
+    document.getElementById(`load-${cat}`).textContent=Math.round(ca)+'%';
+  }
+}
+function toggleCat(cat){document.getElementById(`cat-${cat}`).classList.toggle('cat-collapsed');}
+
+// ══════════════════════════════════════════════════════
+// GAME ENGINE
+// ══════════════════════════════════════════════════════
+const canvas=document.getElementById('game-canvas');
+const ctx=canvas.getContext('2d');
+let game=null;
+
+function perimLen(tr){return 2*(tr.w+tr.h);}
+function perimPt(tr,t){
+  const L=perimLen(tr); let d=(((t%1)+1)%1)*L;
+  if(d<tr.w)return{x:tr.x+d,y:tr.y};
+  d-=tr.w; if(d<tr.h)return{x:tr.x+tr.w,y:tr.y+d};
+  d-=tr.h; if(d<tr.w)return{x:tr.x+tr.w-d,y:tr.y+tr.h};
+  d-=tr.w; return{x:tr.x,y:tr.y+tr.h-d};
+}
+function perimAngle(tr,t){
+  const L=perimLen(tr); let d=(((t%1)+1)%1)*L;
+  if(d<tr.w)return 0; d-=tr.w;
+  if(d<tr.h)return Math.PI/2; d-=tr.h;
+  if(d<tr.w)return Math.PI;
+  return -Math.PI/2;
+}
+
+// Gap = fraction of perimeter that player is AHEAD of snake head
+// Positive = player is ahead (good)
+function gap(pT, sT) { return ((pT - sT)+1)%1; }
+
+function initGame(){
+  const W=canvas.parentElement.clientWidth, H=canvas.parentElement.clientHeight;
+  canvas.width=W; canvas.height=H;
+  const pad=60;
+  const track={x:pad,y:pad,w:W-pad*2,h:H-pad*2};
+
+  game={
+    track, W, H,
+    player:{ t:0, radius:14, health:100, score:0, alive:true, resting:false, speed:0, mouthOpen:0, mouthDir:1 },
+    // Snake: one moving entity; segments are body parts following head
+    snakeHead:{ t:0.55 }, // starts behind player
+    snakeSegments:[], // [{t, cat, taskId, task, wobble}]
+    headHistory:[], // ring buffer of head t values, for body follow
+    dots:generateDots(track),
+    particles:[],
+    restScore:0,
+    loadDecayTimer:0,
+    DECAY_INTERVAL:10000,
+    lastTime:null,
+  };
+
+  syncSnake();
+  document.getElementById('death-overlay').classList.remove('show');
+}
+
+function generateDots(tr){
+  const d=[];
+  for(let i=0;i<50;i++) d.push({t:i/50,eaten:false});
+  return d;
+}
+
+function syncSnake(){
+  if(!game) return;
+  const active=getAllActive();
+  const {snakeSegments, snakeHead, track} = game;
+  const L=perimLen(track);
+
+  // Remove departed
+  game.snakeSegments=snakeSegments.filter(s=>active.find(a=>a.id===s.taskId));
+
+  // Add new
+  active.forEach((t,i)=>{
+    if(!game.snakeSegments.find(s=>s.taskId===t.id)){
+      // Place at end of current tail
+      const tail=game.snakeSegments.length
+        ? game.snakeSegments[game.snakeSegments.length-1].t
+        : snakeHead.t;
+      const offset=(game.snakeSegments.length+1)*SEG_SPACING/L;
+      game.snakeSegments.push({
+        taskId:t.id, cat:t.cat, task:t, t:((tail-offset)+1)%1, wobble:Math.random()*Math.PI*2
+      });
+    } else {
+      const s=game.snakeSegments.find(s=>s.taskId===t.id);
+      s.task=t; s.cat=t.cat;
+    }
+  });
+
+  // History length = enough for all segments
+  const needed=(game.snakeSegments.length+2)*Math.ceil(SEG_SPACING/0.4)+200;
+  while(game.headHistory.length<needed) game.headHistory.push(snakeHead.t);
+
+  document.getElementById('enemy-count').textContent=active.length;
+  document.getElementById('snake-len').textContent=game.snakeSegments.length+' segs';
+}
+
+function update(ts){
+  if(!game||!game.player.alive)return;
+  if(!game.lastTime){game.lastTime=ts; return;}
+  const dt=Math.min(ts-game.lastTime,80);
+  game.lastTime=ts;
+
+  const {track,player,snakeHead,dots}=game;
+  const L=perimLen(track);
+
+  syncSnake();
+
+  const active=getAllActive();
+  const hasThreats=active.length>0;
+  const snakeSpd=computeSnakeSpeed();
+
+  // Gap between player (ahead) and snake head (behind)
+  const g=gap(player.t, snakeHead.t); // 0..1, higher = farther ahead
+  const gPx=g*L;
+
+  // Player behavior
+  // States: rest (stopped, recharge) | run (base) | sprint (danger)
+  const isDanger  = hasThreats && g < THRESH_DANGER;
+  const isClose   = hasThreats && g < THRESH_WAKE;
+  const isFarAhead= !hasThreats || g > THRESH_REST;
+
+  // State transitions
+  if (isFarAhead && !player.resting) player.resting=true;
+  if (isClose && player.resting) player.resting=false;
+
+  let pSpd;
+  if(!hasThreats){
+    pSpd=PLAYER_BASE_SPEED*0.2; // barely drifting, full rest
+    player.resting=true;
+  } else if(player.resting){
+    // Stopped — but keep just barely ahead of own drift
+    // Actually fully stopped: t doesn't change
+    pSpd=0;
+  } else if(isDanger){
+    pSpd=Math.max(snakeSpd*1.5, PLAYER_BASE_SPEED*1.8);
+  } else {
+    pSpd=PLAYER_BASE_SPEED;
+  }
+
+  player.speed=pSpd;
+  player.t=(player.t+pSpd*dt)%1;
+
+  // Snake head moves
+  if(hasThreats){
+    snakeHead.t=(snakeHead.t+snakeSpd*dt)%1;
+
+    // Push to history (prepend)
+    game.headHistory.unshift(snakeHead.t);
+    const maxLen=(game.snakeSegments.length+2)*Math.ceil(SEG_SPACING/0.4)+200;
+    if(game.headHistory.length>maxLen) game.headHistory.length=maxLen;
+
+    // Body segments follow head history
+    const stepsPerSeg=Math.ceil(SEG_SPACING / Math.max(snakeSpd*dt, 0.1));
+    game.snakeSegments.forEach((seg,i)=>{
+      const idx=Math.min((i+1)*stepsPerSeg, game.headHistory.length-1);
+      seg.t=game.headHistory[idx];
+      seg.wobble+=0.005*dt;
+    });
+  }
+
+  // Health
+  let hr;
+  if(!hasThreats)         hr=+0.06;   // full rest, recharge fast
+  else if(player.resting) hr=+0.028;  // resting, recharge slow
+  else if(isDanger)       hr=-0.09;   // danger, drain fast
+  else                    hr=-0.013;  // running, drain slow
+
+  player.health=Math.max(0,Math.min(100,player.health+hr*dt*0.1));
+
+  if(player.health<=0){
+    player.alive=false;
+    document.getElementById('death-overlay').classList.add('show');
+    return;
+  }
+
+  // Catch check
+  if(hasThreats && g<0.5){
+    if(gPx<24){
+      player.health=Math.max(0,player.health-7);
+      snakeHead.t=(snakeHead.t-0.04+1)%1;
+    }
+  }
+
+  // Dots
+  dots.forEach(d=>{
+    if(d.eaten)return;
+    const dl=Math.abs(player.t-d.t);
+    if(Math.min(dl,1-dl)*L<15){ d.eaten=true; player.score+=10; spawnParticle(perimPt(track,d.t)); }
+  });
+  if(dots.every(d=>d.eaten)) game.dots=generateDots(track);
+
+  // Decay
+  game.loadDecayTimer+=dt;
+  if(game.loadDecayTimer>game.DECAY_INTERVAL){game.loadDecayTimer=0;decayLoads();}
+
+  game.particles=game.particles.filter(p=>p.life>0);
+  game.particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=2;p.vx*=0.93;p.vy*=0.93;});
+
+  if(player.resting||!hasThreats) game.restScore+=dt*0.015;
+
+  updateHUD(player.resting,isDanger,!hasThreats,pSpd,snakeSpd,gPx,hr);
+}
+
+function decayLoads(){
+  for(const cat of CATS){ tasks[cat].forEach(t=>{if(!t.done&&t.active&&t.load>0)t.load=Math.max(0,t.load-2);}); renderTasks(cat); }
+  updateTotalLoad();
+}
+
+function spawnParticle(pos){
+  for(let i=0;i<4;i++) game.particles.push({x:pos.x,y:pos.y,vx:(Math.random()-.5)*3,vy:(Math.random()-.5)*3,life:60,color:'#FFE000'});
+}
+
+function updateHUD(resting,isDanger,noThreats,pSpd,snakeSpd,gPx,hr){
+  const badge=document.getElementById('status-badge');
+  const cls=!game.player.alive?'s-dead':isDanger?'s-danger':resting?'s-rest':'s-run';
+  badge.className='hud-value '+cls;
+  badge.textContent=!game.player.alive?'BURNOUT':isDanger?'DANGER!':resting?'RESTING':'RUNNING';
+
+  const hp=game.player.health;
+  document.getElementById('health-fill').style.width=hp+'%';
+  document.getElementById('health-pct').textContent=Math.round(hp)+'%';
+  document.getElementById('score-val').textContent=String(Math.floor(game.player.score+game.restScore)).padStart(6,'0');
+
+  const ps=(pSpd*10000).toFixed(2)+'u';
+  const ss=(snakeSpd*10000).toFixed(2)+'u';
+  const gapStr=noThreats?'∞':Math.round(gPx)+'px';
+  const hrStr=(hr>0?'+':'')+hr.toFixed(3)+'/t';
+  const hpCol=hr>0?'#00ff41':hr<-0.05?'#ff0033':'#ffaa00';
+
+  document.getElementById('sv-p').textContent=ps;
+  document.getElementById('sv-e').textContent=ss;
+  document.getElementById('sv-g').textContent=gapStr;
+  document.getElementById('sv-h').textContent=hrStr;
+  document.getElementById('sv-h').style.color=hpCol;
+
+  document.getElementById('ss-you').textContent=ps;
+  document.getElementById('ss-snake').textContent=ss;
+  document.getElementById('ss-gap').textContent=gapStr;
+  document.getElementById('ss-hp').textContent=hrStr;
+  document.getElementById('ss-hp').style.color=hpCol;
+}
+
+// ══════════════════════════════════════════════════════
+// DRAW
+// ══════════════════════════════════════════════════════
+function draw(){
+  if(!game)return;
+  const{W,H,track,player,snakeHead,snakeSegments,dots,particles}=game;
+  ctx.clearRect(0,0,W,H);
+  drawGrid(W,H);
+  drawTrack(track);
+  drawDots(dots,track);
+  particles.forEach(p=>{
+    ctx.save(); ctx.globalAlpha=p.life/60; ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2); ctx.fill(); ctx.restore();
+  });
+  const active=getAllActive();
+  if(active.length) drawSnake(snakeHead, snakeSegments, track);
+  if(player.alive) drawPlayer(player,track);
+}
+
+function drawGrid(W,H){
+  ctx.strokeStyle='#001525'; ctx.lineWidth=0.5;
+  const gs=30;
+  for(let x=0;x<W;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+}
+
+function drawTrack(tr){
+  ctx.save();
+  ctx.strokeStyle='rgba(0,100,200,0.08)'; ctx.lineWidth=14;
+  ctx.beginPath(); ctx.roundRect(tr.x-20,tr.y-20,tr.w+40,tr.h+40,20); ctx.stroke();
+  ctx.strokeStyle='#003366'; ctx.lineWidth=2;
+  ctx.shadowColor='#0066CC'; ctx.shadowBlur=18;
+  ctx.beginPath(); ctx.roundRect(tr.x-16,tr.y-16,tr.w+32,tr.h+32,16); ctx.stroke();
+  ctx.restore();
+}
+
+function drawDots(dots,tr){
+  dots.forEach(d=>{
+    if(d.eaten)return;
+    const p=perimPt(tr,d.t);
+    ctx.save(); ctx.fillStyle='#fff'; ctx.shadowColor='#aaccff'; ctx.shadowBlur=6;
+    ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2); ctx.fill(); ctx.restore();
+  });
+}
+
+function drawSnake(head, segs, tr){
+  const L=perimLen(tr);
+  // All parts: head first, then body segments
+  const parts=[{t:head.t,isHead:true},...segs.map(s=>({...s,isHead:false}))];
+
+  // Draw connecting tubes between consecutive parts
+  for(let i=0;i<parts.length-1;i++){
+    const a=perimPt(tr,parts[i].t), b=perimPt(tr,parts[i+1].t);
+    const dx=b.x-a.x, dy=b.y-a.y, dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<90){
+      const col=parts[i+1].cat?COLORS[parts[i+1].cat]:'#888888';
+      ctx.save();
+      ctx.strokeStyle=col; ctx.globalAlpha=0.3;
+      ctx.lineWidth=8; ctx.shadowColor=col; ctx.shadowBlur=6; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // Draw segments body→head (so head is on top)
+  for(let i=parts.length-1;i>=0;i--){
+    const pt=perimPt(tr,parts[i].t);
+    if(parts[i].isHead) drawSnakeHead(pt,segs,tr);
+    else drawSegBody(pt,parts[i],i,parts.length);
+  }
+
+  // Danger arc
+  if(game.player.alive){
+    const snakePos=perimPt(tr,head.t);
+    const playerPos=perimPt(tr,game.player.t);
+    const g=gap(game.player.t,head.t);
+    const gPx=g*L;
+    if(gPx<L*0.22&&g<0.5){
+      const alpha=Math.max(0,1-gPx/(L*0.22))*0.45;
+      ctx.save();
+      ctx.strokeStyle=`rgba(255,30,30,${alpha})`; ctx.lineWidth=1;
+      ctx.setLineDash([4,8]);
+      ctx.beginPath(); ctx.moveTo(playerPos.x,playerPos.y); ctx.lineTo(snakePos.x,snakePos.y); ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
+function drawSnakeHead(pos, segs, tr){
+  const active=getAllActive(); if(!active.length)return;
+  const snakeSpd=computeSnakeSpeed();
+  const ratio=snakeSpd/PLAYER_BASE_SPEED;
+
+  // Pick dominant cat by highest load
+  const dom=active.reduce((a,b)=>a.load>b.load?a:b);
+  const col=COLORS[dom.cat];
+  const W2=26,H2=28;
+  const t=Date.now()*0.001;
+
+  ctx.save(); ctx.translate(pos.x,pos.y);
+
+  const auraColor=ratio>1.05?'#ff2244':ratio>0.9?'#ffaa00':'#44cc44';
+  ctx.shadowColor=auraColor;
+  ctx.shadowBlur=18+Math.sin(t*4)*6;
+
+  ctx.fillStyle=col;
+  ctx.beginPath();
+  ctx.arc(0,-H2*.2,W2*.5,Math.PI,0);
+  ctx.lineTo(W2*.5,H2*.32);
+  for(let i=3;i>=0;i--){
+    ctx.lineTo(-W2*.5+(W2/3)*i, H2*.32+(i%2===0?5:-5)+Math.sin(t*3+i)*2);
+  }
+  ctx.closePath(); ctx.fill();
+
+  ctx.shadowBlur=0;
+  ctx.fillStyle='white';
+  ctx.beginPath(); ctx.ellipse(-7,-H2*.2,5,6,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(7,-H2*.2,5,6,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#001133';
+  ctx.beginPath(); ctx.arc(-7,-H2*.2,3,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(7,-H2*.2,3,0,Math.PI*2); ctx.fill();
+
+  // Speed bar above head
+  const bw=40;
+  ctx.fillStyle='#0a0a0a'; ctx.fillRect(-bw/2,-H2-6,bw,6);
+  const frac=Math.min(1,ratio/2.2);
+  const barCol=frac>0.5?'#ff2244':frac>0.42?'#ffaa00':'#00ff41';
+  ctx.fillStyle=barCol; ctx.fillRect(-bw/2,-H2-6,bw*frac,6);
+  // Center marker = player speed
+  ctx.fillStyle='#FFE000'; ctx.fillRect(-1,-H2-8,2,10);
+
+  // Speed label
+  ctx.fillStyle=auraColor; ctx.font='6px Share Tech Mono'; ctx.textAlign='center';
+  ctx.fillText(`${(ratio*100).toFixed(0)}% SPD`,-bw/2+bw*frac/2,-H2-9);
+
+  ctx.restore();
+}
+
+function drawSegBody(pos, seg, idx, total){
+  const col=COLORS[seg.cat]||'#888';
+  const shrink=Math.max(0.55,1-idx*0.035);
+  const W2=(22-idx*0.4)*shrink, H2=(24-idx*0.4)*shrink;
+  const t=seg.wobble;
+
+  ctx.save(); ctx.translate(pos.x,pos.y);
+  ctx.shadowColor=col; ctx.shadowBlur=10;
+  ctx.fillStyle=col+'bb';
+  ctx.beginPath();
+  ctx.arc(0,-H2*.2,W2*.5,Math.PI,0);
+  ctx.lineTo(W2*.5,H2*.3);
+  for(let i=3;i>=0;i--){
+    ctx.lineTo(-W2*.5+(W2/3)*i, H2*.3+(i%2===0?4:-4)+Math.sin(t+i)*1.5);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(255,255,255,0.65)';
+  ctx.beginPath(); ctx.ellipse(-W2*.25,-H2*.2,W2*.18,W2*.22,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(W2*.25,-H2*.2,W2*.18,W2*.22,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#00113a';
+  ctx.beginPath(); ctx.arc(-W2*.25,-H2*.2,W2*.1,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W2*.25,-H2*.2,W2*.1,0,Math.PI*2); ctx.fill();
+
+  // Task label (only first few)
+  if(seg.task&&idx<=4){
+    ctx.restore(); ctx.save(); ctx.translate(pos.x,pos.y);
+    ctx.fillStyle=col; ctx.globalAlpha=0.65;
+    ctx.font='6px Share Tech Mono'; ctx.textAlign='center';
+    const lbl=seg.task.name.length>11?seg.task.name.slice(0,10)+'…':seg.task.name;
+    ctx.fillText(lbl,0,-(H2+10));
+  }
+  ctx.restore();
+}
+
+function drawPlayer(player,tr){
+  const pos=perimPt(tr,player.t);
+  const ang=perimAngle(tr,player.t);
+  const R=player.radius;
+
+  if(!player.resting||player.speed>0){
+    player.mouthOpen+=0.14*player.mouthDir;
+    if(player.mouthOpen>0.28)player.mouthDir=-1;
+    if(player.mouthOpen<0)player.mouthDir=1;
+  }
+  const ma=player.resting?0.04:player.mouthOpen;
+
+  ctx.save(); ctx.translate(pos.x,pos.y); ctx.rotate(ang);
+  ctx.shadowColor='#FFE000'; ctx.shadowBlur=player.resting?35:22;
+  ctx.fillStyle='#FFE000';
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,R,ma,Math.PI*2-ma); ctx.closePath(); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.arc(R*.3,-R*.4,R*.15,0,Math.PI*2); ctx.fill();
+
+  if(player.resting){
+    ctx.rotate(-ang);
+    ctx.fillStyle='rgba(0,255,65,0.75)'; ctx.font='7px Press Start 2P'; ctx.textAlign='left';
+    const zn=Math.floor(Date.now()/450)%3;
+    ctx.fillText('z'.repeat(zn+1),R+4,-R*.3);
+  }
+  ctx.restore();
+
+  // Vitality ring
+  const hp=player.health/100, hue=hp*120;
+  ctx.save();
+  ctx.strokeStyle=`hsla(${hue},100%,50%,${0.18+hp*.38})`;
+  ctx.lineWidth=2; ctx.shadowColor=`hsl(${hue},100%,50%)`; ctx.shadowBlur=14;
+  ctx.beginPath(); ctx.arc(pos.x,pos.y,R+6,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════════════
+// LOOP
+// ══════════════════════════════════════════════════════
+function loop(ts){update(ts);draw();requestAnimationFrame(loop);}
+function restartGame(){initGame();}
+window.addEventListener('resize',()=>{if(game)initGame();});
+
+initGame(); updateTotalLoad(); requestAnimationFrame(loop);
+
+setTimeout(()=>{
+  tasks.work.push({id:taskIdCounter++,name:'PhD defense prep',load:70,active:true,done:false,cat:'work'});
+  tasks.personal.push({id:taskIdCounter++,name:'exercise routine',load:30,active:true,done:false,cat:'personal'});
+  tasks.family.push({id:taskIdCounter++,name:'call mom',load:20,active:true,done:false,cat:'family'});
+  tasks.other.push({id:taskIdCounter++,name:'help friend move',load:55,active:true,done:false,cat:'other'});
+  for(const cat of CATS)renderTasks(cat);
+  updateTotalLoad();
+},80);
+</script>
+</body>
+</html>
