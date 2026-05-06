@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eisenhower Matrix</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --primary-btn: #334155;
+            --text-dark: #0f172a;
+            --text-muted: #475569;
+            
+            /* Semantic Colors for Matrix */
+            /* Q1: Do Now (Urgent & Important) - Red for Action/Urgency */
+            --q1-border: #ef4444;
+            --q1-bg: #fee2e2;
+            
+            /* Q2: Plan (Important, Not Urgent) - Blue for Calm Planning */
+            --q2-border: #3b82f6;
+            --q2-bg: #dbeafe;
+            
+            /* Q3: Delegate (Urgent, Not Important) - Amber for Caution/Handoff */
+            --q3-border: #f59e0b;
+            --q3-bg: #fef3c7;
+            
+            /* Q4: Drop (Not Urgent, Not Important) - Gray for Deletion/Waste */
+            --q4-border: #64748b;
+            --q4-bg: #f1f5f9;
+            
+            --inbox-bg: #e2e8f0;
+            --done-bg: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            padding: 1.5rem;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 850px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        /* Input Section */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary-btn);
+        }
+
+        .input-group button {
+            background-color: var(--primary-btn);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .input-group button:hover {
+            background-color: #0f172a;
+        }
+
+        /* Collapsible Sections */
+        details {
+            margin-bottom: 1rem;
+            background: var(--inbox-bg);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+        }
+        
+        details#done-section {
+            background: var(--done-bg);
+            margin-top: 1rem;
+        }
+
+        summary {
+            padding: 10px 15px;
+            font-weight: 600;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+            user-select: none;
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        summary::after {
+            content: '▼';
+            font-size: 0.7rem;
+            transition: transform 0.2s;
+            color: var(--text-muted);
+        }
+
+        details[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        /* Dropzones */
+        .task-list {
+            min-height: 60px;
+            padding: 10px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Matrix Grid */
+        .matrix {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .matrix {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .quadrant {
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            min-height: 180px; /* Smaller height */
+            border-top: 4px solid;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .quadrant h2 {
+            margin: 0 0 4px 0;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin: 0 0 10px 0;
+            line-height: 1.2;
+            font-style: italic;
+        }
+
+        /* Semantic Quadrant Styling */
+        .q1 { background-color: var(--q1-bg); border-color: var(--q1-border); }
+        .q1 h2 { color: #b91c1c; }
+
+        .q2 { background-color: var(--q2-bg); border-color: var(--q2-border); }
+        .q2 h2 { color: #1d4ed8; }
+
+        .q3 { background-color: var(--q3-bg); border-color: var(--q3-border); }
+        .q3 h2 { color: #b45309; }
+
+        .q4 { background-color: var(--q4-bg); border-color: var(--q4-border); }
+        .q4 h2 { color: #334155; }
+
+        .q1 .task-list, .q2 .task-list, .q3 .task-list, .q4 .task-list {
+            padding: 0;
+            flex: 1;
+        }
+
+        /* Task Items */
+        .task {
+            background-color: #ffffff;
+            color: var(--text-dark);
+            padding: 10px 12px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: grab;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-size: 0.9rem;
+            transition: box-shadow 0.2s, transform 0.1s;
+        }
+
+        .task:active {
+            cursor: grabbing;
+        }
+
+        .task:hover {
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+
+        .task.dragging {
+            opacity: 0.4;
+            transform: scale(0.98);
+        }
+
+        .task span {
+            word-break: break-word;
+            padding-right: 10px;
+            line-height: 1.3;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0 5px;
+            transition: color 0.2s;
+        }
+
+        .delete-btn:hover {
+            color: #ef4444;
+        }
+
+        /* Drag over effect */
+        .drag-over {
+            background-color: rgba(0, 0, 0, 0.05) !important;
+            border-radius: 6px;
+            border: 1px dashed #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Eisenhower Matrix Builder</h1>
+
+    <div class="input-group">
+        <input type="text" id="taskInput" placeholder="Enter a new task...">
+        <button onclick="addTask()">Add Task</button>
+    </div>
+
+    <!-- Inbox -->
+    <details open id="inbox-section">
+        <summary>Inbox (Unsorted Tasks)</summary>
+        <div id="inbox" class="task-list" data-zone="inbox"></div>
+    </details>
+
+    <!-- Matrix -->
+    <div class="matrix">
+        <div class="quadrant q1">
+            <h2>Do Now</h2>
+            <p class="hint">Urgent & Important. Critical deadlines, emergencies.</p>
+            <div id="q1" class="task-list" data-zone="q1"></div>
+        </div>
+
+        <div class="quadrant q2">
+            <h2>Schedule</h2>
+            <p class="hint">Important, Not Urgent. High value, strategic planning.</p>
+            <div id="q2" class="task-list" data-zone="q2"></div>
+        </div>
+
+        <div class="quadrant q3">
+            <h2>Delegate</h2>
+            <p class="hint">Urgent, Not Important. Interruptions, routine requests.</p>
+            <div id="q3" class="task-list" data-zone="q3"></div>
+        </div>
+
+        <div class="quadrant q4">
+            <h2>Drop / Delete</h2>
+            <p class="hint">Not Urgent, Not Important. Distractions, time wasters.</p>
+            <div id="q4" class="task-list" data-zone="q4"></div>
+        </div>
+    </div>
+
+    <!-- Done -->
+    <details id="done-section">
+        <summary>Done (Completed)</summary>
+        <div id="done" class="task-list" data-zone="done"></div>
+    </details>
+</div>
+
+<script>
+    // State Management
+    let tasks = JSON.parse(localStorage.getItem('eisenhowerTasks_v2')) || [];
+    
+    const taskInput = document.getElementById('taskInput');
+    const dropzones = document.querySelectorAll('.task-list');
+
+    // Initialize App
+    function init() {
+        renderTasks();
+        setupDragAndDrop();
+        
+        // Enter key to add task
+        taskInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addTask();
+        });
+    }
+
+    // Save to LocalStorage
+    function saveTasks() {
+        localStorage.setItem('eisenhowerTasks_v2', JSON.stringify(tasks));
+    }
+
+    // Add new task (defaults to Inbox)
+    function addTask() {
+        const text = taskInput.value.trim();
+        if (!text) return;
+
+        const newTask = {
+            id: 'task_' + Date.now(),
+            text: text,
+            zone: 'inbox'
+        };
+
+        tasks.push(newTask);
+        saveTasks();
+        taskInput.value = '';
+        renderTasks();
+    }
+
+    // Delete task
+    function deleteTask(id) {
+        tasks = tasks.filter(t => t.id !== id);
+        saveTasks();
+        renderTasks();
+    }
+
+    // Render all tasks into their respective zones
+    function renderTasks() {
+        // Clear all zones
+        dropzones.forEach(zone => zone.innerHTML = '');
+
+        // Distribute tasks
+        tasks.forEach(task => {
+            const zone = document.getElementById(task.zone);
+            if (zone) {
+                const taskElement = document.createElement('div');
+                taskElement.className = 'task';
+                taskElement.draggable = true;
+                taskElement.id = task.id;
+                taskElement.innerHTML = `
+                    <span>${task.text}</span>
+                    <button class="delete-btn" title="Delete Task" onclick="deleteTask('${task.id}')">×</button>
+                `;
+                
+                // Add Drag Events to the new task
+                taskElement.addEventListener('dragstart', handleDragStart);
+                taskElement.addEventListener('dragend', handleDragEnd);
+                
+                zone.appendChild(taskElement);
+            }
+        });
+    }
+
+    // Drag and Drop Logic
+    function setupDragAndDrop() {
+        dropzones.forEach(zone => {
+            zone.addEventListener('dragover', handleDragOver);
+            zone.addEventListener('dragleave', handleDragLeave);
+            zone.addEventListener('drop', handleDrop);
+        });
+    }
+
+    function handleDragStart(e) {
+        e.dataTransfer.setData('text/plain', e.target.id);
+        // Use timeout to allow the drag image to generate before changing opacity
+        setTimeout(() => e.target.classList.add('dragging'), 0);
+    }
+
+    function handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+        dropzones.forEach(z => z.classList.remove('drag-over'));
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault(); // Necessary to allow dropping
+        const dropzone = e.target.closest('.task-list');
+        if (dropzone) {
+            dropzone.classList.add('drag-over');
+        }
+    }
+
+    function handleDragLeave(e) {
+        const dropzone = e.target.closest('.task-list');
+        if (dropzone) {
+            dropzone.classList.remove('drag-over');
+        }
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        const dropzone = e.target.closest('.task-list');
+        if (!dropzone) return;
+
+        dropzone.classList.remove('drag-over');
+        const taskId = e.dataTransfer.getData('text/plain');
+        const newZoneId = dropzone.getAttribute('data-zone');
+
+        // Update task state
+        const taskIndex = tasks.findIndex(t => t.id === taskId);
+        if (taskIndex > -1) {
+            tasks[taskIndex].zone = newZoneId;
+            
+            // If moved to Done, automatically open the done section
+            if (newZoneId === 'done') {
+                document.getElementById('done-section').open = true;
+            }
+            
+            saveTasks();
+            renderTasks();
+        }
+    }
+
+    // Run Initialization
+    init();
+</script>
+
+</body>
+</html>
