@@ -1,330 +1,1048 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <title>Vinay Verma</title>
-  <meta name="author" content="Vinay Verma">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  
-  <link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon">
-  
-  <link rel="stylesheet" type="text/css" href="stylesheet_v2.css">
-  
-  <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
-  
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-  
-  <script src="https://unpkg.com/typed.js@2.0.16/dist/typed.umd.js"></script>
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vinay K. Verma - Spatio-Temporal AI Portfolio</title>
+    
+    <script src="https://unpkg.com/typed.js@2.0.16/dist/typed.umd.js"></script>
+    
+    <style>
+        /* === PASTEL LIGHT THEME === */
+        :root {
+            --bg-color: #F4F7FB;
+            --grid-color: #E2E8F0;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            
+            --node-person: #3B82F6;   
+            --node-work: #E91E63;     
+            --node-edu: #F59E0B;      
+            --node-research: #10B981; 
+            --node-project: #8B5CF6;  
+            
+            --card-bg: rgba(255, 255, 255, 0.95);
+        }
 
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            overflow: hidden; 
+        }
+
+        /* ==========================================
+           1. STATIC RESUME PAGE
+           ========================================== */
+        #static-page {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh;
+            overflow-y: auto; overflow-x: hidden; z-index: 100;
+            background: var(--bg-color);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        #static-page.hidden {
+            opacity: 0; transform: scale(0.95) translateY(-20px); pointer-events: none;
+        }
+        #static-page::-webkit-scrollbar { width: 8px; }
+        #static-page::-webkit-scrollbar-thumb { background: #CBD5E0; border-radius: 4px; }
+
+        .resume-container { max-width: 850px; margin: 0 auto; padding: 60px 20px 120px 20px; }
+        
+        .static-card {
+            background: #fff; border-radius: 12px; padding: 40px; margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #E2E8F0;
+            border-left: 6px solid var(--node-person);
+        }
+
+        .resume-header { font-size: 2.5em; margin: 0 0 5px 0; color: var(--text-dark); }
+        .resume-bio { font-size: 1.1em; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
+        .section-title { font-size: 1.4em; color: var(--text-dark); border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; margin-top: 30px; }
+        
+        .entry { margin-bottom: 20px; }
+        .entry h3 { margin: 0 0 5px 0; font-size: 1.1em; }
+        .entry .meta { font-size: 0.9em; font-weight: 600; color: var(--node-person); margin-bottom: 5px; }
+        .entry p { margin: 0; color: var(--text-muted); font-size: 0.95em; line-height: 1.5; }
+
+        .hint-overlay {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #fff; color: var(--node-person); padding: 12px 28px;
+            border-radius: 30px; font-weight: 700; font-size: 14px;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15); border: 2px solid var(--node-person);
+            animation: bounce 2s infinite; cursor: pointer; z-index: 101;
+        }
+        @keyframes bounce { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -8px); } }
+
+        /* ==========================================
+           2. 2D SPATIO-TEMPORAL SCENE GRAPH
+           ========================================== */
+        #viewport {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            opacity: 0; pointer-events: none; transition: opacity 0.8s ease; z-index: 10;
+        }
+        body.game-mode #viewport { opacity: 1; pointer-events: auto; }
+
+        /* Flat Top-Down Container */
+        #scene {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        }
+
+        #world-layer { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+        #bg-canvas { position: absolute; top: 0; left: 0; }
+        #hud-canvas { position: absolute; top: 0; left: 0; z-index: 20; pointer-events: none; }
+
+        /* --- 2D SCENE GRAPH NODES --- */
+        .map-node {
+            position: absolute; width: 420px; 
+            max-height: 380px; overflow-y: auto; overflow-x: hidden;
+            background: var(--card-bg); border-radius: 12px; padding: 25px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.06), 0 0 0 1px rgba(255,255,255,1);
+            backdrop-filter: blur(10px); border: 1px solid #E2E8F0;
+            transform: translate(-50%, -50%);
+            transition: box-shadow 0.2s, transform 0.2s;    
+        }
+        .map-node::-webkit-scrollbar { width: 5px; }
+        .map-node::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
+        .map-node:hover { 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1); 
+            transform: translate(-50%, -52%);
+            z-index: 15; 
+        }
+
+        .st-header {
+            position: sticky; top: -10px; background: #F8FAFC; border: 1px solid #E2E8F0;
+            border-radius: 6px; padding: 6px 12px; margin-bottom: 15px; font-family: monospace;
+            font-size: 11px; font-weight: bold; color: var(--text-dark); box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            z-index: 10;
+        }
+        .st-key { color: var(--text-muted); }
+        .st-val { margin-right: 15px; }
+
+        #node-hero { border-top: 5px solid var(--node-person); }
+        #node-work-past, #node-work-pres { border-top: 5px solid var(--node-work); }
+        #node-edu, #node-edu-past { border-top: 5px solid var(--node-edu); }
+        #node-research { border-top: 5px solid var(--node-research); }
+        #node-projects { border-top: 5px solid var(--node-project); }
+
+        .node-title { font-size: 1.4em; margin: 0 0 10px 0; color: var(--text-dark); }
+        .node-meta { font-size: 0.85em; font-weight: 600; margin-bottom: 10px; }
+        .node-desc { font-size: 0.9em; color: var(--text-muted); line-height: 1.5; margin: 0 0 10px 0; }
+        
+        .skill-pill {
+            display: inline-block; background: #F1F5F9; color: #475569;
+            padding: 3px 8px; border-radius: 4px; font-size: 0.75em; font-weight: 600;
+            margin: 0 4px 4px 0; border: 1px solid #E2E8F0;
+        }
+        .link-btn { display: inline-block; margin-top: 10px; font-weight: bold; font-size: 0.85em; text-decoration: none; }
+
+        /* --- HUD UI PANELS --- */
+        .hud-panel {
+            position: absolute; background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px; padding: 20px; font-size: 12px; color: var(--text-dark);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid #E2E8F0;
+            backdrop-filter: blur(5px); z-index: 30;
+        }
+        #top-right-hud { top: 20px; right: 20px; width: 230px; }
+        #bottom-left-hud { bottom: 20px; left: 20px; }
+        
+        .hud-title { font-weight: 800; color: var(--text-muted); margin-bottom: 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #E2E8F0; padding-bottom: 5px;}
+        .key { background: #F1F5F9; padding: 3px 6px; border-radius: 4px; border: 1px solid #CBD5E1; font-family: monospace; font-weight: bold; }
+        .val { float: right; font-family: monospace; font-weight: bold;}
+
+        #interaction-prompt {
+            position: absolute; top: 15%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff; color: var(--node-person); padding: 12px 30px;
+            border-radius: 30px; font-size: 14px; font-weight: 700; text-transform: uppercase;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 2px solid var(--node-person);
+            display: none; z-index: 30;
+        }
+    </style>
+</head>
 <body>
 
-  <div id="tsparticles"></div>
-
-  <div class="container">
-
-    <header class="hero-section">
-      <div class="hero-text" data-aos="fade-right">
-        <h1 class="name">Vinay K. Verma</h1>
-        
-        <p class="bio">I am <span id="typed-bio"></span></p>
-        
-        <p class="bio-static">
-          Machine Learning Engineer with a strong focus on Computer Vision and Deep Learning.
-          Currently pursuing a PhD at IIIT Delhi, with research centered on Explainable AI for Computer Vision in Healthcare.
-          Previously contributed to CCTV-based vision systems at Wobot, large-scale media transformation tools at PixelBin (Fynd), and sports
-          analytics solutions at StatsPerform. Passionate about developing
-          efficient, scalable Al systems that solve real-world problems and
-          advance the field of Computer Vision.
-        </p>
-        
-        <nav class="links">
-          <a href="#research">Research</a>
-          <a href="#education">Education</a>
-          <a href="#work">Work</a>
-          <a href="blog/index.html">Blog</a>
-        </nav>
-        <nav class="social-links">
-          <a href="mailto:vermavinay982@gmail.com">Email</a> /
-          <a href="data/vinay_cv.pdf" target="_blank">CV</a> /
-          <a href="https://scholar.google.com/citations?user=yb0OBZIAAAAJ&hl=en&authuser=1" target="_blank">Scholar</a> /
-          <a href="https://x.com/vermavinay982" target="_blank">Twitter</a> /
-          <a href="https://www.linkedin.com/in/vermavinay982/" target="_blank">Linkedin</a> /
-          <a href="https://github.com/vermavinay982" target="_blank">Github</a>
-        </nav>
-      </div>
-      
-      <div class="hero-image" data-aos="fade-left" data-aos-delay="200">
-        <a href="https://www.linkedin.com/in/vermavinay982/" target="_blank">
-          <img src="images/VinayVerma.jpg" alt="Profile photo of Vinay Verma">
-        </a>
-      </div>
-    </header>
-
-    <main>
-
-      <section id="research" data-aos="fade-up">
-        <h2 class="section-title">Research</h2>
-        <p class="section-intro">I'm interested in computer vision, deep-learning and video analytics. Here is some of my published work.</p>
-
-        <article class="card paper">
-          <div class="card-image">
-            <img src='images/efficient_perception/patch_v2.png' alt="Efficient Localized Perception">
-          </div>
-          <div class="card-content">
-            <a href="https://ieeexplore.ieee.org/document/10888483" target="_blank">
-              <h3>Efficient Localized Perception for Resource-Constrained Vision Systems</h3>
-            </a>
-            <p class="citation">
-              A. V. Subramanyam, N. Singal and V. K. Verma, ”Efficient Localized Perception for Resource-Constrained Vision Systems,” ICASSP 2025...
-            </p>
-            <div class="card-links">
-              <a href="https://github.com/Visual-Conception-Group/Localized-Perception-Constrained-Vision-Systems/tree/main" target="_blank">Code</a> /
-              <a href="https://ieeexplore.ieee.org/document/10888483" target="_blank">Paper</a>
+    <div id="static-page">
+        <div class="resume-container">
+            <div class="static-card" style="border-left-color: var(--node-person)">
+                <h1 class="resume-header">Vinay K. Verma</h1>
+                <p class="resume-bio"><span id="typed-bio"></span></p>
+                <p class="resume-bio">AI Researcher and Computer Vision Engineer with 6+ years of experience in building scalable vision systems across industry and academia. Currently focused on learning structured world representations through semantic scene graphs and multimodal encoders for downstream tasks such as autonomous systems and healthcare applications.</p>
+                <div>
+                    <a href="blog/index.html" style="margin-right:15px; font-weight:bold; color:var(--node-person);">Blog</a>
+                    <a href="https://www.linkedin.com/in/vermavinay982/" target="_blank" style="margin-right:15px; font-weight:bold; color:var(--node-person);">LinkedIn</a>
+                    <a href="https://github.com/vermavinay982" target="_blank" style="margin-right:15px; font-weight:bold; color:var(--node-person);">GitHub</a>
+                    <a href="data/vinay_cv.pdf" target="_blank" style="font-weight:bold; color:var(--node-person);">Resume PDF</a>
+                    <!-- <a href="#research">Research</a>
+                    <a href="#education">Education</a>
+                    <a href="#work">Work</a> -->
+                    
+                </div>
             </div>
-          </div>
-        </article>
-        
-        <article class="card paper" data-aos="fade-up">
-          <div class="card-image">
-            <img src='images/patient_id/patient_id.png' alt="Patient Identification">
-          </div>
-          <div class="card-content">
-            <a href="https://ieeexplore.ieee.org/document/9250002" target="_blank">
-              <h3>Patient Identification using Facial Recognition</h3>
-            </a>
-            <p class="citation">
-              V. K. Verma, V. Kansal and P. Bhatnagar, ”Patient Identification using Facial Recognition,” 2020 International Conference on Futuristic Technologies...
-            </p>
-            <div class="card-links">
-              <a href="https://ieeexplore.ieee.org/document/9250002" target="_blank">Paper</a>
+
+            <h2 class="section-title">Work Experience</h2>
+            <div class="static-card" style="border-left-color: var(--node-work)">
+                <div class="entry"><h3>HRI Lab @ IIIT Delhi</h3><div class="meta">Researcher | Aug 2025 - Present</div>
+                <p>Working on multi-robot perception and representation learning using semantic and geometric scene understanding. Designing graph-based world models from multi-view camera inputs for robot localization, calibration, and interaction.</p></div>
+                
+                <div class="entry"><h3>Visual Conception Group @ IIIT Delhi</h3><div class="meta">Research Assistant | Oct 2023 - Jul 2024</div>
+                <p>Developed segmentation algorithms for large satellite and volumetric medical datasets on Jetson edge platforms. Presented at ICASSP 2025.</p></div>
+                
+                <div class="entry"><h3>Stats Perform, London (Remote)</h3><div class="meta">CV Engineer 2 | Nov 2022 - Dec 2023</div>
+                <p>Improved player tracking accuracy from 85% to 98% using temporal smoothing. Designed robust Jersey OCR (TensorFlow) with 90%+ accuracy.</p></div>
+                
+                <div class="entry"><h3>Fynd Shopsense Retail & Wobot</h3><div class="meta">ML Engineer & Sr. CV Engineer | 2019 - 2022</div>
+                <p>Built CV APIs handling 2.5M+ req/day. Designed multi-camera vehicle tracking for 300+ CCTV cams. Built lighting-invariant color detection.</p></div>
             </div>
-          </div>
-        </article>
-      </section>
 
-      <section id="education" data-aos="fade-up">
-        <h2 class="section-title">Education</h2>
-        
-        <article class="card school">
-          <img src='images/education/hmi_logo.jpg' alt="IIIT Delhi HMI Lab Logo">
-          <div class="card-content">
-            <h3>Indraprastha Institute of Information Technology, Delhi</h3>
-            <p>Doctor of Philosophy - PhD, Human Robot Interaction (June 2024 - July 2029)</p>
-          </div>
-        </article>
+            <h2 class="section-title">Projects & Systems</h2>
+            <div class="static-card" style="border-left-color: var(--node-project)">
+                <div class="entry"><h3>Robotics & Manipulation</h3>
+                <p>Designed a sensorless force estimation model utilizing joint currents for the uFactory Lite6. Engineered autonomous tabletop object sorting and AprilTag camera calibration pipelines.</p></div>
+                
+                <div class="entry"><h3>Generative AI & Healthcare</h3>
+                <p>Built ResearchBuddy, a RAG-Based QA pipeline using Gemini-2.5 Flash and LangChain. Developed OPD Assistant Medical Record System with PGIMER to convert unstructured raw data to meaningful records.</p></div>
+            </div>
 
-        <article class="card school">
-          <img src='images/education/IIITD_logo.jpg' alt="IIIT Delhi Logo">
-          <div class="card-content">
-            <h3>Indraprastha Institute of Information Technology, Delhi</h3>
-            <p>M.Tech CSE Research in Computer Science (2024 - present)</p>
-            <p>Postgraduate Diploma in Artificial Intelligence (2022 - 2023)</p>
-          </div>
-        </article>
-        
-        <article class="card school" data-aos="fade-up">
-          <img src='images/education/ggsipu.png' alt="GGSIPU Logo">
-          <div class="card-content">
-            <h3>Dr Akhilesh Das Gupta Institute of Technology & Management</h3>
-            <p>B.Tech. in Electronics and Communication Engineering (2016 - 2020)</p>
-          </div>
-        </article>
+            <h2 class="section-title">Publications & Patents</h2>
+            <div class="static-card" style="border-left-color: var(--node-research)">
+                <div class="entry"><h3>Towards Falsifiable Grammars of HRI</h3><div class="meta">ACM HRI 2026, Edinburgh, UK</div></div>
+                <div class="entry"><h3>Resource-Efficient Perception for Vision Systems</h3><div class="meta">ICASSP 2025, Hyderabad, India</div></div>
+                <div class="entry"><h3>Toward Falsifiable Grammars for NeuroDesign in HRI</h3><div class="meta">NeuroHRI 2025</div></div>
+                <div class="entry"><h3>Foundation Models for 3D Biomedical Image Segmentation</h3><div class="meta">CVPR Workshop MedSegFM 2025</div></div>
+                <div class="entry"><h3>Patent: A Method to Train Deep Learning Model</h3><div class="meta">Indian Patent App. No. 202411050462</div></div>
+            </div>
 
-        <article class="card school" data-aos="fade-up">
-          <img src='images/education/kvs.jpg' alt="Kendriya Vidyalaya Logo">
-          <div class="card-content">
-            <h3>Kendriya Vidyalaya, Vivek Vihar, Delhi</h3>
-            <p>High School, Science (2009 - 2016)</p>
-          </div>
-        </article>
-      </section>
-
-      <section id="work" data-aos="fade-up">
-        <h2 class="section-title">Work Experience</h2>
-
-        <article class="card job">
-          <img src='images/education/hmi_logo.jpg' alt="IIIT Delhi HMI Lab Logo">
-          <div class="card-content">
-            <h3>Human Robot Interaction Lab @ IIITD, Delhi</h3>
-            <p>Researcher (Aug 2025 - Present)</p>
-          </div>
-        </article>
-
-        <article class="card job">
-          <img src='images/work_exp/IIITD_logo.jpg' alt="IIIT Delhi Logo">
-          <div class="card-content">
-            <h3>Visual Conception Group at IIIT, Delhi</h3>
-            <p>Research Assistant (October 2023 - July 2024)</p>
-          </div>
-        </article>
-        
-        <article class="card job" data-aos="fade-up">
-          <img src='images/work_exp/stats.png' alt="StatsPerform Logo">
-          <div class="card-content">
-            <h3>StatsPerform, Bangalore, India</h3>
-            <p>Computer Vision Engineer 2 (November 2022 - December 2023)</p>
-          </div>
-        </article>
-        
-        <article class="card job" data-aos="fade-up">
-          <img src='images/work_exp/fynd.png' alt="Fynd Logo">
-          <div class="card-content">
-            <h3>Fynd - Shopsense Retail, Mumbai, India</h3>
-            <p>Machine Learning Engineer (April 2022 - November 2022)</p>
-          </div>
-        </article>
-        
-        <article class="card job" data-aos="fade-up">
-          <img src='images/work_exp/wobot.jpeg' alt="Wobot Logo">
-          <div class="card-content">
-            <h3>Wobot Intelligence (Wobot.ai), New Delhi, India</h3>
-            <p>Senior Computer Vision Engineer (Aug 2019 - May 2022)</p>
-          </div>
-        </article>
-
-
-      </section>
-    </main>
+            <h2 class="section-title">Education</h2>
+            <div class="static-card" style="border-left-color: var(--node-edu)">
+                <div class="entry"><h3>PhD, Human Robot Interaction</h3><div class="meta">IIIT Delhi | 2024 - 2029 (CGPA: 8.40)</div></div>
+                <div class="entry"><h3>M.Tech Research (CSE)</h3><div class="meta">IIIT Delhi | 2024 - 2026 (CGPA: 8.40)</div></div>
+                <div class="entry"><h3>PG Diploma (Data Science & AI)</h3><div class="meta">IIIT Delhi | 2022 - 2023 (CGPA: 9.17)</div></div>
+                <div class="entry"><h3>B.Tech (ECE)</h3><div class="meta">ADGIPS (GGSIPU), Delhi | 2016 - 2020 (CGPA: 7.79)</div></div>
+            </div>
+        </div>
+    </div>
     
-    <footer>
-      <p>Design inspired by modern web trends. Built by Vinay Verma.</p>
-    </footer>
-    
-  </div> 
-  
-  <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
-  <script>
-    AOS.init({
-      duration: 700, // animation duration in ms
-      once: true,     // whether animation should happen only once
-    });
-  </script>
+    <div class="hint-overlay" id="start-hint" onclick="startGameMode()">Press W, A, S, D, or SPACE to Enter 2D Sandbox</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
-  <script>
-    tsParticles.load("tsparticles", {
-      fpsLimit: 60,
-      interactivity: {
-        events: {
-          onHover: {
-            enable: true,
-            mode: "grab"
-          },
-          onClick: {
-            enable: true,
-            mode: "push"
-          }
-        },
-        modes: {
-          grab: { distance: 140, links: { opacity: 0.8 } },
-          push: { quantity: 4 }
+    <div id="viewport">
+        <div id="scene">
+            <canvas id="bg-canvas"></canvas>
+            
+            <div id="world-layer">
+                
+                <div id="node-hero" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">Node_ID:</span> <span class="st-val">n_001</span>
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-person)">Entity.Person</span>
+                    </div>
+                    <h1 class="node-title">Vinay K. Verma</h1>
+                    <div class="node-meta" style="color:var(--node-person)">AI Researcher | Computer Vision</div>
+                    <p class="node-desc">Focused on learning structured world representations through semantic scene graphs and multimodal encoders.</p>
+                    <div>
+                        <span class="skill-pill">Python</span><span class="skill-pill">C++</span><span class="skill-pill">PyTorch</span><span class="skill-pill">ROS2</span><span class="skill-pill">TensorFlow</span><span class="skill-pill">Kubernetes</span>
+                    </div>
+                    <a href="https://www.linkedin.com/in/vermavinay982/" target="_blank" class="link-btn" style="color:var(--node-person)">[ ACCESS LINKEDIN ]</a>
+                </div>
+
+                <div id="node-work-past" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">T_Start:</span> <span class="st-val">2019</span>
+                        <span class="st-key">T_End:</span> <span class="st-val">2023</span>
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-work)">Event.Experience</span>
+                    </div>
+                    <h1 class="node-title">Industry Applied AI</h1>
+                    <div class="entry">
+                        <h3>Stats Perform</h3><div class="meta" style="color:var(--node-work)">CV Engineer 2 | Nov '22 - Dec '23</div>
+                        <p class="node-desc">Improved player tracking accuracy from 85% to 98% via temporal smoothing. Designed robust Jersey OCR (TensorFlow).</p>
+                    </div>
+                    <div class="entry">
+                        <h3>Fynd & Wobot Intelligence</h3><div class="meta" style="color:var(--node-work)">ML Engineer / Sr. CV Engineer | 2019 - 2022</div>
+                        <p class="node-desc">Built CV APIs handling 2.5M+ req/day. Designed multi-camera vehicle tracking for 300+ CCTV cams.</p>
+                    </div>
+                </div>
+
+                <div id="node-work-pres" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">T_Start:</span> <span class="st-val">2023</span>
+                        <span class="st-key">T_End:</span> <span class="st-val">Present</span>
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-work)">Event.Experience</span>
+                    </div>
+                    <h1 class="node-title">Academic Research Labs</h1>
+                    <div class="entry">
+                        <h3>HRI Lab @ IIIT Delhi</h3><div class="meta" style="color:var(--node-work)">Researcher | Aug '25 - Present</div>
+                        <p class="node-desc">Designing graph-based world models from multi-view camera inputs for robot localization, calibration, and interaction.</p>
+                    </div>
+                    <div class="entry">
+                        <h3>Visual Conception Group</h3><div class="meta" style="color:var(--node-work)">Research Asst. | Oct '23 - Jul '24</div>
+                        <p class="node-desc">Developed segmentation algorithms for large satellite and volumetric medical datasets on Jetson edge platforms.</p>
+                    </div>
+                </div>
+
+                <div id="node-projects" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-project)">Data.Systems</span>
+                        <span class="st-key">Domain:</span> <span class="st-val">Robotics & LLMs</span>
+                    </div>
+                    <h1 class="node-title">Engineering Systems</h1>
+                    <div class="entry">
+                        <h3>Robotics & Manipulation</h3>
+                        <p class="node-desc">Sensorless Force Estimation (Lite6), Autonomous Tabletop Object Sorting, AprilTag Calibration Pipeline, ROS2 & Gazebo Sims.</p>
+                    </div>
+                    <div class="entry">
+                        <h3>Generative AI & Health</h3>
+                        <p class="node-desc">ResearchBuddy: RAG-Based QA using Gemini-2.5 Flash. OPD Assistant Medical Record System built with PGIMER.</p>
+                    </div>
+                </div>
+
+                <div id="node-research" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-research)">Data.Publications</span>
+                        <span class="st-key">Count:</span> <span class="st-val">5+</span>
+                    </div>
+                    <h1 class="node-title">Research Outputs</h1>
+                    <div class="entry">
+                        <h3>Towards Falsifiable Grammars of HRI</h3>
+                        <p class="node-desc">ACM HRI 2026, Edinburgh. Transforms HRI from descriptive analysis to a priori verification.</p>
+                    </div>
+                    <div class="entry">
+                        <h3>Resource-Efficient Perception</h3>
+                        <p class="node-desc">ICASSP 2025. Optimized computer vision for edge systems under resource constraints.</p>
+                    </div>
+                    <div class="entry">
+                        <h3>Patents & Foundations</h3>
+                        <p class="node-desc">NeuroHRI 2025. CVPR MedSegFM 2025 (Ranked 4th/210). Indian Patent App (202411050462) for DL Training Methods.</p>
+                    </div>
+                    <a href="https://ieeexplore.ieee.org/document/10888483" target="_blank" class="link-btn" style="color:var(--node-research)">[ VIEW PAPER ]</a>
+                </div>
+
+                <div id="node-edu-past" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">T_Start:</span> <span class="st-val">2016</span>
+                        <span class="st-key">T_End:</span> <span class="st-val">2023</span>
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-edu)">Relation.Studied_At</span>
+                    </div>
+                    <h1 class="node-title">Academic Foundations</h1>
+                    <div class="entry">
+                        <h3>PG Diploma (Data Science & AI)</h3><div class="meta" style="color:var(--node-edu)">IIIT Delhi | 2022 - 2023</div>
+                    </div>
+                    <div class="entry">
+                        <h3>B.Tech (ECE)</h3><div class="meta" style="color:var(--node-edu)">ADGIPS (GGSIPU) | 2016 - 2020</div>
+                    </div>
+                </div>
+
+                <div id="node-edu" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">T_Start:</span> <span class="st-val">2024</span>
+                        <span class="st-key">T_End:</span> <span class="st-val">2029</span>
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-edu)">Relation.Studied_At</span>
+                    </div>
+                    <h1 class="node-title">Advanced Academia</h1>
+                    <div class="entry">
+                        <h3>PhD, Human Robot Interaction</h3><div class="meta" style="color:var(--node-edu)">IIIT Delhi | 2024 - 2029</div>
+                        <p class="node-desc">Department of CSE (Human Machine Interaction Lab).</p>
+                    </div>
+                    <div class="entry">
+                        <h3>M.Tech Research (CSE)</h3><div class="meta" style="color:var(--node-edu)">IIIT Delhi | 2024 - 2026</div>
+                        <p class="node-desc">Thesis: Localized Perception for Constrained Vision Systems.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <canvas id="hud-canvas"></canvas>
+
+        <div id="top-right-hud" class="hud-panel">
+            <div class="hud-title">Spatio-Temporal Telemetry</div>
+            <div style="margin-bottom: 6px;">TEMPUS (X) <span class="val" id="kf-x" style="color: var(--node-person)">2026.0</span></div>
+            <div style="margin-bottom: 6px;">DOMAIN (Y) <span class="val" id="kf-y">0000.0</span></div>
+            <div style="margin-bottom: 6px;">VELOCITY <span class="val" id="kf-v">00.0</span></div>
+            <div style="margin-bottom: 6px;">SCORE <span class="val" id="score">0</span></div>
+            <div style="margin-bottom: 6px;">LIVES <span class="val" id="lives" style="color: #E91E63;">5</span></div>
+            <div style="margin-bottom: 6px; display: none;" id="high-score-row">HIGH <span class="val" id="high-score">0</span></div>
+            <div style="margin-bottom: 10px; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px;">WEAPON <span class="val" id="kf-shield" style="color: #10B981;">STD</span></div>
+            <div style="padding-top: 2px;">AUTO-TRAVERSE <span class="val" id="drive-mode" style="color: var(--text-muted);">OFF</span></div>
+        </div>
+
+        <div id="bottom-left-hud" class="hud-panel">
+            <div class="hud-title">Agent Controls</div>
+            <div style="margin-bottom: 6px;">Navigate <span class="key" style="float:right">A / D / Steer</span></div>
+            <div style="margin-bottom: 6px;">Accelerate <span class="key" style="float:right">W / Mouse Hold</span></div>
+            <div style="margin-bottom: 6px;">Fire Gun <span class="key" style="float:right">SPACE</span></div>
+            <div style="margin-bottom: 6px;">Auto-Traverse <span class="key" style="float:right">E / Q</span></div>
+            <div style="margin-bottom: 4px;">Inspect Node <span class="key" style="float:right">ENTER</span></div>
+        </div>
+
+        <div id="interaction-prompt">Press ENTER to Inspect Node</div>
+    </div>
+
+    <script>
+        // Typing Effect Initialization
+        new Typed('#typed-bio', {
+            strings: ["Human Robot Interaction", "Computer Vision Researcher", "AI & ML Engineer"],
+            typeSpeed: 40, backSpeed: 20, loop: true
+        });
+
+        // Core Variables
+        let gameState = 0; 
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        const hudCanvas = document.getElementById('hud-canvas');
+        const hudCtx = hudCanvas.getContext('2d');
+        const worldLayer = document.getElementById('world-layer');
+        let width = window.innerWidth, height = window.innerHeight;
+        
+        // Score, splashes, and celebration state
+        let score = 0;
+        let lives = 5; 
+        let highScore = parseInt(localStorage.getItem('vk_highscore') || '0', 10) || 0;
+        let previousHighScore = highScore; 
+        const splashMarks = []; 
+        const confetti = [];
+        let confettiActive = false;
+        let gameOver = false;
+        let highScoreBeatMessage = false; 
+        
+        window.addEventListener('load', () => {
+            const hs = document.getElementById('high-score'); if (hs) hs.innerText = highScore;
+            const sc = document.getElementById('score'); if (sc) sc.innerText = score;
+            const lv = document.getElementById('lives'); if (lv) lv.innerText = lives.toFixed(1);
+        });
+
+        function resize() {
+            width = window.innerWidth; height = window.innerHeight;
+            bgCanvas.width = width; bgCanvas.height = height;
+            hudCanvas.width = width; hudCanvas.height = height;
         }
-      },
-      particles: {
-        color: { value: "#64ffda" }, // The neon color
-        links: {
-          color: "#ffffff", // Connections between particles
-          distance: 150,
-          enable: true,
-          opacity: 0.2, // Faint connections
-          width: 1
-        },
-        move: {
-          direction: "none",
-          enable: true,
-          outModes: "out",
-          random: false,
-          speed: 1, // Slow movement
-          straight: false
-        },
-        number: {
-          density: { enable: true, value_area: 800 },
-          value: 80 // Number of particles
-        },
-        opacity: { value: 0.3 }, // Faint particles
-        shape: { type: "circle" },
-        size: { value: { min: 1, max: 3 } }
-      },
-      detectRetina: true
-    });
-  </script>
+        window.addEventListener('resize', resize); resize();
 
-  <script>
-    var typed = new Typed('#typed-bio', {
-      strings: [
-        "a Doctoral Student at IIIT Delhi.",
-        "pursuing a PhD in Computational Neuroscience.",
-        "researching Explainable AI for Healthcare.",
-        "working in the Human Machine Interaction Lab.",
-        "passionate about efficient, scalable AI systems."
-      ],
-      typeSpeed: 40,
-      backSpeed: 20,
-      backDelay: 1500,
-      loop: true,
-      smartBackspace: true
-    });
-  </script>
+        /* --- 2D SPATIO-TEMPORAL MAP LAYOUT --- */
+        const nodes = {
+            work_past: { id: 'work_past', x: 2800, y: 2600, el: document.getElementById('node-work-past'), c: '#E91E63' },
+            edu_past:  { id: 'edu_past',  x: 2900, y: 3400, el: document.getElementById('node-edu-past'), c: '#F59E0B' },
+            projects:  { id: 'projects',  x: 2800, y: 3000, el: document.getElementById('node-projects'), c: '#8B5CF6' },
+            hero:      { id: 'hero',      x: 3400, y: 3000, el: document.getElementById('node-hero'), c: '#3B82F6', link: 'https://www.linkedin.com/in/vermavinay982/' },
+            work_pres: { id: 'work_pres', x: 3400, y: 2500, el: document.getElementById('node-work-pres'), c: '#E91E63' },
+            edu_pres:  { id: 'edu_pres',  x: 3600, y: 3500, el: document.getElementById('node-edu'), c: '#F59E0B' },
+            research:  { id: 'research',  x: 4000, y: 3000, el: document.getElementById('node-research'), c: '#10B981', link: 'https://ieeexplore.ieee.org/document/10888483' }
+        };
 
-  <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-  <span class="icon-moon">🌙</span>
-  <span class="icon-sun">☀️</span>
-  </button>
-  
-<script>
-    const themeToggle = document.getElementById('theme-toggle');
-    const body = document.body;
-    const themeKey = 'vinay-theme-preference';
-    let isAnimating = false;
+        const edges = [
+            { from: 'work_past', to: 'projects', label: 'Applied_To' },
+            { from: 'edu_past', to: 'projects', label: 'Applied_To' },
+            { from: 'projects', to: 'hero', label: 'Developed_By' },
+            { from: 'hero', to: 'work_pres', label: 'Employed_By' },
+            { from: 'hero', to: 'edu_pres', label: 'Studies_At' },
+            { from: 'work_pres', to: 'research', label: 'Yields' },
+            { from: 'edu_pres', to: 'research', label: 'Yields' }
+        ];
 
-    // 1. Check for saved preference on page load
-    const currentTheme = localStorage.getItem(themeKey);
-    if (currentTheme === 'light') {
-      body.classList.add('light-mode');
-    }
+        Object.values(nodes).forEach(n => { n.el.style.left = `${n.x}px`; n.el.style.top = `${n.y}px`; });
 
-    // 2. Click listener
-    themeToggle.addEventListener('click', () => {
-      if (isAnimating) return;
-      isAnimating = true;
+        // --- GAME ENTITIES ---
+        const car = {
+            x: 3400, y: 3250, angle: -Math.PI/2, 
+            speed: 0, maxSpeed: 14, acceleration: 0.6, friction: 0.92, turnSpeed: 0.08,
+            autoDrive: false, targetNodeIndex: 0, waitTimer: 0,
+            invulnerableTimer: 0 // I-Frames tracking
+        };
+        car.scale = 1.0; 
+        const autoDriveSequence = ['hero', 'work_pres', 'research', 'edu_pres', 'projects', 'work_past', 'edu_past'];
 
-      const isSwitchingToLight = !body.classList.contains('light-mode');
+        const npcs = [];
+        const bullets = [];
+        const particles = [];
+        const powerups = [];
+        const pastelColors = ['#A0C4FF', '#CAFFBF', '#FFADAD', '#FDFFB6', '#BDB2FF', '#FFD6A5'];
+        const nodeKeys = Object.keys(nodes);
 
-      // Create the wave/overlay element
-      const overlay = document.createElement('div');
-      overlay.classList.add('theme-transition-overlay');
-      
-      // Assign the *target* theme color to the wave
-      if (isSwitchingToLight) {
-        overlay.classList.add('wave-to-light');
-      } else {
-        overlay.classList.add('wave-to-dark');
-      }
+        let weaponMode = 0; 
+        let powerupTimer = 0;
+        let lastFired = 0;
 
-      document.body.appendChild(overlay);
+        for(let i=0; i<25; i++) { spawnNPC(); }
 
-      // --- THIS IS THE FIX ---
-      
-      // 1. Start the wave animation (painting over the *old* theme)
-      requestAnimationFrame(() => {
-        overlay.classList.add('expand');
-      });
+        function spawnNPC(x, y, layer) {
+            npcs.push({
+                x: x || 1800 + Math.random()*3200, 
+                y: y || 1800 + Math.random()*2400,
+                angle: Math.random() * Math.PI * 2, speed: 1.5 + Math.random()*2, radius: 40,
+                color: pastelColors[Math.floor(Math.random()*pastelColors.length)],
+                targetNode: nodes[nodeKeys[Math.floor(Math.random()*nodeKeys.length)]],
+                layer: layer || (Math.random() < 0.5 ? 'below' : 'above')
+            });
+        }
 
-      // 2. Wait for the animation to finish (600ms)
-      setTimeout(() => {
-        // 3. *Now* toggle the body class to match the wave
-        body.classList.toggle('light-mode'); 
-        localStorage.setItem(themeKey, isSwitchingToLight ? 'light' : 'dark');
-        
-        // 4. Remove the wave
-        document.body.removeChild(overlay);
-        isAnimating = false;
-      }, 600); // This duration *must* match your CSS transition-duration
-    });
-  </script>
+        function burstEntity(bx, by, color) {
+            for(let k=0; k<20; k++) {
+                let a = Math.random() * Math.PI * 2;
+                let s = 2 + Math.random() * 8;
+                particles.push({
+                    x: bx, y: by, vx: Math.cos(a)*s, vy: Math.sin(a)*s,
+                    life: 1.0, color: color, size: 3 + Math.random()*4
+                });
+            }
+        }
 
+        // --- INPUT HANDLING ---
+        const keys = { w: false, a: false, s: false, d: false, space: false };
+        const mouse = { x: width/2, y: height/2, down: false };
 
+        window.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            if (['w', 'a', 's', 'd'].includes(k)) { keys[k] = true; startGameMode(); }
+            if (k === ' ') { 
+                keys.space = true; 
+                startGameMode(); 
+                e.preventDefault(); 
+            }
+            if (k === 'e' && gameState === 1 && !gameOver) { car.autoDrive = true; car.waitTimer = 0; }
+            if (k === 'q' && gameState === 1 && !gameOver) car.autoDrive = false;
+            
+            if (e.key === 'Enter' && gameState === 1 && !gameOver) {
+                let nearest = getNearestNode();
+                if (nearest && nearest.dist < 250) {
+                    if (nearest.node.link) window.open(nearest.node.link, '_blank');
+                    else nearest.node.el.scrollIntoView({behavior: 'smooth', block: 'center'});
+                }
+            }
+            if (k === 'r' && gameState === 1 && gameOver) restartGame();
+        });
+        window.addEventListener('keyup', (e) => {
+            const k = e.key.toLowerCase();
+            if (['w', 'a', 's', 'd'].includes(k)) keys[k] = false;
+            if (k === ' ') keys.space = false;
+        });
+        window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        window.addEventListener('mousedown', (e) => { 
+            if (!e.target.closest('.map-node') && !e.target.closest('.resume-container')) {
+                mouse.down = true; startGameMode(); 
+            }
+        });
+        window.addEventListener('mouseup', () => mouse.down = false);
+
+        function startGameMode() {
+            if (gameState === 1) return;
+            gameState = 1;
+            document.body.classList.add('game-mode');
+            document.getElementById('static-page').classList.add('hidden');
+            document.getElementById('start-hint').style.display = 'none';
+            loop();
+        }
+
+        function restartGame() {
+            score = 0;
+            lives = 5;
+            car.x = 3400; car.y = 3250; car.angle = -Math.PI/2;
+            car.speed = 0; car.scale = 1.0; car.invulnerableTimer = 0;
+            gameOver = false;
+            highScoreBeatMessage = false;
+            confettiActive = false;
+            confetti.length = 0;
+            splashMarks.length = 0;
+            bullets.length = 0;
+            particles.length = 0;
+            powerups.length = 0;
+            
+            npcs.length = 0;
+            for (let i = 0; i < 25; i++) { spawnNPC(); }
+            
+            const scoreEl = document.getElementById('score'); if (scoreEl) scoreEl.innerText = score;
+            const lv = document.getElementById('lives'); if (lv) lv.innerText = lives.toFixed(1);
+            const hsRow = document.getElementById('high-score-row'); if (hsRow) hsRow.style.display = 'none';
+        }
+
+        function getNearestNode() {
+            let nearest = null; let minDist = Infinity;
+            Object.values(nodes).forEach(n => {
+                let d = Math.hypot(car.x - n.x, car.y - n.y);
+                if (d < minDist) { minDist = d; nearest = n; }
+            });
+            return { node: nearest, dist: minDist };
+        }
+
+        // --- GAME LOGIC ENGINE ---
+        function update() {
+            if (gameOver) return; 
+            
+            // I-Frames Timer update
+            if (car.invulnerableTimer > 0) {
+                car.invulnerableTimer--;
+            }
+
+            // Weapon Firing Logic
+            let fireDelay = weaponMode === 1 ? 100 : 250;
+            if (keys.space && Date.now() - lastFired > fireDelay) {
+                lastFired = Date.now();
+                let nx = car.x + Math.cos(car.angle) * 20;
+                let ny = car.y + Math.sin(car.angle) * 20;
+                
+                bullets.push({x: nx, y: ny, angle: car.angle, speed: 25, life: 60});
+                if (weaponMode === 2) {
+                    bullets.push({x: nx, y: ny, angle: car.angle + 0.25, speed: 25, life: 60});
+                    bullets.push({x: nx, y: ny, angle: car.angle - 0.25, speed: 25, life: 60});
+                }
+            }
+
+            // Movement Logic
+            if (car.autoDrive) {
+                document.getElementById('drive-mode').innerText = "ENGAGED";
+                document.getElementById('drive-mode').style.color = "#10B981";
+                
+                const target = nodes[autoDriveSequence[car.targetNodeIndex]];
+                const dx = target.x - car.x; const dy = target.y - car.y;
+                const dist = Math.hypot(dx, dy);
+                
+                let targetAngle = Math.atan2(dy, dx);
+                let diff = targetAngle - car.angle;
+                diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+                car.angle += diff * 0.15; 
+                
+                if (dist < 100) {
+                    car.speed *= 0.6; 
+                    if (Math.abs(car.speed) < 2.5) {
+                        car.waitTimer++;
+                        if (car.waitTimer > 40) { 
+                            car.targetNodeIndex = (car.targetNodeIndex + 1) % autoDriveSequence.length;
+                            car.waitTimer = 0;
+                        }
+                    }
+                } else {
+                    car.speed += car.acceleration;
+                }
+            } else {
+                document.getElementById('drive-mode').innerText = "OFF";
+                document.getElementById('drive-mode').style.color = "var(--text-muted)";
+
+                if (mouse.down) {
+                    let targetAngle = Math.atan2(mouse.y - height / 2, mouse.x - width / 2);
+                    let diff = targetAngle - car.angle;
+                    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+                    car.angle += diff * 0.15;
+                    car.speed += car.acceleration; 
+                }
+
+                if (keys.w) car.speed += car.acceleration;
+                if (keys.s) car.speed -= car.acceleration;
+                
+                if (Math.abs(car.speed) > 0.1 && !mouse.down) {
+                    const dir = car.speed > 0 ? 1 : -1;
+                    if (keys.a) car.angle -= car.turnSpeed * dir;
+                    if (keys.d) car.angle += car.turnSpeed * dir;
+                }
+            }
+
+            car.speed *= car.friction;
+            if (car.speed > car.maxSpeed) car.speed = car.maxSpeed;
+            if (car.speed < -car.maxSpeed/2) car.speed = -car.maxSpeed/2;
+
+            car.x += Math.cos(car.angle) * car.speed;
+            car.y += Math.sin(car.angle) * car.speed;
+
+            // Update Bullets & Collisions
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                let b = bullets[i];
+                b.x += Math.cos(b.angle) * b.speed;
+                b.y += Math.sin(b.angle) * b.speed;
+                b.life--;
+                
+                let hit = false;
+                for (let j = npcs.length - 1; j >= 0; j--) {
+                    let npc = npcs[j];
+                    if (Math.hypot(b.x - npc.x, b.y - npc.y) < npc.radius + 10) {
+                        burstEntity(npc.x, npc.y, npc.color);
+                        splashMarks.push({ x: npc.x, y: npc.y, color: npc.color, radius: 30 + Math.random()*40, alpha: 1.0, decay: 0.005 + Math.random()*0.01 });
+
+                        // Scoring and Vampiric Life mechanics
+                        score += 1;
+                        lives += 0.2; // Gain life for shooting targets
+                        
+                        // Scale is strictly tied to current lives (between 0.3x and 3.0x size)
+                        car.scale = Math.max(0.3, Math.min(0.5 + (lives * 0.1), 3.0));
+
+                        const scoreEl = document.getElementById('score'); if (scoreEl) scoreEl.innerText = score;
+                        const lv = document.getElementById('lives'); if (lv) lv.innerText = lives.toFixed(1);
+
+                        if (score > previousHighScore && !highScoreBeatMessage) {
+                            highScoreBeatMessage = true;
+                            const hs = document.getElementById('high-score'); 
+                            const hsRow = document.getElementById('high-score-row');
+                            if (hs && hsRow) { 
+                                hsRow.style.display = 'block';
+                                hs.innerText = score;
+                            }
+                        }
+                        
+                        npcs.splice(j, 1);
+                        bullets.splice(i, 1);
+                        hit = true;
+                        
+                        setTimeout(() => {
+                            let side = Math.random() > 0.5 ? 1 : -1;
+                            spawnNPC(car.x + side * (1000 + Math.random()*500), car.y + side * (1000 + Math.random()*500));
+                        }, 500);
+                        break;
+                    }
+                }
+                if(hit) continue;
+                if (b.life <= 0) bullets.splice(i, 1);
+            }
+
+            // Update NPCs
+            npcs.forEach(npc => {
+                let dx = npc.targetNode.x - npc.x;
+                let dy = npc.targetNode.y - npc.y;
+                let dist = Math.hypot(dx, dy);
+
+                let targetAngle = Math.atan2(dy, dx);
+                let diff = targetAngle - npc.angle;
+                diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+                npc.angle += diff * 0.03; 
+                npc.angle += (Math.random() - 0.5) * 0.1;
+
+                npc.x += Math.cos(npc.angle) * npc.speed;
+                npc.y += Math.sin(npc.angle) * npc.speed;
+
+                if (dist < 200) {
+                     npc.targetNode = nodes[nodeKeys[Math.floor(Math.random()*nodeKeys.length)]];
+                }
+
+                // Collision with car (Taking Damage)
+                // Only register hit if NOT currently in an invulnerability window
+                if (!gameOver && car.invulnerableTimer <= 0 && Math.hypot(car.x - npc.x, car.y - npc.y) < (npc.radius + 20 * car.scale)) {
+                    
+                    lives -= 1.0; // Lose 1 full life per hit
+                    car.invulnerableTimer = 90; // 1.5 seconds of I-Frames (60fps * 1.5)
+                    
+                    // Update scale based on new lowered life
+                    car.scale = Math.max(0.3, Math.min(0.5 + (lives * 0.1), 3.0));
+                    const lv = document.getElementById('lives'); if (lv) lv.innerText = lives.toFixed(1);
+                    
+                    // push NPC away
+                    npc.angle = Math.atan2(npc.y - car.y, npc.x - car.x);
+                    npc.speed = 8;
+                    
+                    if (lives <= 0) {
+                        gameOver = true;
+                        handleGameOver();
+                    }
+                }
+            });
+
+            // Update Powerups
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                let p = powerups[i];
+                p.life--;
+                p.angle += 0.05;
+                if (Math.hypot(car.x - p.x, car.y - p.y) < 50) {
+                    weaponMode = p.type;
+                    powerupTimer = 400; 
+                    powerups.splice(i, 1);
+                    continue;
+                }
+                if (p.life <= 0) powerups.splice(i, 1);
+            }
+
+            if (powerupTimer > 0) {
+                powerupTimer--;
+                if (powerupTimer <= 0) weaponMode = 0;
+            }
+
+            // Update Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx; p.y += p.vy;
+                p.vx *= 0.95; p.vy *= 0.95; 
+                p.life -= 0.02;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            // UI Overlays
+            let nearest = getNearestNode();
+            document.getElementById('interaction-prompt').style.display = (nearest && nearest.dist < 250 && !car.autoDrive) ? 'block' : 'none';
+
+            let year = 2016 + ((car.x - 2200) / 2400) * 10;
+            document.getElementById('kf-x').innerText = year.toFixed(1) + " (Yr)";
+            document.getElementById('kf-y').innerText = car.y.toFixed(0);
+            document.getElementById('kf-v').innerText = Math.abs(car.speed).toFixed(1);
+            
+            let wepStatus = document.getElementById('kf-shield');
+            if(weaponMode === 1) { wepStatus.innerText = "RAPID FIRE"; wepStatus.style.color = "#E91E63"; }
+            else if(weaponMode === 2) { wepStatus.innerText = "SPREAD"; wepStatus.style.color = "#3B82F6"; }
+            else { wepStatus.innerText = "STANDARD"; wepStatus.style.color = "#10B981"; }
+
+            // Update Camera 
+            const camX = car.x - width / 2;
+            const camY = car.y - height / 2;
+            worldLayer.style.transform = `translate(${-camX}px, ${-camY}px)`;
+            
+            renderBackground(camX, camY);
+            renderHUD(camX, camY);
+        }
+
+        // --- RENDERING ENGINE ---
+        function renderBackground(camX, camY) {
+            bgCtx.clearRect(0, 0, width, height);
+
+            bgCtx.strokeStyle = 'rgba(203, 213, 225, 0.6)';
+            bgCtx.lineWidth = 1;
+            const startX = -(camX % 100); const startY = -(camY % 100);
+            
+            bgCtx.beginPath();
+            for (let x = startX; x < width; x += 100) { bgCtx.moveTo(x, 0); bgCtx.lineTo(x, height); }
+            for (let y = startY; y < height; y += 100) { bgCtx.moveTo(0, y); bgCtx.lineTo(width, y); }
+            bgCtx.stroke();
+
+            edges.forEach(edge => {
+                const n1 = nodes[edge.from], n2 = nodes[edge.to];
+                const sx1 = n1.x - camX, sy1 = n1.y - camY, sx2 = n2.x - camX, sy2 = n2.y - camY;
+                
+                bgCtx.lineWidth = 10; bgCtx.lineCap = "round";
+                bgCtx.strokeStyle = 'rgba(226, 232, 240, 0.8)';
+                bgCtx.beginPath(); bgCtx.moveTo(sx1, sy1); bgCtx.lineTo(sx2, sy2); bgCtx.stroke();
+                
+                bgCtx.lineWidth = 3; bgCtx.strokeStyle = n1.c;
+                bgCtx.setLineDash([8, 8]);
+                bgCtx.beginPath(); bgCtx.moveTo(sx1, sy1); bgCtx.lineTo(sx2, sy2); bgCtx.stroke();
+                bgCtx.setLineDash([]);
+                
+                let mx = (sx1 + sx2)/2; let my = (sy1 + sy2)/2;
+                bgCtx.fillStyle = '#64748B'; bgCtx.font = "bold 12px monospace";
+                bgCtx.fillText(`[${edge.label}]`, mx + 10, my - 10);
+            });
+
+            npcs.filter(n => n.layer === 'below').forEach(npc => {
+                bgCtx.save();
+                bgCtx.translate(npc.x - camX, npc.y - camY);
+                bgCtx.beginPath(); bgCtx.arc(0, 0, npc.radius, 0, Math.PI*2);
+                bgCtx.fillStyle = npc.color; 
+                bgCtx.shadowBlur = 15; bgCtx.shadowColor = npc.color;
+                bgCtx.fill();
+                
+                bgCtx.beginPath(); bgCtx.arc(0, 0, npc.radius*0.4, 0, Math.PI*2);
+                bgCtx.fillStyle = '#fff'; bgCtx.fill();
+                bgCtx.restore();
+            });
+
+            for (let i = splashMarks.length - 1; i >= 0; i--) {
+                let s = splashMarks[i];
+                bgCtx.save();
+                bgCtx.globalAlpha = s.alpha;
+                bgCtx.beginPath();
+                let sx = s.x - camX, sy = s.y - camY;
+                let grd = bgCtx.createRadialGradient(sx, sy, 0, sx, sy, s.radius);
+                grd.addColorStop(0, s.color);
+                grd.addColorStop(1, 'rgba(255,255,255,0)');
+                bgCtx.fillStyle = grd;
+                bgCtx.arc(sx, sy, s.radius, 0, Math.PI*2);
+                bgCtx.fill();
+                bgCtx.restore();
+
+                s.alpha -= s.decay;
+                s.radius += 0.05;
+                if (s.alpha <= 0) splashMarks.splice(i, 1);
+            }
+
+            powerups.forEach(p => {
+                bgCtx.save();
+                bgCtx.translate(p.x - camX, p.y - camY);
+                bgCtx.rotate(p.angle);
+                bgCtx.globalAlpha = p.life > 100 ? 1 : p.life / 100;
+                
+                bgCtx.fillStyle = p.type === 1 ? '#E91E63' : '#3B82F6';
+                bgCtx.shadowBlur = 10; bgCtx.shadowColor = bgCtx.fillStyle;
+                
+                bgCtx.beginPath();
+                bgCtx.moveTo(15, 0); bgCtx.lineTo(-7.5, 13); bgCtx.lineTo(-7.5, -13);
+                bgCtx.closePath();
+                bgCtx.fill();
+                
+                bgCtx.beginPath(); bgCtx.arc(0, 0, 5, 0, Math.PI*2);
+                bgCtx.fillStyle = '#fff'; bgCtx.fill();
+                bgCtx.restore();
+            });
+
+            bullets.forEach(b => {
+                bgCtx.beginPath();
+                bgCtx.moveTo(b.x - camX, b.y - camY);
+                bgCtx.lineTo((b.x - Math.cos(b.angle)*20) - camX, (b.y - Math.sin(b.angle)*20) - camY);
+                bgCtx.strokeStyle = weaponMode === 1 ? '#E91E63' : (weaponMode === 2 ? '#3B82F6' : '#10B981');
+                bgCtx.lineWidth = 4; bgCtx.lineCap = "round";
+                bgCtx.shadowBlur = 10; bgCtx.shadowColor = bgCtx.strokeStyle;
+                bgCtx.stroke();
+                bgCtx.shadowBlur = 0;
+            });
+
+            particles.forEach(p => {
+                bgCtx.globalAlpha = p.life;
+                bgCtx.beginPath();
+                bgCtx.arc(p.x - camX, p.y - camY, p.size, 0, Math.PI*2);
+                bgCtx.fillStyle = p.color;
+                bgCtx.fill();
+            });
+            bgCtx.globalAlpha = 1.0;
+        }
+
+        function renderHUD(camX, camY) {
+            hudCtx.clearRect(0, 0, width, height);
+            const cx = width / 2, cy = height / 2;
+
+            npcs.filter(n => n.layer === 'above').forEach(npc => {
+                hudCtx.save();
+                hudCtx.translate(npc.x - camX, npc.y - camY);
+                hudCtx.beginPath(); hudCtx.arc(0, 0, npc.radius, 0, Math.PI*2);
+                hudCtx.fillStyle = npc.color; hudCtx.shadowBlur = 15; hudCtx.shadowColor = npc.color; hudCtx.fill();
+                hudCtx.beginPath(); hudCtx.arc(0, 0, npc.radius*0.4, 0, Math.PI*2); hudCtx.fillStyle = '#fff'; hudCtx.fill();
+                hudCtx.restore();
+            });
+
+            if (confettiActive || confetti.length) {
+                for (let i = confetti.length - 1; i >= 0; i--) {
+                    const c = confetti[i];
+                    hudCtx.save();
+                    hudCtx.translate(c.x, c.y);
+                    hudCtx.rotate(c.rot);
+                    hudCtx.fillStyle = c.color;
+                    hudCtx.fillRect(-c.w/2, -c.h/2, c.w, c.h);
+                    hudCtx.restore();
+                    c.x += c.vx; c.y += c.vy; c.vy += 0.12; c.rot += c.vr; c.life -= 1;
+                    if (c.y > height + 50 || c.life <= 0) confetti.splice(i, 1);
+                }
+            }
+
+            hudCtx.save();
+            hudCtx.translate(cx, cy);
+
+            let speedRatio = Math.abs(car.speed) / car.maxSpeed;
+            hudCtx.beginPath();
+            hudCtx.arc(0, 0, 45, Math.PI * 0.75, Math.PI * 2.25);
+            hudCtx.strokeStyle = 'rgba(226, 232, 240, 0.6)'; hudCtx.lineWidth = 5; hudCtx.lineCap = "round"; hudCtx.stroke();
+            
+            if (speedRatio > 0.05) {
+                hudCtx.beginPath();
+                hudCtx.arc(0, 0, 45, Math.PI * 0.75, Math.PI * 0.75 + (1.5 * Math.PI * speedRatio));
+                hudCtx.strokeStyle = '#3B82F6'; hudCtx.stroke();
+            }
+
+            hudCtx.rotate(car.angle);
+
+            if (Math.abs(car.speed) > 0.5) {
+                let vectorLen = 22 + (Math.abs(car.speed) * 8);
+                hudCtx.beginPath(); hudCtx.moveTo(22, 0); hudCtx.lineTo(vectorLen, 0);
+                hudCtx.strokeStyle = '#3B82F6'; hudCtx.lineWidth = 2; hudCtx.setLineDash([5, 5]); hudCtx.stroke(); hudCtx.setLineDash([]);
+                hudCtx.beginPath(); hudCtx.moveTo(vectorLen, 0); hudCtx.lineTo(vectorLen - 6, -5); hudCtx.lineTo(vectorLen - 6, 5);
+                hudCtx.fillStyle = '#3B82F6'; hudCtx.fill();
+            }
+
+            // --- RENDER AGENT SHIP ---
+            hudCtx.save();
+            hudCtx.scale(car.scale, car.scale);
+            
+            // Draw visual immunity shield if active
+            if (car.invulnerableTimer > 0) {
+                hudCtx.save();
+                hudCtx.beginPath();
+                hudCtx.arc(0, 0, 35, 0, Math.PI*2);
+                let alpha = 0.2 + 0.4 * Math.abs(Math.sin(Date.now() / 150)); // Pulsing effect
+                hudCtx.fillStyle = `rgba(59, 130, 246, ${alpha})`;
+                hudCtx.fill();
+                hudCtx.strokeStyle = '#60A5FA';
+                hudCtx.lineWidth = 2;
+                hudCtx.stroke();
+                hudCtx.restore();
+            }
+            
+            hudCtx.fillStyle = '#1E293B'; 
+            hudCtx.shadowBlur = 10; hudCtx.shadowColor = 'rgba(59, 130, 246, 0.4)';
+            
+            hudCtx.beginPath();
+            hudCtx.moveTo(25, 0);       
+            hudCtx.lineTo(-12, 14);     
+            hudCtx.lineTo(-5, 0);       
+            hudCtx.lineTo(-12, -14);    
+            hudCtx.closePath();
+            hudCtx.fill();
+            
+            hudCtx.shadowBlur = 0; 
+            hudCtx.fillStyle = weaponMode === 1 ? '#E91E63' : (weaponMode === 2 ? '#3B82F6' : '#10B981');
+            hudCtx.beginPath(); hudCtx.arc(2, 0, 3.5, 0, Math.PI*2); hudCtx.fill();
+            hudCtx.restore(); 
+            hudCtx.restore();
+
+            if (gameState === 1 && !car.autoDrive) {
+                hudCtx.beginPath(); hudCtx.arc(mouse.x, mouse.y, 8, 0, Math.PI*2);
+                hudCtx.strokeStyle = mouse.down ? '#E91E63' : '#3B82F6'; 
+                hudCtx.lineWidth = 2; hudCtx.stroke();
+                
+                hudCtx.beginPath(); hudCtx.moveTo(mouse.x-12, mouse.y); hudCtx.lineTo(mouse.x-4, mouse.y); hudCtx.stroke();
+                hudCtx.beginPath(); hudCtx.moveTo(mouse.x+12, mouse.y); hudCtx.lineTo(mouse.x+4, mouse.y); hudCtx.stroke();
+                hudCtx.beginPath(); hudCtx.moveTo(mouse.x, mouse.y-12); hudCtx.lineTo(mouse.x, mouse.y-4); hudCtx.stroke();
+                hudCtx.beginPath(); hudCtx.moveTo(mouse.x, mouse.y+12); hudCtx.lineTo(mouse.x, mouse.y+4); hudCtx.stroke();
+                
+                if(mouse.down) { hudCtx.fillStyle = 'rgba(233, 30, 99, 0.3)'; hudCtx.fill(); }
+            }
+
+            if (confettiActive) {
+                hudCtx.save();
+                hudCtx.font = 'bold 48px monospace';
+                hudCtx.fillStyle = '#FFD700';
+                hudCtx.shadowColor = '#FFD700'; hudCtx.shadowBlur = 20;
+                hudCtx.textAlign = 'center'; hudCtx.fillText('NEW HIGH SCORE!', width/2, height/2 - 40);
+                hudCtx.restore();
+            }
+
+            if (gameOver) {
+                hudCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                hudCtx.fillRect(0, 0, width, height);
+
+                hudCtx.save();
+                hudCtx.textAlign = 'center';
+                hudCtx.font = 'bold 56px monospace';
+                hudCtx.fillStyle = '#E91E63';
+                hudCtx.fillText('GAME OVER', width/2, height/2 - 80);
+
+                hudCtx.font = 'bold 32px monospace';
+                hudCtx.fillStyle = '#fff';
+                hudCtx.fillText('Final Score: ' + score, width/2, height/2);
+                hudCtx.fillText('High Score: ' + highScore, width/2, height/2 + 60);
+
+                hudCtx.font = '16px monospace';
+                hudCtx.fillStyle = '#A8B2D1';
+                hudCtx.fillText('Press R to Restart', width/2, height/2 + 140);
+                hudCtx.restore();
+            }
+        }
+
+        function loop() {
+            if(gameState === 1) update();
+            requestAnimationFrame(loop);
+        }
+
+        function handleGameOver() {
+            if (score > previousHighScore) {
+                highScore = score;
+                localStorage.setItem('vk_highscore', String(highScore));
+                celebrate();
+            }
+        }
+
+        function celebrate() {
+            confettiActive = true;
+            for (let i = 0; i < 120; i++) {
+                confetti.push({
+                    x: Math.random() * width,
+                    y: -Math.random() * 200,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: 1 + Math.random() * 3,
+                    w: 6 + Math.random() * 8,
+                    h: 8 + Math.random() * 8,
+                    rot: Math.random() * Math.PI,
+                    vr: (Math.random() - 0.5) * 0.2,
+                    color: ['#FFD166', '#EF476F', '#06D6A0', '#118AB2', '#073B4C'][Math.floor(Math.random()*5)],
+                    life: 200 + Math.random()*200
+                });
+            }
+            setTimeout(() => { confettiActive = false; }, 3500);
+        }
+
+    </script>
 </body>
 </html>

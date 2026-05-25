@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vinay K. Verma - Spatio-Temporal AI Portfolio</title>
+    
+    <script src="https://unpkg.com/typed.js@2.0.16/dist/typed.umd.js"></script>
+    
+    <style>
+        /* === PASTEL LIGHT THEME === */
+        :root {
+            --bg-color: #F4F7FB;
+            --grid-color: #E2E8F0;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            
+            --node-person: #3B82F6;   /* Blue */
+            --node-work: #E91E63;     /* Pink */
+            --node-edu: #F59E0B;      /* Yellow/Orange */
+            --node-research: #10B981; /* Green */
+            --node-project: #8B5CF6;  /* Purple */
+            
+            --card-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            overflow: hidden; 
+        }
+
+        /* ==========================================
+           1. STATIC RESUME PAGE
+           ========================================== */
+        #static-page {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh;
+            overflow-y: auto; overflow-x: hidden; z-index: 100;
+            background: var(--bg-color);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        #static-page.hidden {
+            opacity: 0; transform: scale(0.95) translateY(-20px); pointer-events: none;
+        }
+        #static-page::-webkit-scrollbar { width: 8px; }
+        #static-page::-webkit-scrollbar-thumb { background: #CBD5E0; border-radius: 4px; }
+
+        .resume-container { max-width: 850px; margin: 0 auto; padding: 60px 20px 120px 20px; }
+        
+        .static-card {
+            background: #fff; border-radius: 12px; padding: 40px; margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #E2E8F0;
+            border-left: 6px solid var(--node-person);
+        }
+
+        .resume-header { font-size: 2.5em; margin: 0 0 5px 0; color: var(--text-dark); }
+        .resume-bio { font-size: 1.1em; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
+        .section-title { font-size: 1.4em; color: var(--text-dark); border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; margin-top: 30px; }
+        
+        .entry { margin-bottom: 20px; }
+        .entry h3 { margin: 0 0 5px 0; font-size: 1.1em; }
+        .entry .meta { font-size: 0.9em; font-weight: 600; color: var(--node-person); margin-bottom: 5px; }
+        .entry p { margin: 0; color: var(--text-muted); font-size: 0.95em; line-height: 1.5; }
+
+        .hint-overlay {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #fff; color: var(--node-person); padding: 12px 28px;
+            border-radius: 30px; font-weight: 700; font-size: 14px;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15); border: 2px solid var(--node-person);
+            animation: bounce 2s infinite; cursor: pointer; z-index: 101;
+        }
+        @keyframes bounce { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -8px); } }
+
+        /* ==========================================
+           2. 2D SPATIO-TEMPORAL SCENE GRAPH
+           ========================================== */
+        #viewport {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            opacity: 0; pointer-events: none; transition: opacity 0.8s ease; z-index: 10;
+        }
+        body.game-mode #viewport { opacity: 1; pointer-events: auto; }
+
+        /* Flat Top-Down Container */
+        #scene {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        }
+
+        #world-layer { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+        #bg-canvas { position: absolute; top: 0; left: 0; }
+        #hud-canvas { position: absolute; top: 0; left: 0; z-index: 20; pointer-events: none; }
+
+        /* --- 2D SCENE GRAPH NODES --- */
+        .map-node {
+            position: absolute; width: 420px; 
+            max-height: 380px; overflow-y: auto; overflow-x: hidden;
+            background: var(--card-bg); border-radius: 12px; padding: 25px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.06), 0 0 0 1px rgba(255,255,255,1);
+            backdrop-filter: blur(10px); border: 1px solid #E2E8F0;
+            
+            /* Center perfectly in 2D space */
+            transform: translate(-50%, -50%);
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .map-node::-webkit-scrollbar { width: 5px; }
+        .map-node::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
+        .map-node:hover { 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1); 
+            transform: translate(-50%, -52%);
+            z-index: 15; 
+        }
+
+        /* Technical Spatio-Temporal Headers */
+        .st-header {
+            position: sticky; top: -10px; background: #F8FAFC; border: 1px solid #E2E8F0;
+            border-radius: 6px; padding: 6px 12px; margin-bottom: 15px; font-family: monospace;
+            font-size: 11px; font-weight: bold; color: var(--text-dark); box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            z-index: 10;
+        }
+        .st-key { color: var(--text-muted); }
+        .st-val { margin-right: 15px; }
+
+        /* Node Specific Styling */
+        #node-hero { border-top: 5px solid var(--node-person); }
+        #node-work-past, #node-work-pres { border-top: 5px solid var(--node-work); }
+        #node-edu, #node-edu-past { border-top: 5px solid var(--node-edu); }
+        #node-research { border-top: 5px solid var(--node-research); }
+        #node-projects { border-top: 5px solid var(--node-project); }
+
+        .node-title { font-size: 1.4em; margin: 0 0 10px 0; color: var(--text-dark); }
+        .node-meta { font-size: 0.85em; font-weight: 600; margin-bottom: 10px; }
+        .node-desc { font-size: 0.9em; color: var(--text-muted); line-height: 1.5; margin: 0 0 10px 0; }
+        
+        .skill-pill {
+            display: inline-block; background: #F1F5F9; color: #475569;
+            padding: 3px 8px; border-radius: 4px; font-size: 0.75em; font-weight: 600;
+            margin: 0 4px 4px 0; border: 1px solid #E2E8F0;
+        }
+        .link-btn { display: inline-block; margin-top: 10px; font-weight: bold; font-size: 0.85em; text-decoration: none; }
+
+        /* --- HUD UI PANELS --- */
+        .hud-panel {
+            position: absolute; background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px; padding: 20px; font-size: 12px; color: var(--text-dark);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid #E2E8F0;
+            backdrop-filter: blur(5px); z-index: 30;
+        }
+        #top-right-hud { top: 20px; right: 20px; width: 230px; }
+        #bottom-left-hud { bottom: 20px; left: 20px; }
+        
+        .hud-title { font-weight: 800; color: var(--text-muted); margin-bottom: 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #E2E8F0; padding-bottom: 5px;}
+        .key { background: #F1F5F9; padding: 3px 6px; border-radius: 4px; border: 1px solid #CBD5E1; font-family: monospace; font-weight: bold; }
+        .val { float: right; font-family: monospace; font-weight: bold;}
+
+        #interaction-prompt {
+            position: absolute; top: 15%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff; color: var(--node-person); padding: 12px 30px;
+            border-radius: 30px; font-size: 14px; font-weight: 700; text-transform: uppercase;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 2px solid var(--node-person);
+            display: none; z-index: 30;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="static-page">
+        <div class="resume-container">
+            <div class="static-card" style="border-left-color: var(--node-person)">
+                <h1 class="resume-header">Vinay K. Verma</h1>
+                <p class="resume-bio"><span id="typed-bio"></span></p>
+                <p class="resume-bio">AI Researcher and Computer Vision Engineer with 6+ years of experience in building scalable vision systems across industry and academia. Currently focused on learning structured world representations through semantic scene graphs and multimodal encoders for downstream tasks such as autonomous systems and healthcare applications.</p>
+                <div>
+                    <a href="https://www.linkedin.com/in/vermavinay982/" target="_blank" style="margin-right:15px; font-weight:bold; color:var(--node-person);">LinkedIn</a>
+                    <a href="https://github.com/vermavinay982" target="_blank" style="margin-right:15px; font-weight:bold; color:var(--node-person);">GitHub</a>
+                    <a href="data/vinay_cv.pdf" target="_blank" style="font-weight:bold; color:var(--node-person);">Resume PDF</a>
+                </div>
+            </div>
+
+            <h2 class="section-title">Work Experience</h2>
+            <div class="static-card" style="border-left-color: var(--node-work)">
+                <div class="entry"><h3>HRI Lab @ IIIT Delhi</h3><div class="meta">Researcher | Aug 2025 - Present</div>
+                <p>Working on multi-robot perception and representation learning using semantic and geometric scene understanding. Designing graph-based world models from multi-view camera inputs for robot localization, calibration, and interaction.</p></div>
+                
+                <div class="entry"><h3>Visual Conception Group @ IIIT Delhi</h3><div class="meta">Research Assistant | Oct 2023 - Jul 2024</div>
+                <p>Developed segmentation algorithms for large satellite and volumetric medical datasets on Jetson edge platforms. Presented at ICASSP 2025.</p></div>
+                
+                <div class="entry"><h3>Stats Perform, London (Remote)</h3><div class="meta">CV Engineer 2 | Nov 2022 - Dec 2023</div>
+                <p>Improved player tracking accuracy from 85% to 98% using temporal smoothing. Designed robust Jersey OCR (TensorFlow) with 90%+ accuracy.</p></div>
+                
+                <div class="entry"><h3>Fynd Shopsense Retail & Wobot</h3><div class="meta">ML Engineer & Sr. CV Engineer | 2019 - 2022</div>
+                <p>Built CV APIs handling 2.5M+ req/day. Designed multi-camera vehicle tracking for 300+ CCTV cams. Built lighting-invariant color detection.</p></div>
+            </div>
+
+            <h2 class="section-title">Projects & Systems</h2>
+            <div class="static-card" style="border-left-color: var(--node-project)">
+                <div class="entry"><h3>Robotics & Manipulation</h3>
+                <p>Designed a sensorless force estimation model utilizing joint currents for the uFactory Lite6. Engineered autonomous tabletop object sorting and AprilTag camera calibration pipelines.</p></div>
+                
+                <div class="entry"><h3>Generative AI & Healthcare</h3>
+                <p>Built ResearchBuddy, a RAG-Based QA pipeline using Gemini-2.5 Flash and LangChain. Developed OPD Assistant Medical Record System with PGIMER to convert unstructured raw data to meaningful records.</p></div>
+            </div>
+
+            <h2 class="section-title">Publications & Patents</h2>
+            <div class="static-card" style="border-left-color: var(--node-research)">
+                <div class="entry"><h3>Towards Falsifiable Grammars of HRI</h3><div class="meta">ACM HRI 2026, Edinburgh, UK</div></div>
+                <div class="entry"><h3>Resource-Efficient Perception for Vision Systems</h3><div class="meta">ICASSP 2025, Hyderabad, India</div></div>
+                <div class="entry"><h3>Toward Falsifiable Grammars for NeuroDesign in HRI</h3><div class="meta">NeuroHRI 2025</div></div>
+                <div class="entry"><h3>Foundation Models for 3D Biomedical Image Segmentation</h3><div class="meta">CVPR Workshop MedSegFM 2025</div></div>
+                <div class="entry"><h3>Patent: A Method to Train Deep Learning Model</h3><div class="meta">Indian Patent App. No. 202411050462</div></div>
+            </div>
+
+            <h2 class="section-title">Education</h2>
+            <div class="static-card" style="border-left-color: var(--node-edu)">
+                <div class="entry"><h3>PhD, Human Robot Interaction</h3><div class="meta">IIIT Delhi | 2024 - 2029 (CGPA: 8.40)</div></div>
+                <div class="entry"><h3>M.Tech Research (CSE)</h3><div class="meta">IIIT Delhi | 2024 - 2026 (CGPA: 8.40)</div></div>
+                <div class="entry"><h3>PG Diploma (Data Science & AI)</h3><div class="meta">IIIT Delhi | 2022 - 2023 (CGPA: 9.17)</div></div>
+                <div class="entry"><h3>B.Tech (ECE)</h3><div class="meta">ADGIPS (GGSIPU), Delhi | 2016 - 2020 (CGPA: 7.79)</div></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="hint-overlay" id="start-hint" onclick="startGameMode()">Press W, A, S, or D to Enter 2D Spatio-Temporal Graph</div>
+
+    <div id="viewport">
+        <div id="scene">
+            <canvas id="bg-canvas"></canvas>
+            
+            <div id="world-layer">
+                
+                <div id="node-hero" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">Node_ID:</span> <span class="st-val">n_001</span>
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-person)">Entity.Person</span>
+                    </div>
+                    <h1 class="node-title">Vinay K. Verma</h1>
+                    <div class="node-meta" style="color:var(--node-person)">AI Researcher | Computer Vision</div>
+                    <p class="node-desc">Focused on learning structured world representations through semantic scene graphs and multimodal encoders.</p>
+                    <div>
+                        <span class="skill-pill">Python</span><span class="skill-pill">C++</span><span class="skill-pill">PyTorch</span><span class="skill-pill">ROS2</span><span class="skill-pill">TensorFlow</span><span class="skill-pill">Kubernetes</span>
+                    </div>
+                    <a href="https://www.linkedin.com/in/vermavinay982/" target="_blank" class="link-btn" style="color:var(--node-person)">[ ACCESS LINKEDIN ]</a>
+                </div>
+
+                <div id="node-work-past" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">T_Start:</span> <span class="st-val">2019</span>
+                        <span class="st-key">T_End:</span> <span class="st-val">2023</span>
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-work)">Event.Experience</span>
+                    </div>
+                    <h1 class="node-title">Industry Applied AI</h1>
+                    <div class="entry">
+                        <h3>Stats Perform</h3><div class="meta" style="color:var(--node-work)">CV Engineer 2 | Nov '22 - Dec '23</div>
+                        <p class="node-desc">Improved player tracking accuracy from 85% to 98% via temporal smoothing. Designed robust Jersey OCR (TensorFlow).</p>
+                    </div>
+                    <div class="entry">
+                        <h3>Fynd & Wobot Intelligence</h3><div class="meta" style="color:var(--node-work)">ML Engineer / Sr. CV Engineer | 2019 - 2022</div>
+                        <p class="node-desc">Built CV APIs handling 2.5M+ req/day. Designed multi-camera vehicle tracking for 300+ CCTV cams.</p>
+                    </div>
+                </div>
+
+                <div id="node-work-pres" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">T_Start:</span> <span class="st-val">2023</span>
+                        <span class="st-key">T_End:</span> <span class="st-val">Present</span>
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-work)">Event.Experience</span>
+                    </div>
+                    <h1 class="node-title">Academic Research Labs</h1>
+                    <div class="entry">
+                        <h3>HRI Lab @ IIIT Delhi</h3><div class="meta" style="color:var(--node-work)">Researcher | Aug '25 - Present</div>
+                        <p class="node-desc">Designing graph-based world models from multi-view camera inputs for robot localization, calibration, and interaction.</p>
+                    </div>
+                    <div class="entry">
+                        <h3>Visual Conception Group</h3><div class="meta" style="color:var(--node-work)">Research Asst. | Oct '23 - Jul '24</div>
+                        <p class="node-desc">Developed segmentation algorithms for large satellite and volumetric medical datasets on Jetson edge platforms.</p>
+                    </div>
+                </div>
+
+                <div id="node-projects" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-project)">Data.Systems</span>
+                        <span class="st-key">Domain:</span> <span class="st-val">Robotics & LLMs</span>
+                    </div>
+                    <h1 class="node-title">Engineering Systems</h1>
+                    <div class="entry">
+                        <h3>Robotics & Manipulation</h3>
+                        <p class="node-desc">Sensorless Force Estimation (Lite6), Autonomous Tabletop Object Sorting, AprilTag Calibration Pipeline, ROS2 & Gazebo Sims.</p>
+                    </div>
+                    <div class="entry">
+                        <h3>Generative AI & Health</h3>
+                        <p class="node-desc">ResearchBuddy: RAG-Based QA using Gemini-2.5 Flash. OPD Assistant Medical Record System built with PGIMER.</p>
+                    </div>
+                </div>
+
+                <div id="node-research" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-research)">Data.Publications</span>
+                        <span class="st-key">Count:</span> <span class="st-val">5+</span>
+                    </div>
+                    <h1 class="node-title">Research Outputs</h1>
+                    <div class="entry">
+                        <h3>Towards Falsifiable Grammars of HRI</h3>
+                        <p class="node-desc">ACM HRI 2026, Edinburgh. Transforms HRI from descriptive analysis to a priori verification.</p>
+                    </div>
+                    <div class="entry">
+                        <h3>Resource-Efficient Perception</h3>
+                        <p class="node-desc">ICASSP 2025. Optimized computer vision for edge systems under resource constraints.</p>
+                    </div>
+                    <div class="entry">
+                        <h3>Patents & Foundations</h3>
+                        <p class="node-desc">NeuroHRI 2025. CVPR MedSegFM 2025 (Ranked 4th/210). Indian Patent App (202411050462) for DL Training Methods.</p>
+                    </div>
+                    <a href="https://ieeexplore.ieee.org/document/10888483" target="_blank" class="link-btn" style="color:var(--node-research)">[ VIEW PAPER ]</a>
+                </div>
+
+                <div id="node-edu-past" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">T_Start:</span> <span class="st-val">2016</span>
+                        <span class="st-key">T_End:</span> <span class="st-val">2023</span>
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-edu)">Relation.Studied_At</span>
+                    </div>
+                    <h1 class="node-title">Academic Foundations</h1>
+                    <div class="entry">
+                        <h3>PG Diploma (Data Science & AI)</h3><div class="meta" style="color:var(--node-edu)">IIIT Delhi | 2022 - 2023</div>
+                    </div>
+                    <div class="entry">
+                        <h3>B.Tech (ECE)</h3><div class="meta" style="color:var(--node-edu)">ADGIPS (GGSIPU) | 2016 - 2020</div>
+                    </div>
+                </div>
+
+                <div id="node-edu" class="map-node">
+                    <div class="st-header">
+                        <span class="st-key">T_Start:</span> <span class="st-val">2024</span>
+                        <span class="st-key">T_End:</span> <span class="st-val">2029</span>
+                        <span class="st-key">Class:</span> <span class="st-val" style="color:var(--node-edu)">Relation.Studied_At</span>
+                    </div>
+                    <h1 class="node-title">Advanced Academia</h1>
+                    <div class="entry">
+                        <h3>PhD, Human Robot Interaction</h3><div class="meta" style="color:var(--node-edu)">IIIT Delhi | 2024 - 2029</div>
+                        <p class="node-desc">Department of CSE (Human Machine Interaction Lab).</p>
+                    </div>
+                    <div class="entry">
+                        <h3>M.Tech Research (CSE)</h3><div class="meta" style="color:var(--node-edu)">IIIT Delhi | 2024 - 2026</div>
+                        <p class="node-desc">Thesis: Localized Perception for Constrained Vision Systems.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <canvas id="hud-canvas"></canvas>
+
+        <div id="top-right-hud" class="hud-panel">
+            <div class="hud-title">Spatio-Temporal Telemetry</div>
+            <div style="margin-bottom: 6px;">TEMPUS (X) <span class="val" id="kf-x" style="color: var(--node-person)">2026.0</span></div>
+            <div style="margin-bottom: 6px;">DOMAIN (Y) <span class="val" id="kf-y">0000.0</span></div>
+            <div style="margin-bottom: 6px;">VELOCITY <span class="val" id="kf-v">00.0</span></div>
+            <div style="margin-bottom: 10px; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px;">INTEGRITY <span class="val" id="kf-shield" style="color: #10B981;">100%</span></div>
+            <div style="padding-top: 2px;">AUTO-TRAVERSE <span class="val" id="drive-mode" style="color: var(--text-muted);">OFF</span></div>
+        </div>
+
+        <div id="bottom-left-hud" class="hud-panel">
+            <div class="hud-title">Agent Controls</div>
+            <div style="margin-bottom: 6px;">Navigate <span class="key" style="float:right">W A S D</span></div>
+            <div style="margin-bottom: 6px;">Steer <span class="key" style="float:right">Hold Mouse</span></div>
+            <div style="margin-bottom: 6px;">Accelerate <span class="key" style="float:right">SPACE</span></div>
+            <div style="margin-bottom: 6px;">Auto-Traverse <span class="key" style="float:right">E / Q</span></div>
+            <div style="margin-bottom: 4px;">Inspect Node <span class="key" style="float:right">ENTER</span></div>
+        </div>
+
+        <div id="interaction-prompt">Press ENTER to Inspect Node</div>
+    </div>
+
+    <script>
+        // Typing Effect Initialization
+        new Typed('#typed-bio', {
+            strings: ["Human Robot Interaction", "Computer Vision Researcher", "AI & ML Engineer"],
+            typeSpeed: 40, backSpeed: 20, loop: true
+        });
+
+        // Core Variables
+        let gameState = 0; 
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        const hudCanvas = document.getElementById('hud-canvas');
+        const hudCtx = hudCanvas.getContext('2d');
+        const worldLayer = document.getElementById('world-layer');
+        let width = window.innerWidth, height = window.innerHeight;
+
+        function resize() {
+            width = window.innerWidth; height = window.innerHeight;
+            bgCanvas.width = width; bgCanvas.height = height;
+            hudCanvas.width = width; hudCanvas.height = height;
+        }
+        window.addEventListener('resize', resize); resize();
+
+        /* --- 2D SPATIO-TEMPORAL MAP LAYOUT (Tightly Spaced) ---
+           X-Axis = Time (Past -> Present -> Future)
+           Y-Axis = Domain (Work/Industry vs Research/Education) 
+        */
+        const nodes = {
+            work_past: { id: 'work_past', x: 2800, y: 2600, el: document.getElementById('node-work-past'), c: '#E91E63' },
+            edu_past:  { id: 'edu_past',  x: 2900, y: 3400, el: document.getElementById('node-edu-past'), c: '#F59E0B' },
+            projects:  { id: 'projects',  x: 2800, y: 3000, el: document.getElementById('node-projects'), c: '#8B5CF6' },
+            hero:      { id: 'hero',      x: 3400, y: 3000, el: document.getElementById('node-hero'), c: '#3B82F6', link: 'https://www.linkedin.com/in/vermavinay982/' },
+            work_pres: { id: 'work_pres', x: 3400, y: 2500, el: document.getElementById('node-work-pres'), c: '#E91E63' },
+            edu_pres:  { id: 'edu_pres',  x: 3600, y: 3500, el: document.getElementById('node-edu'), c: '#F59E0B' },
+            research:  { id: 'research',  x: 4000, y: 3000, el: document.getElementById('node-research'), c: '#10B981', link: 'https://ieeexplore.ieee.org/document/10888483' }
+        };
+
+        const edges = [
+            { from: 'work_past', to: 'projects', label: 'Applied_To' },
+            { from: 'edu_past', to: 'projects', label: 'Applied_To' },
+            { from: 'projects', to: 'hero', label: 'Developed_By' },
+            { from: 'hero', to: 'work_pres', label: 'Employed_By' },
+            { from: 'hero', to: 'edu_pres', label: 'Studies_At' },
+            { from: 'work_pres', to: 'research', label: 'Yields' },
+            { from: 'edu_pres', to: 'research', label: 'Yields' }
+        ];
+
+        // Apply spatial coordinates to HTML elements
+        Object.values(nodes).forEach(n => { n.el.style.left = `${n.x}px`; n.el.style.top = `${n.y}px`; });
+
+        // --- AGENT (VEHICLE) ---
+        const car = {
+            x: 3400, y: 3250, angle: -Math.PI/2, 
+            speed: 0, maxSpeed: 14, acceleration: 0.6, friction: 0.92, turnSpeed: 0.08,
+            autoDrive: false, targetNodeIndex: 0, waitTimer: 0, shield: 100
+        };
+        const autoDriveSequence = ['hero', 'work_pres', 'research', 'edu_pres', 'projects', 'work_past', 'edu_past'];
+
+        // --- NPCs (Data Packets) ---
+        const npcs = [];
+        const pastelColors = ['#A0C4FF', '#CAFFBF', '#FFADAD', '#FDFFB6', '#BDB2FF', '#FFD6A5'];
+        for(let i=0; i<15; i++) {
+            npcs.push({
+                x: 1800 + Math.random()*3200, y: 1800 + Math.random()*2400,
+                angle: Math.random() * Math.PI * 2, speed: 2 + Math.random()*10, radius: 40,
+                color: pastelColors[Math.floor(Math.random()*pastelColors.length)]
+            });
+        }
+
+        // --- INPUT HANDLING ---
+        const keys = { w: false, a: false, s: false, d: false, space: false };
+        const mouse = { x: width/2, y: height/2, down: false };
+
+        window.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            if (['w', 'a', 's', 'd'].includes(k)) { keys[k] = true; startGameMode(); }
+            if (k === ' ') keys.space = true;
+            if (k === 'e' && gameState === 1) { car.autoDrive = true; car.waitTimer = 0; }
+            if (k === 'q' && gameState === 1) car.autoDrive = false;
+            
+            if (e.key === 'Enter' && gameState === 1) {
+                let nearest = getNearestNode();
+                if (nearest && nearest.dist < 250) {
+                    if (nearest.node.link) window.open(nearest.node.link, '_blank');
+                    else nearest.node.el.scrollIntoView({behavior: 'smooth', block: 'center'});
+                }
+            }
+        });
+        window.addEventListener('keyup', (e) => {
+            const k = e.key.toLowerCase();
+            if (['w', 'a', 's', 'd'].includes(k)) keys[k] = false;
+            if (k === ' ') keys.space = false;
+        });
+        window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        window.addEventListener('mousedown', (e) => { 
+            if (!e.target.closest('.map-node') && !e.target.closest('.resume-container')) {
+                mouse.down = true; startGameMode(); 
+            }
+        });
+        window.addEventListener('mouseup', () => mouse.down = false);
+
+        function startGameMode() {
+            if (gameState === 1) return;
+            gameState = 1;
+            document.body.classList.add('game-mode');
+            document.getElementById('static-page').classList.add('hidden');
+            document.getElementById('start-hint').style.display = 'none';
+            loop();
+        }
+
+        function getNearestNode() {
+            let nearest = null; let minDist = Infinity;
+            Object.values(nodes).forEach(n => {
+                let d = Math.hypot(car.x - n.x, car.y - n.y);
+                if (d < minDist) { minDist = d; nearest = n; }
+            });
+            return { node: nearest, dist: minDist };
+        }
+
+        // --- GAME LOGIC ENGINE ---
+        function update() {
+            let maxSpd = keys.space ? car.maxSpeed * 1.5 : car.maxSpeed;
+
+            if (car.autoDrive) {
+                document.getElementById('drive-mode').innerText = "ENGAGED";
+                document.getElementById('drive-mode').style.color = "#10B981";
+                
+                const target = nodes[autoDriveSequence[car.targetNodeIndex]];
+                const dx = target.x - car.x; const dy = target.y - car.y;
+                const dist = Math.hypot(dx, dy);
+                
+                let targetAngle = Math.atan2(dy, dx);
+                let diff = targetAngle - car.angle;
+                diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+                car.angle += diff * 0.15; 
+                
+                if (dist < 100) {
+                    car.speed *= 0.6; // Brake
+                    if (Math.abs(car.speed) < 2.5) {
+                        car.waitTimer++;
+                        if (car.waitTimer > 40) { // Brief pause
+                            car.targetNodeIndex = (car.targetNodeIndex + 1) % autoDriveSequence.length;
+                            car.waitTimer = 0;
+                        }
+                    }
+                } else {
+                    car.speed += car.acceleration;
+                }
+            } else {
+                document.getElementById('drive-mode').innerText = "OFF";
+                document.getElementById('drive-mode').style.color = "var(--text-muted)";
+
+                if (mouse.down) {
+                    let targetAngle = Math.atan2(mouse.y - height / 2, mouse.x - width / 2);
+                    let diff = targetAngle - car.angle;
+                    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+                    car.angle += diff * 0.15;
+                    car.speed += car.acceleration; 
+                }
+
+                if (keys.w) car.speed += car.acceleration;
+                if (keys.s) car.speed -= car.acceleration;
+                
+                if (Math.abs(car.speed) > 0.1 && !mouse.down) {
+                    const dir = car.speed > 0 ? 1 : -1;
+                    if (keys.a) car.angle -= car.turnSpeed * dir;
+                    if (keys.d) car.angle += car.turnSpeed * dir;
+                }
+            }
+
+            car.speed *= car.friction;
+            if (car.speed > maxSpd) car.speed = maxSpd;
+            if (car.speed < -maxSpd/2) car.speed = -maxSpd/2;
+
+            car.x += Math.cos(car.angle) * car.speed;
+            car.y += Math.sin(car.angle) * car.speed;
+
+            if(car.shield < 100) car.shield += 0.2;
+
+            // NPCs Navigation bounds (Tightened for smaller map)
+            npcs.forEach(npc => {
+                npc.x += Math.cos(npc.angle) * npc.speed;
+                npc.y += Math.sin(npc.angle) * npc.speed;
+                if (Math.random() < 0.05) npc.angle += (Math.random()-0.5);
+                
+                if(npc.x < 1800) npc.x = 5000; if(npc.x > 5000) npc.x = 1800;
+                if(npc.y < 1800) npc.y = 4200; if(npc.y > 4200) npc.y = 1800;
+
+                let dist = Math.hypot(car.x - npc.x, car.y - npc.y);
+                if (dist < 70) {
+                    car.speed *= 0.5; 
+                    car.shield = Math.max(0, car.shield - 10);
+                    npc.angle = Math.atan2(npc.y - car.y, npc.x - car.x);
+                    npc.speed = car.speed*10+0.1; 
+                }
+            });
+
+            // UI
+            let nearest = getNearestNode();
+            document.getElementById('interaction-prompt').style.display = (nearest && nearest.dist < 250 && !car.autoDrive) ? 'block' : 'none';
+
+            // X mapped to timeline conceptually (2200 to 4600 is 2400px span, roughly 10 years)
+            let year = 2016 + ((car.x - 2200) / 2400) * 10;
+            document.getElementById('kf-x').innerText = year.toFixed(1) + " (Yr)";
+            document.getElementById('kf-y').innerText = car.y.toFixed(0);
+            document.getElementById('kf-v').innerText = Math.abs(car.speed).toFixed(1);
+            
+            let sColor = car.shield > 60 ? '#10B981' : (car.shield > 30 ? '#F59E0B' : '#E91E63');
+            document.getElementById('kf-shield').style.color = sColor;
+            document.getElementById('kf-shield').innerText = Math.floor(car.shield) + '%';
+
+            // Update Camera by translating the world layer
+            const camX = car.x - width / 2;
+            const camY = car.y - height / 2;
+            worldLayer.style.transform = `translate(${-camX}px, ${-camY}px)`;
+            
+            renderBackground(camX, camY);
+            renderHUD();
+        }
+
+        // --- RENDERING ENGINE ---
+        function renderBackground(camX, camY) {
+            bgCtx.clearRect(0, 0, width, height);
+
+            // Time/Domain Latent Grid
+            bgCtx.strokeStyle = 'rgba(203, 213, 225, 0.6)';
+            bgCtx.lineWidth = 1;
+            const startX = -(camX % 100); const startY = -(camY % 100);
+            
+            bgCtx.beginPath();
+            for (let x = startX; x < width; x += 100) { bgCtx.moveTo(x, 0); bgCtx.lineTo(x, height); }
+            for (let y = startY; y < height; y += 100) { bgCtx.moveTo(0, y); bgCtx.lineTo(width, y); }
+            bgCtx.stroke();
+
+            // Scene Graph Edges (Drawn flat underneath nodes)
+            edges.forEach(edge => {
+                const n1 = nodes[edge.from], n2 = nodes[edge.to];
+                const sx1 = n1.x - camX, sy1 = n1.y - camY, sx2 = n2.x - camX, sy2 = n2.y - camY;
+                
+                // Track line
+                bgCtx.lineWidth = 10; bgCtx.lineCap = "round";
+                bgCtx.strokeStyle = 'rgba(226, 232, 240, 0.8)';
+                bgCtx.beginPath(); bgCtx.moveTo(sx1, sy1); bgCtx.lineTo(sx2, sy2); bgCtx.stroke();
+                
+                // Colored relation line
+                bgCtx.lineWidth = 3; bgCtx.strokeStyle = n1.c;
+                bgCtx.setLineDash([8, 8]);
+                bgCtx.beginPath(); bgCtx.moveTo(sx1, sy1); bgCtx.lineTo(sx2, sy2); bgCtx.stroke();
+                bgCtx.setLineDash([]);
+                
+                // Edge Label
+                let mx = (sx1 + sx2)/2; let my = (sy1 + sy2)/2;
+                bgCtx.fillStyle = '#64748B'; bgCtx.font = "bold 12px monospace";
+                bgCtx.fillText(`[${edge.label}]`, mx + 10, my - 10);
+            });
+
+            // NPCs
+            npcs.forEach(npc => {
+                bgCtx.save();
+                bgCtx.translate(npc.x - camX, npc.y - camY);
+                bgCtx.beginPath(); bgCtx.arc(0, 0, npc.radius, 0, Math.PI*2);
+                bgCtx.fillStyle = npc.color; bgCtx.fill();
+                bgCtx.restore();
+            });
+        }
+
+        // Renders Agent and UI Overlays on flat screen canvas
+        function renderHUD() {
+            hudCtx.clearRect(0, 0, width, height);
+            const cx = width / 2, cy = height / 2;
+
+            hudCtx.save();
+            hudCtx.translate(cx, cy);
+
+            // 1. DYNAMIC SPEED ARC (Holographic effect)
+            let speedRatio = Math.abs(car.speed) / car.maxSpeed;
+            hudCtx.beginPath();
+            hudCtx.arc(0, 0, 45, Math.PI * 0.75, Math.PI * 2.25);
+            hudCtx.strokeStyle = 'rgba(226, 232, 240, 0.6)'; hudCtx.lineWidth = 5; hudCtx.lineCap = "round"; hudCtx.stroke();
+            
+            if (speedRatio > 0.05) {
+                hudCtx.beginPath();
+                hudCtx.arc(0, 0, 45, Math.PI * 0.75, Math.PI * 0.75 + (1.5 * Math.PI * speedRatio));
+                hudCtx.strokeStyle = '#3B82F6'; hudCtx.stroke();
+            }
+
+            hudCtx.rotate(car.angle);
+
+            // 2. DYNAMIC VELOCITY VECTOR (Stretches from nose)
+            if (Math.abs(car.speed) > 0.5) {
+                let vectorLen = 22 + (Math.abs(car.speed) * 8);
+                
+                // Dashed Line
+                hudCtx.beginPath(); hudCtx.moveTo(22, 0); hudCtx.lineTo(vectorLen, 0);
+                hudCtx.strokeStyle = '#3B82F6'; hudCtx.lineWidth = 2; hudCtx.setLineDash([5, 5]); hudCtx.stroke(); hudCtx.setLineDash([]);
+                
+                // Vector Arrowhead
+                hudCtx.beginPath(); hudCtx.moveTo(vectorLen, 0); hudCtx.lineTo(vectorLen - 6, -5); hudCtx.lineTo(vectorLen - 6, 5);
+                hudCtx.fillStyle = '#3B82F6'; hudCtx.fill();
+            }
+
+            // 3. THE AGENT (Sleek Shape)
+            hudCtx.fillStyle = '#3B82F6';
+            hudCtx.shadowBlur = 10; hudCtx.shadowColor = 'rgba(59, 130, 246, 0.4)';
+            
+            hudCtx.beginPath();
+            hudCtx.moveTo(20, 0);       
+            hudCtx.lineTo(-10, 10);     
+            hudCtx.lineTo(-5, 0);       
+            hudCtx.lineTo(-10, -10);    
+            hudCtx.closePath();
+            hudCtx.fill();
+            
+            hudCtx.shadowBlur = 0; hudCtx.fillStyle = '#fff';
+            hudCtx.beginPath(); hudCtx.arc(2, 0, 2.5, 0, Math.PI*2); hudCtx.fill();
+            hudCtx.restore();
+
+            // Custom Mouse Cursor
+            if (gameState === 1 && !car.autoDrive) {
+                hudCtx.beginPath(); hudCtx.arc(mouse.x, mouse.y, 6, 0, Math.PI*2);
+                hudCtx.strokeStyle = mouse.down ? '#1E293B' : '#3B82F6'; 
+                hudCtx.lineWidth = 2; hudCtx.stroke();
+                if(mouse.down) { hudCtx.fillStyle = '#1E293B'; hudCtx.fill(); }
+            }
+        }
+
+        function loop() {
+            if(gameState === 1) update();
+            requestAnimationFrame(loop);
+        }
+
+    </script>
+</body>
+</html>
