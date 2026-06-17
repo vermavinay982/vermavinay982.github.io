@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gym Camera Optimization Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --panel-bg: #ffffff;
+            --text-dark: #333333;
+            --border-color: #dddddd;
+            --primary: #007bff;
+            --primary-hover: #0056b3;
+            --accent: #28a745;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .dashboard {
+            display: flex;
+            gap: 20px;
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            max-width: 1200px;
+            width: 100%;
+        }
+        .canvas-container {
+            position: relative;
+            border: 2px solid var(--text-dark);
+            background-color: #fafafa;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        /* The canvas size will be set via JS to match the 7.5 x 7.6 ratio */
+        canvas {
+            display: block;
+        }
+        .controls-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 300px;
+        }
+        .control-group {
+            background: var(--bg-color);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        h2 { margin-top: 0; font-size: 1.5em; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+        h3 { margin-top: 0; font-size: 1.1em; color: #555; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9em; }
+        input[type="range"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .checkbox-label { display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer; }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: var(--primary-hover); }
+        .metrics {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 5px solid var(--accent);
+        }
+        .metric-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em;}
+        .metric-value { font-weight: bold; color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="canvas-container">
+        <canvas id="gymCanvas" width="600" height="608"></canvas>
+    </div>
+
+    <div class="controls-panel">
+        <h2>Camera Configuration</h2>
+        
+        <div class="control-group">
+            <h3>Grid & Coverage</h3>
+            <label for="zoneSize">Capture Zone Size: <span id="zoneSizeVal">10</span> ft</label>
+            <input type="range" id="zoneSize" min="5" max="20" value="10" step="1">
+            
+            <label class="checkbox-label">
+                <input type="checkbox" id="showCoverage" checked> Show Uncovered Areas (Gray)
+            </label>
+        </div>
+
+        <div class="control-group">
+            <h3>Camera Fleet</h3>
+            <label for="camCount">Total Perimeter Cameras</label>
+            <input type="number" id="camCount" min="0" max="20" value="9">
+            
+            <label for="placementStrategy">Placement Strategy</label>
+            <select id="placementStrategy">
+                <option value="uniform">Uniform Perimeter</option>
+                <option value="corners">Corners & Centers</option>
+            </select>
+
+            <button id="addCenterBtn" style="margin-top: 15px;">Add Central Camera Pair (Front/Back)</button>
+        </div>
+
+        <div class="metrics">
+            <h3>Analysis Metrics</h3>
+            <div class="metric-item">
+                <span>Floor Area Coverage:</span>
+                <span class="metric-value" id="coveragePct">0%</span>
+            </div>
+            <div class="metric-item" style="font-size: 0.8em; color: #666; margin-top: 10px;">
+                *Coverage is calculated by sampling points across the floor plan.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Configuration & Constants ---
+    const canvas = document.getElementById('gymCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Gym Dimensions: 7.5m (W) x 7.6m (H)
+    // Scale: 80 pixels per meter
+    const SCALE = 80;
+    const ROOM_W = 7.5;
+    const ROOM_H = 7.6;
+    const PIXEL_W = ROOM_W * SCALE; // 600
+    const PIXEL_H = ROOM_H * SCALE; // 608
+    
+    canvas.width = PIXEL_W;
+    canvas.height = PIXEL_H;
+
+    // State
+    let cameras = [];
+    let state = {
+        zoneSizeFt: 10,
+        showCoverage: true,
+        camCount: 9,
+        strategy: 'uniform',
+        hasCenterPair: false
+    };
+
+    // DOM Elements
+    const elZoneSize = document.getElementById('zoneSize');
+    const elZoneSizeVal = document.getElementById('zoneSizeVal');
+    const elShowCoverage = document.getElementById('showCoverage');
+    const elCamCount = document.getElementById('camCount');
+    const elStrategy = document.getElementById('placementStrategy');
+    const btnAddCenter = document.getElementById('addCenterBtn');
+    const elCoveragePct = document.getElementById('coveragePct');
+
+    // --- Event Listeners ---
+    elZoneSize.addEventListener('input', (e) => {
+        state.zoneSizeFt = parseFloat(e.target.value);
+        elZoneSizeVal.textContent = state.zoneSizeFt;
+        update();
+    });
+    elShowCoverage.addEventListener('change', (e) => { state.showCoverage = e.target.checked; update(); });
+    elCamCount.addEventListener('change', (e) => { state.camCount = parseInt(e.target.value) || 0; update(); });
+    elStrategy.addEventListener('change', (e) => { state.strategy = e.target.value; update(); });
+    
+    btnAddCenter.addEventListener('click', () => {
+        state.hasCenterPair = !state.hasCenterPair;
+        btnAddCenter.textContent = state.hasCenterPair ? "Remove Central Camera Pair" : "Add Central Camera Pair (Front/Back)";
+        btnAddCenter.style.backgroundColor = state.hasCenterPair ? "#dc3545" : "var(--primary)";
+        update();
+    });
+
+    // --- Core Logic ---
+
+    function update() {
+        generateCameras();
+        draw();
+        calculateMetrics();
+    }
+
+    function generateCameras() {
+        cameras = [];
+        const count = state.camCount;
+        
+        if (count > 0) {
+            if (state.strategy === 'uniform') {
+                // Distribute evenly along the perimeter
+                // Perimeter = 2W + 2H
+                const perimeter = 2 * PIXEL_W + 2 * PIXEL_H;
+                const spacing = perimeter / count;
+                
+                for (let i = 0; i < count; i++) {
+                    let d = i * spacing;
+                    let x, y, angle;
+                    
+                    if (d < PIXEL_W) { // Top edge
+                        x = d; y = 0; angle = Math.PI / 2; // Face down
+                    } else if (d < PIXEL_W + PIXEL_H) { // Right edge
+                        x = PIXEL_W; y = d - PIXEL_W; angle = Math.PI; // Face left
+                    } else if (d < 2 * PIXEL_W + PIXEL_H) { // Bottom edge
+                        x = PIXEL_W - (d - (PIXEL_W + PIXEL_H)); y = PIXEL_H; angle = -Math.PI / 2; // Face up
+                    } else { // Left edge
+                        x = 0; y = PIXEL_H - (d - (2 * PIXEL_W + PIXEL_H)); angle = 0; // Face right
+                    }
+                    
+                    cameras.push(createCamera(x, y, angle, 'perimeter'));
+                }
+            } else if (state.strategy === 'corners') {
+                // Simplified corner/center placement
+                const positions = [
+                    {x: 0, y: 0, a: Math.PI/4}, {x: PIXEL_W, y: 0, a: 3*Math.PI/4},
+                    {x: PIXEL_W, y: PIXEL_H, a: -3*Math.PI/4}, {x: 0, y: PIXEL_H, a: -Math.PI/4},
+                    {x: PIXEL_W/2, y: 0, a: Math.PI/2}, {x: PIXEL_W/2, y: PIXEL_H, a: -Math.PI/2},
+                    {x: 0, y: PIXEL_H/2, a: 0}, {x: PIXEL_W, y: PIXEL_H/2, a: Math.PI}
+                ];
+                for(let i=0; i<Math.min(count, positions.length); i++) {
+                    cameras.push(createCamera(positions[i].x, positions[i].y, positions[i].a, 'perimeter'));
+                }
+            }
+        }
+
+        if (state.hasCenterPair) {
+            // Add two cameras dead center
+            const cx = PIXEL_W / 2;
+            const cy = PIXEL_H / 2;
+            cameras.push(createCamera(cx, cy, -Math.PI / 2, 'center')); // Facing up (Front)
+            cameras.push(createCamera(cx, cy, Math.PI / 2, 'center'));  // Facing down (Back)
+        }
+    }
+
+    function createCamera(x, y, angle, type) {
+        return {
+            x: x,
+            y: y,
+            angle: angle,
+            fov: Math.PI / 2, // 90 degree field of view
+            range: 12 * SCALE, // 12 meters range
+            type: type
+        };
+    }
+
+    // --- Rendering ---
+
+    function draw() {
+        ctx.clearRect(0, 0, PIXEL_W, PIXEL_H);
+        
+        drawRoomFeatures();
+        drawGrid();
+        
+        // Draw Uncovered Areas Overlay if checked
+        if (state.showCoverage) {
+            drawCoverageMask();
+        } else {
+            // If mask is off, just draw the FOV cones
+            cameras.forEach(cam => drawFOV(cam));
+        }
+
+        cameras.forEach(cam => drawCameraIcon(cam));
+    }
+
+    function drawRoomFeatures() {
+        // Schematic representation of equipment
+        ctx.fillStyle = '#e0e0e0';
+        ctx.strokeStyle = '#999';
+        ctx.lineWidth = 2;
+
+        // Treadmills (Top Right)
+        ctx.fillRect(PIXEL_W - 180, 50, 60, 140);
+        ctx.strokeRect(PIXEL_W - 180, 50, 60, 140);
+        ctx.fillRect(PIXEL_W - 90, 50, 60, 140);
+        ctx.strokeRect(PIXEL_W - 90, 50, 60, 140);
+
+        // Center Table/Multi-gym
+        ctx.beginPath();
+        ctx.arc(PIXEL_W/2 - 100, PIXEL_H/2 + 50, 40, 0, Math.PI*2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Benches / Dumbbells (Bottom Right)
+        ctx.fillRect(PIXEL_W - 200, PIXEL_H - 150, 150, 40);
+        ctx.strokeRect(PIXEL_W - 200, PIXEL_H - 150, 150, 40);
+    }
+
+    function drawGrid() {
+        // Convert feet to pixels (1 ft = 0.3048 m)
+        const sizeMeters = state.zoneSizeFt * 0.3048;
+        const sizePx = sizeMeters * SCALE;
+
+        ctx.strokeStyle = 'rgba(40, 167, 69, 0.4)'; // Green grid
+        ctx.lineWidth = 2;
+
+        // Center the grid based on the middle of the room
+        const startX = (PIXEL_W / 2) % sizePx;
+        const startY = (PIXEL_H / 2) % sizePx;
+
+        for (let x = startX; x <= PIXEL_W; x += sizePx) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, PIXEL_H); ctx.stroke();
+        }
+        for (let y = startY; y <= PIXEL_H; y += sizePx) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(PIXEL_W, y); ctx.stroke();
+        }
+    }
+
+    function drawFOV(cam) {
+        ctx.beginPath();
+        ctx.moveTo(cam.x, cam.y);
+        ctx.arc(cam.x, cam.y, cam.range, cam.angle - cam.fov/2, cam.angle + cam.fov/2);
+        ctx.closePath();
+        ctx.fillStyle = cam.type === 'center' ? 'rgba(0, 123, 255, 0.2)' : 'rgba(255, 193, 7, 0.2)';
+        ctx.fill();
+        ctx.strokeStyle = cam.type === 'center' ? 'rgba(0, 123, 255, 0.5)' : 'rgba(255, 193, 7, 0.5)';
+        ctx.stroke();
+    }
+
+    function drawCoverageMask() {
+        // Create an offscreen canvas to calculate the union of all FOVs
+        const maskCanvas = document.createElement('canvas');
+        maskCanvas.width = PIXEL_W;
+        maskCanvas.height = PIXEL_H;
+        const mCtx = maskCanvas.getContext('2d');
+
+        // Draw solid FOVs
+        mCtx.fillStyle = 'black';
+        cameras.forEach(cam => {
+            mCtx.beginPath();
+            mCtx.moveTo(cam.x, cam.y);
+            mCtx.arc(cam.x, cam.y, cam.range, cam.angle - cam.fov/2, cam.angle + cam.fov/2);
+            mCtx.closePath();
+            mCtx.fill();
+        });
+
+        // Main canvas: draw semi-transparent dark overlay over the whole room
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(0, 0, PIXEL_W, PIXEL_H);
+
+        // "Cut out" the FOV areas by using composite operation
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.drawImage(maskCanvas, 0, 0);
+        
+        // Reset composite operation
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Optionally, outline the FOVs lightly so they are distinct
+        cameras.forEach(cam => {
+            ctx.beginPath();
+            ctx.moveTo(cam.x, cam.y);
+            ctx.arc(cam.x, cam.y, cam.range, cam.angle - cam.fov/2, cam.angle + cam.fov/2);
+            ctx.closePath();
+            ctx.strokeStyle = cam.type === 'center' ? 'rgba(0, 123, 255, 0.8)' : 'rgba(255, 193, 7, 0.8)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        });
+    }
+
+    function drawCameraIcon(cam) {
+        const iconSize = 12;
+        ctx.save();
+        ctx.translate(cam.x, cam.y);
+        ctx.rotate(cam.angle);
+        
+        // Camera body
+        ctx.fillStyle = cam.type === 'center' ? '#007bff' : '#dc3545';
+        ctx.fillRect(-6, -6, 12, 12);
+        
+        // Lens
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.moveTo(6, -4);
+        ctx.lineTo(12, -8);
+        ctx.lineTo(12, 8);
+        ctx.lineTo(6, 4);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    // --- Math & Analytics ---
+
+    function calculateMetrics() {
+        if (cameras.length === 0) {
+            elCoveragePct.textContent = "0%";
+            return;
+        }
+
+        // Grid sampling to calculate percentage
+        const sampleResolution = 10; // check every 10 pixels
+        let coveredPoints = 0;
+        let totalPoints = 0;
+
+        for (let x = 0; x < PIXEL_W; x += sampleResolution) {
+            for (let y = 0; y < PIXEL_H; y += sampleResolution) {
+                totalPoints++;
+                
+                // Check if (x,y) is inside any camera's FOV
+                let isCovered = false;
+                for (let i = 0; i < cameras.length; i++) {
+                    if (isPointInFOV(x, y, cameras[i])) {
+                        isCovered = true;
+                        break;
+                    }
+                }
+                if (isCovered) coveredPoints++;
+            }
+        }
+
+        const pct = (coveredPoints / totalPoints) * 100;
+        elCoveragePct.textContent = pct.toFixed(1) + "%";
+    }
+
+    function isPointInFOV(px, py, cam) {
+        const dx = px - cam.x;
+        const dy = py - cam.y;
+        const distSq = dx*dx + dy*dy;
+        
+        // Check range
+        if (distSq > cam.range * cam.range) return false;
+
+        // Check angle
+        const pointAngle = Math.atan2(dy, dx);
+        
+        // Normalize angles to be between -PI and PI to handle wrap-around correctly
+        let angleDiff = pointAngle - cam.angle;
+        while (angleDiff <= -Math.PI) angleDiff += Math.PI * 2;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+        return Math.abs(angleDiff) <= (cam.fov / 2);
+    }
+
+    // Init
+    update();
+
+</script>
+</body>
+</html>
