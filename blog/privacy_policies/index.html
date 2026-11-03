@@ -62,7 +62,7 @@
         <p>Select an extension to view its privacy policy:</p>
         
         <!-- Static List based on current repository files -->
-        <!-- <ul id="policy-list">
+        <ul id="policy-list">
             <li>
                 <a href="ext_eisenhower.html">
                     <span class="file-icon">📄</span> ext_eisenhower.html
@@ -78,9 +78,9 @@
                     <span class="file-icon">📄</span> ext_magicwand.html
                 </a>
             </li>
-        </ul> -->
+        </ul>
 
-      <ul>
+      <!-- <ul>
             {% for file in site.static_files %}
                 {% if file.path contains '/blog/privacy_policies/' and file.extname == '.html' and file.name != 'index.html' %}
                 <li>
@@ -90,7 +90,7 @@
                 </li>
                 {% endif %}
             {% endfor %}
-        </ul>
+        </ul> -->
     </div>
 </body>
 </html>
