@@ -3,17 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Waterglass — Windshield Rain &amp; Poetry Editor</title>
+  <title>Tom Riddle's Diary — Parchment, Rain &amp; Ink Editor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Dancing+Script:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <style>
     :root {
-      --ui-bg: rgba(255, 255, 255, 0.66);
-      --ui-border: rgba(255, 255, 255, 0.86);
+      --ui-bg: rgba(242, 224, 192, 0.86);
+      --ui-border: rgba(145, 102, 54, 0.42);
+      --ui-shadow: 0 12px 36px rgba(34, 19, 7, 0.22), 0 2px 8px rgba(34, 19, 7, 0.10);
+      --text-main: #1c1008;
+      --text-muted: #5c3d22;
+      --pen-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M3 29l5.5-1.6L26.5 9.4a2.8 2.8 0 0 0-4-4L4.5 23.4 3 29z' fill='%2323150b' stroke='%23e7c687' stroke-width='1.3'/%3E%3Cpath d='M4.5 23.4l4 4L3 29l1.5-5.6z' fill='%23d4a353'/%3E%3Ccircle cx='9.5' cy='22.5' r='1.1' fill='%23f7e2b2'/%3E%3C/svg%3E") 2 30, text;
+    }
+
+    body.theme-bright {
+      --ui-bg: rgba(255, 255, 255, 0.86);
+      --ui-border: rgba(148, 163, 184, 0.42);
       --ui-shadow: 0 12px 36px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.06);
-      --text-main: #1e293b;
-      --text-muted: #64748b;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+    }
+
+    body.theme-dark {
+      --ui-bg: rgba(24, 29, 40, 0.88);
+      --ui-border: rgba(148, 163, 184, 0.24);
+      --ui-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.25);
+      --text-main: #f5efe0;
+      --text-muted: #cbd5e1;
     }
 
     * {
@@ -27,12 +45,15 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #e4ecf4;
+      background: #c79862;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       user-select: none;
       -webkit-user-select: none;
       touch-action: none;
     }
+
+    body.theme-bright { background: #eef2f6; }
+    body.theme-dark { background: #10141c; }
 
     canvas#glass-canvas {
       position: fixed;
@@ -41,40 +62,85 @@
       width: 100%;
       height: 100%;
       z-index: 1;
-      cursor: grab;
+      cursor: var(--pen-cursor);
+    }
+
+    canvas#fx-canvas {
+      position: fixed;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
     }
 
     canvas#glass-canvas.pressing {
       cursor: grabbing;
     }
 
-    /* Native textarea aligned 1:1 with the glass ruled lines */
-    #poem-editor {
+    /* Editable Title at top of parchment */
+    #diary-title {
       position: fixed;
-      top: 0;
+      top: 44px;
       left: 50%;
       transform: translateX(-50%);
       width: min(760px, 92vw);
-      height: calc(100vh - 104px);
-      padding: 68px 28px 40px 56px;
+      height: 44px;
+      padding: 0 28px 0 56px;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: 'Dancing Script', 'Caveat', cursive;
+      font-size: 36px;
+      font-weight: 700;
+      color: transparent;
+      caret-color: #160c05;
+      z-index: 4;
+      cursor: var(--pen-cursor);
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    body.theme-bright #diary-title { caret-color: #090d16; }
+    body.theme-dark #diary-title { caret-color: #f8f1df; }
+
+    #diary-title::selection {
+      background: rgba(120, 74, 28, 0.22);
+      color: transparent;
+    }
+
+    /* Native textarea aligned 1:1 with the parchment body */
+    #poem-editor {
+      position: fixed;
+      top: 96px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(760px, 92vw);
+      height: calc(100vh - 190px);
+      padding: 12px 28px 24px 56px;
       background: transparent;
       border: none;
       outline: none;
       resize: none;
-      font-family: 'Caveat', 'Brush Script MT', 'Segoe Script', cursive;
-      font-size: 30px;
-      font-weight: 500;
-      line-height: 44px;
+      font-family: 'Dancing Script', 'Caveat', 'Brush Script MT', 'Segoe Script', cursive;
+      font-size: 32px;
+      font-weight: 600;
+      line-height: 46px;
       letter-spacing: 0.01em;
       color: transparent;
-      caret-color: #0f172a;
+      caret-color: #160c05;
       z-index: 2;
-      overflow-y: auto;
+      overflow: hidden;
       white-space: pre-wrap;
       word-wrap: break-word;
       pointer-events: none;
+      cursor: var(--pen-cursor);
       scrollbar-width: none;
     }
+
+    body.theme-bright #poem-editor { caret-color: #090d16; }
+    body.theme-dark #poem-editor { caret-color: #f8f1df; }
 
     #poem-editor::-webkit-scrollbar {
       display: none;
@@ -82,28 +148,45 @@
 
     #poem-editor.active-typing {
       pointer-events: auto;
-      z-index: 3;
+      z-index: 4;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    #poem-editor::selection {
+      background: rgba(120, 74, 28, 0.22);
+      color: transparent;
+    }
+
+    body.theme-bright #poem-editor::selection {
+      background: rgba(100, 116, 139, 0.18);
+      color: transparent;
+    }
+
+    body.theme-dark #poem-editor::selection {
+      background: rgba(245, 224, 175, 0.22);
+      color: transparent;
     }
 
     /* Whisper-quiet top hint */
     .hint-pill {
       position: fixed;
-      top: 14px;
+      top: 10px;
       left: 50%;
       transform: translateX(-50%);
-      padding: 6px 14px;
+      padding: 5px 13px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.56);
+      background: var(--ui-bg);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.78);
+      border: 1px solid var(--ui-border);
       color: var(--text-muted);
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 500;
       letter-spacing: 0.01em;
       pointer-events: none;
       white-space: nowrap;
-      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.10);
       transition: opacity 0.6s ease, transform 0.6s ease;
       z-index: 15;
     }
@@ -113,24 +196,63 @@
       transform: translateX(-50%) translateY(-8px);
     }
 
+    /* Zen Mode */
+    body.zen-mode .control-dock,
+    body.zen-mode .hint-pill {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: translateX(-50%) translateY(14px);
+    }
+
+    .zen-exit-btn {
+      position: fixed;
+      top: 14px;
+      right: 16px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--ui-border);
+      background: var(--ui-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 11.5px;
+      font-weight: 500;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, color 0.2s ease;
+      z-index: 25;
+    }
+
+    body.zen-mode .zen-exit-btn {
+      opacity: 0.45;
+      pointer-events: auto;
+    }
+
+    body.zen-mode .zen-exit-btn:hover {
+      opacity: 1;
+      color: var(--text-main);
+    }
+
     /* Minimal floating control dock */
     .control-dock {
       position: fixed;
-      bottom: 16px;
+      bottom: 14px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 7px 12px;
+      gap: 6px;
+      padding: 7px 11px;
       border-radius: 999px;
       background: var(--ui-bg);
-      backdrop-filter: blur(18px) saturate(160%);
-      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      backdrop-filter: blur(18px) saturate(150%);
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
       border: 1px solid var(--ui-border);
       box-shadow: var(--ui-shadow);
       z-index: 20;
-      max-width: calc(100vw - 20px);
+      max-width: calc(100vw - 18px);
       overflow-x: auto;
       scrollbar-width: none;
     }
@@ -147,33 +269,30 @@
     }
 
     .swatch {
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.92);
-      box-shadow: 0 2px 5px rgba(15, 23, 42, 0.14);
+      border: 2px solid rgba(255, 255, 255, 0.88);
+      box-shadow: 0 2px 5px rgba(15, 23, 42, 0.18);
       cursor: pointer;
       transition: transform 0.16s ease, box-shadow 0.16s ease;
       flex-shrink: 0;
     }
 
-    .swatch:hover {
-      transform: scale(1.14);
-    }
-
+    .swatch:hover { transform: scale(1.14); }
     .swatch.active {
       transform: scale(1.16);
-      box-shadow: 0 0 0 2px rgba(30, 41, 59, 0.55), 0 3px 8px rgba(15, 23, 42, 0.18);
+      box-shadow: 0 0 0 2px var(--text-main), 0 3px 8px rgba(15, 23, 42, 0.22);
     }
 
     .color-picker-wrap {
       position: relative;
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       overflow: hidden;
-      border: 2px solid rgba(255, 255, 255, 0.92);
-      box-shadow: 0 2px 5px rgba(15, 23, 42, 0.14);
+      border: 2px solid rgba(255, 255, 255, 0.88);
+      box-shadow: 0 2px 5px rgba(15, 23, 42, 0.18);
       background: conic-gradient(#ef4444, #f59e0b, #10b981, #38bdf8, #8b5cf6, #ec4899, #ef4444);
       cursor: pointer;
       flex-shrink: 0;
@@ -181,22 +300,22 @@
 
     .color-picker-wrap.active {
       transform: scale(1.16);
-      box-shadow: 0 0 0 2px rgba(30, 41, 59, 0.55);
+      box-shadow: 0 0 0 2px var(--text-main);
     }
 
     .color-picker-wrap input[type="color"] {
       position: absolute;
       inset: -6px;
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       opacity: 0;
       cursor: pointer;
     }
 
     .divider {
       width: 1px;
-      height: 20px;
-      background: rgba(100, 116, 139, 0.22);
+      height: 18px;
+      background: rgba(120, 113, 108, 0.28);
       flex-shrink: 0;
     }
 
@@ -204,33 +323,49 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 4px;
       height: 28px;
       padding: 0 9px;
       border: none;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.56);
+      background: rgba(255, 255, 255, 0.36);
       color: var(--text-main);
       font-family: inherit;
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 500;
       cursor: pointer;
-      transition: background 0.18s ease, color 0.18s ease, transform 0.14s ease;
+      transition: background 0.18s ease, color 0.18s ease, transform 0.14s ease, opacity 0.18s ease;
       white-space: nowrap;
       flex-shrink: 0;
     }
 
-    .dock-btn:hover {
-      background: rgba(255, 255, 255, 0.94);
+    body.theme-dark .dock-btn {
+      background: rgba(255, 255, 255, 0.10);
     }
 
-    .dock-btn:active {
-      transform: scale(0.95);
+    .dock-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    body.theme-dark .dock-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .dock-btn:active:not(:disabled) { transform: scale(0.95); }
+
+    .dock-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
 
     .dock-btn.active {
-      background: #1e293b;
-      color: #ffffff;
+      background: var(--text-main);
+      color: #fdf8ee;
+    }
+
+    body.theme-dark .dock-btn.active {
+      background: #f5efe0;
+      color: #10141c;
     }
 
     .dock-btn svg {
@@ -243,10 +378,19 @@
       stroke-linejoin: round;
     }
 
+    .page-indicator {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      padding: 0 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
     .slider-group {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       font-size: 11px;
       font-weight: 500;
       color: var(--text-muted);
@@ -254,18 +398,18 @@
     }
 
     .slider-group input[type="range"] {
-      width: 68px;
+      width: 52px;
       height: 4px;
-      accent-color: #1e293b;
+      accent-color: var(--text-main);
       cursor: pointer;
     }
 
-    .wiper-select {
+    .dock-select {
       height: 28px;
-      padding: 0 8px;
+      padding: 0 7px;
       border-radius: 999px;
-      border: 1px solid rgba(100, 116, 139, 0.22);
-      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(120, 113, 108, 0.26);
+      background: rgba(255, 255, 255, 0.45);
       color: var(--text-main);
       font-family: inherit;
       font-size: 11.5px;
@@ -275,16 +419,53 @@
       flex-shrink: 0;
     }
 
-    @media (max-width: 720px) {
+    body.theme-dark .dock-select {
+      background: rgba(30, 38, 52, 0.9);
+      border-color: rgba(148, 163, 184, 0.3);
+    }
+
+    .dock-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 28px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.32);
+      color: var(--text-main);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    body.theme-dark .dock-check {
+      background: rgba(255, 255, 255, 0.10);
+    }
+
+    .dock-check input {
+      accent-color: var(--text-main);
+      cursor: pointer;
+    }
+
+    @media (max-width: 820px) {
+      #diary-title {
+        top: 38px;
+        padding: 0 18px 0 36px;
+        font-size: 30px;
+      }
       #poem-editor {
-        padding: 58px 18px 32px 36px;
-        font-size: 25px;
-        line-height: 38px;
+        top: 84px;
+        height: calc(100vh - 170px);
+        padding: 10px 18px 20px 36px;
+        font-size: 26px;
+        line-height: 40px;
       }
       .control-dock {
-        bottom: 12px;
-        gap: 6px;
-        padding: 6px 10px;
+        bottom: 10px;
+        gap: 5px;
+        padding: 6px 9px;
       }
       .dock-btn span {
         display: none;
@@ -297,7 +478,7 @@
         display: none;
       }
       .slider-group input[type="range"] {
-        width: 54px;
+        width: 44px;
       }
       .hint-pill {
         font-size: 11px;
@@ -307,56 +488,85 @@
   </style>
 </head>
 <body>
-  <div id="hint-pill" class="hint-pill">Click text to write · Hold-press drops to splash · Run Rain &amp; Wiper</div>
+  <button id="btn-zen-exit" class="zen-exit-btn" title="Exit Zen Mode">Exit Zen</button>
+  <div id="hint-pill" class="hint-pill">Write freely · Pages auto-break when full or click + Page · Flip through your diary</div>
 
   <canvas id="glass-canvas"></canvas>
+  <canvas id="fx-canvas"></canvas>
 
-  <textarea id="poem-editor" spellcheck="false" aria-label="Cursive glass poetry editor">Rain on the windshield glass,
-Soft ink and drifting light,
-Each drop clings to a quiet word
-And blurs the edge of night.</textarea>
+  <input id="diary-title" type="text" value="Midnight Reflections" placeholder="Enter diary title..." spellcheck="false" aria-label="Diary entry title" />
+  <textarea id="poem-editor" spellcheck="false" aria-label="Diary parchment poetry editor"></textarea>
 
-  <div class="control-dock" role="toolbar" aria-label="Windshield and editor controls">
+  <div class="control-dock" role="toolbar" aria-label="Diary and effect controls">
+    <!-- Page Navigation & New Page Controls -->
+    <button class="dock-btn" id="btn-prev-page" title="Previous page">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      <span>Prev</span>
+    </button>
+    <span class="page-indicator" id="page-indicator">1 / 1</span>
+    <button class="dock-btn" id="btn-next-page" title="Next page">
+      <span>Next</span>
+      <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <button class="dock-btn" id="btn-new-page" title="Add new page">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+      <span>+ Page</span>
+    </button>
+
+    <div class="divider"></div>
+
     <div class="swatches" id="swatches">
-      <button class="swatch active" data-color="#38bdf8" style="background: #38bdf8;" title="Aqua" aria-label="Aqua water"></button>
-      <button class="swatch" data-color="#2563eb" style="background: #2563eb;" title="Cobalt" aria-label="Cobalt water"></button>
-      <button class="swatch" data-color="#10b981" style="background: #10b981;" title="Emerald" aria-label="Emerald water"></button>
-      <button class="swatch" data-color="#f43f5e" style="background: #f43f5e;" title="Rose" aria-label="Rose water"></button>
-      <button class="swatch" data-color="#f59e0b" style="background: #f59e0b;" title="Amber" aria-label="Amber water"></button>
-      <button class="swatch" data-color="#8b5cf6" style="background: #8b5cf6;" title="Violet" aria-label="Violet water"></button>
-      <label class="color-picker-wrap" id="custom-picker-wrap" title="Custom watercolor">
-        <input type="color" id="custom-color-input" value="#38bdf8" aria-label="Custom water color" />
+      <button class="swatch active" data-color="#38bdf8" style="background: #38bdf8;" title="Aqua" aria-label="Aqua color"></button>
+      <button class="swatch" data-color="#f59e0b" style="background: #f59e0b;" title="Gold" aria-label="Gold color"></button>
+      <button class="swatch" data-color="#10b981" style="background: #10b981;" title="Emerald" aria-label="Emerald color"></button>
+      <button class="swatch" data-color="#f43f5e" style="background: #f43f5e;" title="Rose" aria-label="Rose color"></button>
+      <button class="swatch" data-color="#8b5cf6" style="background: #8b5cf6;" title="Violet" aria-label="Violet color"></button>
+      <label class="color-picker-wrap" id="custom-picker-wrap" title="Custom color">
+        <input type="color" id="custom-color-input" value="#38bdf8" aria-label="Custom color" />
       </label>
     </div>
 
     <div class="divider"></div>
 
-    <button class="dock-btn" id="btn-write" title="Write on glass">
+    <select class="dock-select" id="effect-mode" title="Particle effect" aria-label="Particle effect">
+      <option value="water">Water</option>
+      <option value="dandelions">Dandelions</option>
+      <option value="stars">Stars</option>
+      <option value="glitters">Glitters</option>
+      <option value="leaves">Leaves</option>
+    </select>
+
+    <button class="dock-btn active" id="btn-bubbles" title="Show or hide bubbles and effects">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="14" r="5"/><circle cx="17" cy="8" r="3"/></svg>
+      <span>Bubbles</span>
+    </button>
+
+    <button class="dock-btn" id="btn-write" title="Write with fountain pen">
       <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
       <span>Write</span>
     </button>
 
-    <button class="dock-btn" id="btn-add" title="Add water drop">
+    <button class="dock-btn" id="btn-add" title="Add drop / particle">
       <svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
-      <span>Drop</span>
+      <span>Add</span>
     </button>
 
-    <button class="dock-btn" id="btn-rain" title="Fountain rain sprinkle">
+    <button class="dock-btn" id="btn-rain" title="Fountain sprinkle">
       <svg viewBox="0 0 24 24"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M8 19v2"/><path d="M12 17v2"/><path d="M16 19v2"/></svg>
-      <span>Rain</span>
+      <span>Sprinkle</span>
     </button>
 
-    <div class="slider-group" title="Car / water speed">
+    <div class="slider-group" title="Flow speed">
       <label for="speed-slider">Speed</label>
-      <input type="range" id="speed-slider" min="0" max="100" value="42" aria-label="Water speed" />
+      <input type="range" id="speed-slider" min="0" max="100" value="35" aria-label="Flow speed" />
     </div>
 
-    <button class="dock-btn" id="btn-wiper" title="Run windshield wiper">
+    <button class="dock-btn" id="btn-wiper" title="Sweep clear">
       <svg viewBox="0 0 24 24"><path d="M3 17a9 9 0 0 1 18 0"/><path d="M12 17L17 7"/></svg>
       <span>Wiper</span>
     </button>
 
-    <select class="wiper-select" id="wiper-schedule" title="Wiper interval" aria-label="Wiper schedule">
+    <select class="dock-select" id="wiper-schedule" title="Wiper interval" aria-label="Wiper schedule">
       <option value="manual">Manual</option>
       <option value="6">Every 6s</option>
       <option value="3">Every 3s</option>
@@ -368,12 +578,43 @@ And blurs the edge of night.</textarea>
       <span>Gravity</span>
     </button>
 
-    <button class="dock-btn" id="btn-save" title="Save glass poem as PNG">
-      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      <span>Save</span>
+    <button class="dock-btn active" id="btn-lines" title="Show or hide guide lines">
+      <svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      <span>Lines</span>
     </button>
 
-    <button class="dock-btn" id="btn-reset" title="Reset droplets">
+    <select class="dock-select" id="theme-select" title="Paper theme" aria-label="Paper theme">
+      <option value="riddle">Parchment</option>
+      <option value="bright">Bright</option>
+      <option value="dark">Dark</option>
+    </select>
+
+    <select class="dock-select" id="export-area" title="Save area" aria-label="Save area">
+      <option value="margin">Margin Area</option>
+      <option value="full">Full Page</option>
+    </select>
+
+    <label class="dock-check" title="Save & print without bubbles/effects on top of ink">
+      <input type="checkbox" id="chk-clean-print" checked />
+      <span>Clean Print</span>
+    </label>
+
+    <button class="dock-btn" id="btn-save" title="Save current page as PNG">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>PNG</span>
+    </button>
+
+    <button class="dock-btn" id="btn-pdf" title="Save all pages as PDF">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>PDF</span>
+    </button>
+
+    <button class="dock-btn" id="btn-zen" title="Fullscreen Zen Mode">
+      <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+      <span>Zen</span>
+    </button>
+
+    <button class="dock-btn" id="btn-reset" title="Reset effects">
       <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
       <span>Reset</span>
     </button>
@@ -383,11 +624,20 @@ And blurs the edge of night.</textarea>
     (function () {
       const MAX_DROPS = 48;
       const canvas = document.getElementById('glass-canvas');
+      const fxCanvas = document.getElementById('fx-canvas');
+      const fxCtx = fxCanvas.getContext('2d');
+      const titleInput = document.getElementById('diary-title');
       const editor = document.getElementById('poem-editor');
       const hintPill = document.getElementById('hint-pill');
+      const btnPrevPage = document.getElementById('btn-prev-page');
+      const btnNextPage = document.getElementById('btn-next-page');
+      const btnNewPage = document.getElementById('btn-new-page');
+      const pageIndicator = document.getElementById('page-indicator');
       const swatchesEl = document.getElementById('swatches');
       const customColorInput = document.getElementById('custom-color-input');
       const customPickerWrap = document.getElementById('custom-picker-wrap');
+      const effectModeSelect = document.getElementById('effect-mode');
+      const btnBubbles = document.getElementById('btn-bubbles');
       const btnWrite = document.getElementById('btn-write');
       const btnAdd = document.getElementById('btn-add');
       const btnRain = document.getElementById('btn-rain');
@@ -395,8 +645,44 @@ And blurs the edge of night.</textarea>
       const btnWiper = document.getElementById('btn-wiper');
       const wiperSchedule = document.getElementById('wiper-schedule');
       const btnGravity = document.getElementById('btn-gravity');
+      const btnLines = document.getElementById('btn-lines');
+      const themeSelect = document.getElementById('theme-select');
+      const exportArea = document.getElementById('export-area');
+      const chkCleanPrint = document.getElementById('chk-clean-print');
       const btnSave = document.getElementById('btn-save');
+      const btnPdf = document.getElementById('btn-pdf');
+      const btnZen = document.getElementById('btn-zen');
+      const btnZenExit = document.getElementById('btn-zen-exit');
       const btnReset = document.getElementById('btn-reset');
+
+      // Populate today's full date & inspiring creative prompt
+      const nowDate = new Date();
+      const formattedDate = nowDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const isoDate = [
+        nowDate.getFullYear(),
+        String(nowDate.getMonth() + 1).padStart(2, '0'),
+        String(nowDate.getDate()).padStart(2, '0')
+      ].join('-');
+
+      const initialPromptText = `${formattedDate}\n\nI was thinking that `;
+      editor.value = '';
+
+      // --- Multi-Page Diary State ---
+      const pages = [{ text: '' }];
+      let currentPageIdx = 0;
+
+      // Page Flip Animation State
+      const pageFlip = {
+        active: false,
+        progress: 0,
+        dir: 1, // 1 = forward (turning right-to-left), -1 = backward (left-to-right)
+        snapshot: document.createElement('canvas')
+      };
 
       const gl = canvas.getContext('webgl', {
         alpha: false,
@@ -410,13 +696,15 @@ And blurs the edge of night.</textarea>
       });
 
       if (!gl) {
-        document.body.innerHTML = '<div style="display:grid;place-items:center;height:100vh;color:#334155;font-family:sans-serif;">WebGL is required for the windshield glass simulation.</div>';
+        document.body.innerHTML = '<div style="display:grid;place-items:center;height:100vh;color:#1c1008;font-family:sans-serif;">WebGL is required for this editor.</div>';
         return;
       }
 
-      // --- Offscreen 2D Canvas for Ruled Glass Paper & Handwritten Cursive Text ---
+      // --- Offscreen Paper & Grain Canvases ---
       const paperCanvas = document.createElement('canvas');
       const paperCtx = paperCanvas.getContext('2d');
+      const grainCanvas = document.createElement('canvas');
+      const grainCtx = grainCanvas.getContext('2d');
       const paperTex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, paperTex);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -426,6 +714,22 @@ And blurs the edge of night.</textarea>
 
       let paperDirty = true;
       let textLineBoxes = [];
+      let currentTheme = 'riddle';
+      let showLines = true;
+      let showBubbles = true;
+      let effectMode = 'water';
+
+      let prevText = '';
+      let charInks = [];
+      let lastCharPositions = [];
+      const burnGlyphs = [];
+      const smokeParticles = [];
+      let magicParticles = [];
+
+      // Intro auto-penning state
+      let introTypingActive = true;
+      let introCharIndex = 0;
+      let introCharTimer = 0;
 
       // --- WebGL Shaders ---
       const vertSrc = `
@@ -445,42 +749,33 @@ And blurs the edge of night.</textarea>
         uniform vec2 u_res;
         uniform float u_dpr;
         uniform int u_count;
-        uniform vec4 u_drops[MAX_DROPS];   // x, y, radius, unused
-        uniform vec4 u_deform[MAX_DROPS];  // angle, stretch, press, unused
-        uniform vec3 u_colors[MAX_DROPS];  // per-drop watercolor RGB
-        uniform vec4 u_pointer;            // x, y, pressStrength, fingerRadius
-        uniform vec4 u_wiper;              // pivotX, pivotY, tipX, tipY
-        uniform float u_wiperActive;       // 0..1 visibility/active
+        uniform vec4 u_drops[MAX_DROPS];
+        uniform vec4 u_deform[MAX_DROPS];
+        uniform vec3 u_colors[MAX_DROPS];
+        uniform vec4 u_pointer;
+        uniform vec4 u_wiper;
+        uniform float u_wiperActive;
+        uniform float u_isParchment;
         uniform sampler2D u_paperTex;
 
         varying vec2 v_uv;
 
-        // Top-down UV mapping matching 2D paperCanvas 1:1 (no upside-down flip!)
         vec3 samplePaper(vec2 p) {
           vec2 uv = clamp(vec2(p.x / u_res.x, p.y / u_res.y), 0.001, 0.999);
           return texture2D(u_paperTex, uv).rgb;
         }
 
-        // Optical water blur + refraction so text stays readable
         vec3 sampleBlurredRefractedPaper(vec2 p, float blurRadius) {
-          vec3 sum = samplePaper(p) * 0.28;
+          vec3 sum = samplePaper(p) * 0.34;
           vec2 o1 = vec2(blurRadius, 0.0);
           vec2 o2 = vec2(0.0, blurRadius);
-          vec2 o3 = vec2(blurRadius * 0.707, blurRadius * 0.707);
-          vec2 o4 = vec2(-blurRadius * 0.707, blurRadius * 0.707);
-
-          sum += samplePaper(p + o1) * 0.10;
-          sum += samplePaper(p - o1) * 0.10;
-          sum += samplePaper(p + o2) * 0.10;
-          sum += samplePaper(p - o2) * 0.10;
-          sum += samplePaper(p + o3) * 0.08;
-          sum += samplePaper(p - o3) * 0.08;
-          sum += samplePaper(p + o4) * 0.08;
-          sum += samplePaper(p - o4) * 0.08;
+          sum += samplePaper(p + o1) * 0.165;
+          sum += samplePaper(p - o1) * 0.165;
+          sum += samplePaper(p + o2) * 0.165;
+          sum += samplePaper(p - o2) * 0.165;
           return sum;
         }
 
-        // Clean oval / teardrop metaball field + analytical gradient
         void evalField(vec2 p, out float field, out vec2 grad, out vec3 mixColor) {
           field = 0.0;
           grad = vec2(0.0);
@@ -501,12 +796,10 @@ And blurs the edge of night.</textarea>
             float s = sin(def.x);
             vec2 rd = vec2(c * d.x + s * d.y, -s * d.x + c * d.y);
 
-            // Clean oval stretch (elongated along movement axis)
             float st = def.y;
             float invSt = 1.0 / st;
             vec2 sd = vec2(rd.x * invSt, rd.y * st);
 
-            // Subtle natural oval/teardrop fullness
             float denom = 0.42 * r * r;
             float distSq = dot(sd, sd);
             float w = exp(-distSq / denom);
@@ -521,7 +814,6 @@ And blurs the edge of night.</textarea>
 
           mixColor = field > 0.0001 ? (colSum / field) : vec3(0.22, 0.74, 0.97);
 
-          // Finger press dimple
           if (u_pointer.z > 0.01 && field > 0.12) {
             vec2 fp = p - u_pointer.xy;
             float fr = u_pointer.w;
@@ -535,7 +827,6 @@ And blurs the edge of night.</textarea>
           }
         }
 
-        // Distance from point p to segment ab for windshield wiper blade
         float sdSegment(vec2 p, vec2 a, vec2 b) {
           vec2 pa = p - a;
           vec2 ba = b - a;
@@ -545,76 +836,66 @@ And blurs the edge of night.</textarea>
 
         void main() {
           vec2 p = vec2(gl_FragCoord.x, u_res.y - gl_FragCoord.y);
-
-          float field;
-          vec2 grad;
-          vec3 dropColor;
-          evalField(p, field, grad, dropColor);
-
-          float threshold = 0.28;
           vec3 paperBg = samplePaper(p);
+          vec3 col = paperBg;
 
-          // Soft contact shadow on glass
-          vec2 shadowOffset = vec2(-4.0, -6.0) * u_dpr;
-          float sField;
-          vec2 sGrad;
-          vec3 sColor;
-          evalField(p + shadowOffset, sField, sGrad, sColor);
+          if (u_count > 0) {
+            float field;
+            vec2 grad;
+            vec3 dropColor;
+            evalField(p, field, grad, dropColor);
 
-          float shadowAlpha = smoothstep(0.06, threshold * 1.1, sField);
-          vec3 shadowTint = mix(vec3(0.76, 0.81, 0.86), sColor * 0.82, 0.35);
-          vec3 col = mix(paperBg, paperBg * shadowTint, shadowAlpha * 0.17);
+            float threshold = 0.28;
 
-          // Anti-aliased water boundary
-          float edgeWidth = 0.025;
-          float inside = smoothstep(threshold - edgeWidth, threshold + edgeWidth, field);
+            float wetHalo = smoothstep(0.06, threshold * 1.05, field);
+            col = mix(col, col * vec3(0.84, 0.78, 0.70), wetHalo * (0.08 + 0.07 * u_isParchment));
 
-          if (inside > 0.001) {
-            float h = clamp((field - threshold) / (1.0 - threshold), 0.0, 1.0);
-            float dome = pow(h, 0.45);
+            float edgeWidth = 0.025;
+            float inside = smoothstep(threshold - edgeWidth, threshold + edgeWidth, field);
 
-            float gradScale = 32.0 * u_dpr;
-            vec3 normal = normalize(vec3(-grad.x * gradScale, -grad.y * gradScale, 1.0));
-            vec3 viewDir = vec3(0.0, 0.0, 1.0);
+            if (inside > 0.001) {
+              float h = clamp((field - threshold) / (1.0 - threshold), 0.0, 1.0);
+              float dome = pow(h, 0.45);
 
-            // Transparent optical refraction + soft blur so text stays readable
-            vec2 refractOffset = normal.xy * (14.0 * u_dpr) * (0.3 + 0.7 * dome);
-            float blurAmt = (1.6 + 2.4 * dome) * u_dpr;
-            vec3 refractedPaper = sampleBlurredRefractedPaper(p - refractOffset, blurAmt);
+              float gradScale = 30.0 * u_dpr;
+              vec3 normal = normalize(vec3(-grad.x * gradScale, -grad.y * gradScale, 1.0));
+              vec3 viewDir = vec3(0.0, 0.0, 1.0);
 
-            float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 2.8);
+              vec2 refractOffset = normal.xy * (12.0 * u_dpr) * (0.3 + 0.7 * dome);
+              float blurAmt = (1.2 + 1.8 * dome) * u_dpr;
+              vec3 refractedPaper = sampleBlurredRefractedPaper(p - refractOffset, blurAmt);
 
-            // Light transparent watercolor tint
-            float meniscus = smoothstep(0.28, 0.0, h);
-            vec3 waterBody = mix(refractedPaper, refractedPaper * mix(vec3(1.0), dropColor * 1.12, 0.38), 0.45);
-            waterBody = mix(waterBody, dropColor, (0.08 + 0.14 * meniscus));
-            waterBody *= 1.0 - meniscus * 0.11;
+              float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 2.8);
+              float meniscus = smoothstep(0.28, 0.0, h);
 
-            // Glossy specular highlights
-            vec3 lightDir1 = normalize(vec3(-0.52, -0.62, 0.85));
-            vec3 halfVec1 = normalize(lightDir1 + viewDir);
-            float spec1 = pow(max(dot(normal, halfVec1), 0.0), 96.0);
-            float specBroad = pow(max(dot(normal, halfVec1), 0.0), 20.0);
+              vec3 waterBody = mix(refractedPaper, refractedPaper * mix(vec3(1.0), dropColor * 1.10, 0.32), 0.40);
+              waterBody = mix(waterBody, dropColor, (0.06 + 0.12 * meniscus));
+              waterBody *= 1.0 - meniscus * 0.11;
 
-            vec3 lightDir2 = normalize(vec3(0.55, 0.65, 0.52));
-            vec3 halfVec2 = normalize(lightDir2 + viewDir);
-            float spec2 = pow(max(dot(normal, halfVec2), 0.0), 36.0);
+              vec3 lightDir1 = normalize(vec3(-0.52, -0.62, 0.85));
+              vec3 halfVec1 = normalize(lightDir1 + viewDir);
+              float spec1 = pow(max(dot(normal, halfVec1), 0.0), 96.0);
+              float specBroad = pow(max(dot(normal, halfVec1), 0.0), 20.0);
 
-            vec3 waterCol = waterBody;
-            waterCol += vec3(1.0) * (spec1 * 0.86 + specBroad * 0.11);
-            waterCol += mix(vec3(1.0), dropColor, 0.30) * (spec2 * 0.26 + fresnel * 0.22);
+              vec3 lightDir2 = normalize(vec3(0.55, 0.65, 0.52));
+              vec3 halfVec2 = normalize(lightDir2 + viewDir);
+              float spec2 = pow(max(dot(normal, halfVec2), 0.0), 36.0);
 
-            col = mix(col, waterCol, inside);
+              vec3 waterCol = waterBody;
+              waterCol += vec3(1.0) * (spec1 * 0.82 + specBroad * 0.09);
+              waterCol += mix(vec3(1.0), dropColor, 0.30) * (spec2 * 0.24 + fresnel * 0.20);
+
+              col = mix(col, waterCol, inside);
+            }
           }
 
-          // Windshield wiper blade rendering
           if (u_wiperActive > 0.01) {
             float dBlade = sdSegment(p, u_wiper.xy, u_wiper.zw);
             float bladeShadow = smoothstep(10.0 * u_dpr, 2.0 * u_dpr, sdSegment(p + vec2(-3.0, -4.0) * u_dpr, u_wiper.xy, u_wiper.zw));
             col = mix(col, col * 0.84, bladeShadow * 0.35 * u_wiperActive);
 
             float bladeMask = smoothstep(4.2 * u_dpr, 2.6 * u_dpr, dBlade);
-            vec3 bladeCol = vec3(0.11, 0.15, 0.22);
+            vec3 bladeCol = vec3(0.14, 0.12, 0.10);
             col = mix(col, bladeCol, bladeMask * u_wiperActive);
           }
 
@@ -659,6 +940,7 @@ And blurs the edge of night.</textarea>
       const uPointer = gl.getUniformLocation(program, 'u_pointer');
       const uWiper = gl.getUniformLocation(program, 'u_wiper');
       const uWiperActive = gl.getUniformLocation(program, 'u_wiperActive');
+      const uIsParchment = gl.getUniformLocation(program, 'u_isParchment');
       const uPaperTex = gl.getUniformLocation(program, 'u_paperTex');
 
       // --- State ---
@@ -667,18 +949,18 @@ And blurs the edge of night.</textarea>
       let height = window.innerHeight;
 
       let activeColor = hexToRgb('#38bdf8');
+      let activeHex = '#38bdf8';
       let gravityEnabled = true;
       let writeMode = false;
       let rainActive = false;
       let rainTimer = 0;
-      let waterSpeed = 0.42;
+      let waterSpeed = 0.35;
 
       const wiper = {
         sweeping: false,
-        progress: 0, // 0 -> 1 (out and back)
+        progress: 0,
         angle: -Math.PI * 0.88,
-        prevAngle: -Math.PI * 0.88,
-        intervalSec: 0, // 0 = manual
+        intervalSec: 0,
         timer: 0,
         alpha: 0
       };
@@ -714,6 +996,37 @@ And blurs the edge of night.</textarea>
         ];
       }
 
+      function buildPaperGrain() {
+        const gw = 256;
+        const gh = 256;
+        grainCanvas.width = gw;
+        grainCanvas.height = gh;
+        const img = grainCtx.createImageData(gw, gh);
+        const data = img.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const n = (Math.random() - 0.5) * 24;
+          data[i] = 128 + n;
+          data[i + 1] = 122 + n;
+          data[i + 2] = 110 + n;
+          data[i + 3] = 22;
+        }
+        grainCtx.putImageData(img, 0, 0);
+      }
+
+      function randomVariedRadius() {
+        const roll = Math.random();
+        if (roll < 0.42) return 4.5 + Math.random() * 6.5;   // tiny droplets
+        if (roll < 0.80) return 11.0 + Math.random() * 14.0; // medium drops
+        return 25.0 + Math.random() * 20.0;                  // large blobs
+      }
+
+      function randomVariedParticleSize() {
+        const roll = Math.random();
+        if (roll < 0.40) return 4.0 + Math.random() * 4.5;
+        if (roll < 0.80) return 8.5 + Math.random() * 8.0;
+        return 16.5 + Math.random() * 11.0;
+      }
+
       function createDrop(x, y, r, color = activeColor, vx = 0, vy = 0) {
         return {
           x,
@@ -732,134 +1045,619 @@ And blurs the edge of night.</textarea>
         };
       }
 
-      function initDrops() {
+      function createMagicParticle(x, y, vx = 0, vy = 0) {
+        return {
+          x,
+          y,
+          vx: vx || (Math.random() - 0.5) * 0.8,
+          vy: vy || (Math.random() * 0.6 + 0.2),
+          size: randomVariedParticleSize(),
+          rot: Math.random() * Math.PI * 2,
+          rotSpeed: (Math.random() - 0.5) * 1.4,
+          phase: Math.random() * Math.PI * 2,
+          color: activeHex,
+          alpha: 0.72 + Math.random() * 0.28
+        };
+      }
+
+      function initEffects() {
         drops = [];
-        const palette = [
-          hexToRgb('#38bdf8'),
-          hexToRgb('#2563eb'),
-          hexToRgb('#10b981'),
-          hexToRgb('#f43f5e'),
-          hexToRgb('#f59e0b'),
-          hexToRgb('#8b5cf6')
-        ];
-        for (let i = 0; i < 12; i++) {
-          const r = 14 + Math.random() * 18;
-          const x = 30 + Math.random() * (width - 60);
-          const y = 30 + Math.random() * (height - 130);
-          const c = palette[i % palette.length];
-          drops.push(createDrop(x, y, r, c, (Math.random() - 0.5) * 0.5, Math.random() * 0.8));
+        magicParticles = [];
+        const palette = ['#38bdf8', '#f59e0b', '#10b981', '#f43f5e', '#8b5cf6'];
+        if (effectMode === 'water') {
+          for (let i = 0; i < 14; i++) {
+            const r = randomVariedRadius();
+            const x = 30 + Math.random() * (width - 60);
+            const y = 30 + Math.random() * (height - 130);
+            const c = hexToRgb(palette[i % palette.length]);
+            drops.push(createDrop(x, y, r, c, (Math.random() - 0.5) * 0.4, Math.random() * 0.6));
+          }
+        } else {
+          for (let i = 0; i < 32; i++) {
+            const p = createMagicParticle(
+              30 + Math.random() * (width - 60),
+              30 + Math.random() * (height - 130)
+            );
+            p.color = palette[i % palette.length];
+            magicParticles.push(p);
+          }
         }
       }
 
-      // --- Render Ruled Glass Paper + Cursive Text to Offscreen Texture ---
-      function renderPaperTexture() {
-        paperDirty = false;
+      function spawnItem(x = null, y = null, vx = 0, vy = 0) {
+        const px = x !== null ? x : 25 + Math.random() * (width - 50);
+        const py = y !== null ? y : 25 + Math.random() * (height - 120);
+        if (effectMode === 'water') {
+          if (drops.length >= MAX_DROPS) {
+            let minIdx = 0;
+            for (let i = 1; i < drops.length; i++) {
+              if (drops[i].r < drops[minIdx].r) minIdx = i;
+            }
+            drops.splice(minIdx, 1);
+          }
+          const r = randomVariedRadius();
+          const d = createDrop(px, py, r, activeColor, vx || (Math.random() - 0.5) * 0.8, vy || (Math.random() - 0.5) * 0.8);
+          d.stretch = 1.15;
+          drops.push(d);
+        } else {
+          if (magicParticles.length >= 100) magicParticles.shift();
+          magicParticles.push(createMagicParticle(px, py, vx, vy));
+        }
+      }
+
+      // --- Layout & Line Wrapping Helper ---
+      function getPageLayoutMetrics() {
+        const isMobile = width <= 820;
+        const edWidth = Math.min(760, width * 0.92);
+        const edLeft = (width - edWidth) * 0.5;
+        const titleTop = isMobile ? 38 : 44;
+        const edTop = isMobile ? 84 : 96;
+        const padTop = isMobile ? 10 : 12;
+        const padLeft = isMobile ? 36 : 56;
+        const padRight = isMobile ? 18 : 28;
+        const fontSize = isMobile ? 26 : 32;
+        const lineHeight = isMobile ? 40 : 46;
+        const maxTextW = edWidth - padLeft - padRight;
+        const clipBottom = height - 92;
+        const usableTextH = Math.max(lineHeight, clipBottom - (edTop + padTop) - 12);
+        const maxLinesPerPage = Math.max(2, Math.floor(usableTextH / lineHeight));
+        return {
+          isMobile, edWidth, edLeft, titleTop, edTop,
+          padTop, padLeft, padRight, fontSize, lineHeight,
+          maxTextW, clipBottom, maxLinesPerPage
+        };
+      }
+
+      function computeWrappedLines(ctx, text, fontSize, maxTextW) {
+        ctx.font = `600 ${fontSize}px 'Dancing Script', 'Caveat', 'Brush Script MT', 'Segoe Script', cursive`;
+        const lines = [];
+        let idx = 0;
+        const paragraphs = text.split('\n');
+        for (let p = 0; p < paragraphs.length; p++) {
+          const para = paragraphs[p];
+          const paraStart = idx;
+          if (para.length === 0) {
+            lines.push({ text: '', startIdx: paraStart, endIdx: paraStart });
+          } else {
+            let lineStart = 0;
+            let lastSpace = -1;
+            for (let i = 0; i <= para.length; i++) {
+              const sub = para.slice(lineStart, i);
+              if (i < para.length && para[i] === ' ') lastSpace = i;
+              if (i === para.length || ctx.measureText(sub).width > maxTextW) {
+                if (i < para.length && lastSpace > lineStart) {
+                  lines.push({
+                    text: para.slice(lineStart, lastSpace),
+                    startIdx: paraStart + lineStart,
+                    endIdx: paraStart + lastSpace + 1
+                  });
+                  lineStart = lastSpace + 1;
+                  lastSpace = -1;
+                } else {
+                  const cut = (i === para.length) ? i : Math.max(lineStart + 1, i - 1);
+                  lines.push({
+                    text: para.slice(lineStart, cut),
+                    startIdx: paraStart + lineStart,
+                    endIdx: paraStart + cut
+                  });
+                  lineStart = cut;
+                }
+              }
+            }
+          }
+          idx += para.length + 1;
+        }
+        return lines;
+      }
+
+      // --- Page Navigation & Automatic Page Break ---
+      function updatePageControls() {
+        pageIndicator.textContent = `${currentPageIdx + 1} / ${pages.length}`;
+        btnPrevPage.disabled = currentPageIdx === 0;
+        btnNextPage.disabled = currentPageIdx >= pages.length - 1;
+      }
+
+      function captureFlipSnapshot() {
+        const snap = pageFlip.snapshot;
+        snap.width = paperCanvas.width;
+        snap.height = paperCanvas.height;
+        const sctx = snap.getContext('2d');
+        sctx.drawImage(paperCanvas, 0, 0);
+      }
+
+      function triggerPageFlip(dir) {
+        captureFlipSnapshot();
+        pageFlip.active = true;
+        pageFlip.progress = 0;
+        pageFlip.dir = dir;
+      }
+
+      function switchToPage(targetIdx, animateFlip = true) {
+        if (targetIdx < 0 || targetIdx >= pages.length || targetIdx === currentPageIdx) return;
+        pages[currentPageIdx].text = editor.value;
+        const dir = targetIdx > currentPageIdx ? 1 : -1;
+
+        if (animateFlip) {
+          renderPaperTexture(currentPageIdx);
+          triggerPageFlip(dir);
+        }
+
+        currentPageIdx = targetIdx;
+        editor.value = pages[currentPageIdx].text;
+        prevText = editor.value;
+        charInks = Array.from(prevText).map(() => 1.0);
+        burnGlyphs.length = 0;
+        smokeParticles.length = 0;
+        updatePageControls();
+        paperDirty = true;
+      }
+
+      function addNewPageAndGo(initialText = '') {
+        pages[currentPageIdx].text = editor.value;
+        renderPaperTexture(currentPageIdx);
+        triggerPageFlip(1);
+
+        pages.splice(currentPageIdx + 1, 0, { text: initialText });
+        currentPageIdx += 1;
+        editor.value = initialText;
+        prevText = initialText;
+        charInks = Array.from(initialText).map(() => 0.0);
+        burnGlyphs.length = 0;
+        smokeParticles.length = 0;
+        updatePageControls();
+        paperDirty = true;
+        setWriteMode(true);
+        editor.selectionStart = editor.selectionEnd = editor.value.length;
+      }
+
+      function checkAutoPageBreak() {
+        const m = getPageLayoutMetrics();
+        const lines = computeWrappedLines(paperCtx, editor.value, m.fontSize, m.maxTextW);
+        if (lines.length <= m.maxLinesPerPage) return;
+
+        // Split overflow lines onto the next page automatically
+        const splitCharIdx = lines[m.maxLinesPerPage].startIdx;
+        const stayText = editor.value.slice(0, splitCharIdx).replace(/\n+$/, '');
+        const overflowText = editor.value.slice(splitCharIdx).replace(/^\n+/, '');
+
+        pages[currentPageIdx].text = stayText;
+        editor.value = stayText;
+        renderPaperTexture(currentPageIdx);
+        triggerPageFlip(1);
+
+        if (currentPageIdx + 1 < pages.length) {
+          const nextExisting = pages[currentPageIdx + 1].text;
+          pages[currentPageIdx + 1].text = overflowText + (nextExisting ? '\n' + nextExisting : '');
+        } else {
+          pages.push({ text: overflowText });
+        }
+
+        currentPageIdx += 1;
+        editor.value = pages[currentPageIdx].text;
+        prevText = editor.value;
+        charInks = Array.from(prevText).map((_, idx) => (idx < overflowText.length ? 0.0 : 1.0));
+        burnGlyphs.length = 0;
+        smokeParticles.length = 0;
+        updatePageControls();
+        paperDirty = true;
+
+        setWriteMode(true);
+        editor.selectionStart = editor.selectionEnd = overflowText.length;
+      }
+
+      // --- Render Paper Texture ---
+      function renderPaperTexture(pageIdxOverride = null, customScale = 1) {
+        if (pageIdxOverride === null && customScale === 1) {
+          paperDirty = false;
+        }
+        const targetPageIdx = pageIdxOverride !== null ? pageIdxOverride : currentPageIdx;
+        const pageText = (targetPageIdx === currentPageIdx && pageIdxOverride === null)
+          ? editor.value
+          : (pages[targetPageIdx] ? pages[targetPageIdx].text : '');
+
+        const effectiveDpr = dpr * customScale;
         const ctx = paperCtx;
 
         ctx.save();
-        ctx.scale(dpr, dpr);
+        ctx.scale(effectiveDpr, effectiveDpr);
 
-        // Frosted glass windshield background
-        const grad = ctx.createLinearGradient(0, 0, width * 0.25, height);
-        grad.addColorStop(0, '#f4f8fc');
-        grad.addColorStop(0.55, '#eaf1f8');
-        grad.addColorStop(1, '#dde7f1');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, width, height);
+        if (currentTheme === 'riddle') {
+          const grad = ctx.createRadialGradient(
+            width * 0.54, height * 0.44, Math.min(width, height) * 0.12,
+            width * 0.5, height * 0.5, Math.max(width, height) * 0.82
+          );
+          grad.addColorStop(0, '#d8ae77');
+          grad.addColorStop(0.55, '#c8985f');
+          grad.addColorStop(1, '#9c6c39');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, width, height);
 
-        const sheen = ctx.createLinearGradient(0, 0, width, height);
-        sheen.addColorStop(0, 'rgba(255,255,255,0.34)');
-        sheen.addColorStop(0.45, 'rgba(255,255,255,0.0)');
-        sheen.addColorStop(1, 'rgba(255,255,255,0.16)');
-        ctx.fillStyle = sheen;
-        ctx.fillRect(0, 0, width, height);
+          const spine = ctx.createLinearGradient(0, 0, Math.min(110, width * 0.16), 0);
+          spine.addColorStop(0, 'rgba(35, 18, 6, 0.52)');
+          spine.addColorStop(0.45, 'rgba(55, 30, 12, 0.16)');
+          spine.addColorStop(1, 'rgba(55, 30, 12, 0.0)');
+          ctx.fillStyle = spine;
+          ctx.fillRect(0, 0, Math.min(110, width * 0.16), height);
+        } else if (currentTheme === 'bright') {
+          const grad = ctx.createLinearGradient(0, 0, 0, height);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(1, '#edf2f7');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, width, height);
+        } else {
+          const grad = ctx.createRadialGradient(
+            width * 0.5, height * 0.45, Math.min(width, height) * 0.15,
+            width * 0.5, height * 0.5, Math.max(width, height) * 0.82
+          );
+          grad.addColorStop(0, '#1a202c');
+          grad.addColorStop(1, '#0c0f16');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, width, height);
+        }
 
-        const isMobile = width <= 720;
-        const edWidth = Math.min(760, width * 0.92);
-        const edLeft = (width - edWidth) * 0.5;
-        const padTop = isMobile ? 58 : 68;
-        const padLeft = isMobile ? 36 : 56;
-        const padRight = isMobile ? 18 : 28;
-        const fontSize = isMobile ? 25 : 30;
-        const lineHeight = isMobile ? 38 : 44;
+        const pattern = ctx.createPattern(grainCanvas, 'repeat');
+        if (pattern) {
+          ctx.fillStyle = pattern;
+          ctx.fillRect(0, 0, width, height);
+        }
 
-        // Margin line
-        ctx.strokeStyle = 'rgba(244, 63, 94, 0.16)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(edLeft + padLeft - 14, 24);
-        ctx.lineTo(edLeft + padLeft - 14, height - 24);
-        ctx.stroke();
+        const m = getPageLayoutMetrics();
 
-        // Ruled horizontal lines
-        ctx.strokeStyle = 'rgba(100, 116, 139, 0.18)';
-        ctx.lineWidth = 1;
-        const firstLineY = padTop + lineHeight - 8 - (editor.scrollTop % lineHeight);
-        for (let y = firstLineY; y < height - 20; y += lineHeight) {
+        // Guide lines (strictly visual)
+        if (showLines) {
+          ctx.strokeStyle = currentTheme === 'dark'
+            ? 'rgba(226, 232, 240, 0.14)'
+            : (currentTheme === 'riddle' ? 'rgba(82, 46, 18, 0.22)' : 'rgba(100, 116, 139, 0.20)');
+          ctx.lineWidth = 1;
           ctx.beginPath();
-          ctx.moveTo(edLeft + 10, y);
-          ctx.lineTo(edLeft + edWidth - 10, y);
+          ctx.moveTo(m.edLeft + m.padLeft - 14, 24);
+          ctx.lineTo(m.edLeft + m.padLeft - 14, height - 24);
           ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(m.edLeft + 10, m.titleTop + 42);
+          ctx.lineTo(m.edLeft + m.edWidth - 10, m.titleTop + 42);
+          ctx.stroke();
+
+          const firstLineY = m.edTop + m.padTop + m.lineHeight - 8;
+          for (let y = firstLineY; y < height - 20; y += m.lineHeight) {
+            ctx.beginPath();
+            ctx.moveTo(m.edLeft + 10, y);
+            ctx.lineTo(m.edLeft + m.edWidth - 10, y);
+            ctx.stroke();
+          }
         }
 
-        // Handwritten cursive text
-        ctx.font = `500 ${fontSize}px 'Caveat', 'Brush Script MT', 'Segoe Script', cursive`;
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
-        ctx.textBaseline = 'alphabetic';
+        const inkRgb = currentTheme === 'dark'
+          ? '248, 241, 223'
+          : (currentTheme === 'riddle' ? '18, 10, 4' : '9, 13, 22');
 
-        const maxTextW = edWidth - padLeft - padRight;
-        const rawLines = editor.value.split('\n');
-        const wrappedLines = [];
-
-        for (const rawLine of rawLines) {
-          if (rawLine === '') {
-            wrappedLines.push('');
-            continue;
-          }
-          const words = rawLine.split(' ');
-          let current = '';
-          for (let i = 0; i < words.length; i++) {
-            const test = current ? current + ' ' + words[i] : words[i];
-            if (ctx.measureText(test).width > maxTextW && current) {
-              wrappedLines.push(current);
-              current = words[i];
-            } else {
-              current = test;
-            }
-          }
-          wrappedLines.push(current);
+        // Draw Diary Title at top
+        const titleText = (titleInput.value || '').trim();
+        if (titleText.length > 0) {
+          ctx.save();
+          ctx.font = `700 ${m.isMobile ? 30 : 36}px 'Dancing Script', 'Caveat', cursive`;
+          ctx.fillStyle = `rgba(${inkRgb}, 0.96)`;
+          ctx.fillText(titleText, m.edLeft + m.padLeft, m.titleTop + (m.isMobile ? 30 : 34), m.maxTextW);
+          ctx.restore();
         }
 
-        const textStartX = edLeft + padLeft;
-        const baseOffsetY = padTop + lineHeight - 13 - editor.scrollTop;
-        textLineBoxes = [];
+        // Subtle Page Number stamp at bottom-right of parchment margin
+        ctx.save();
+        ctx.font = `600 18px 'Dancing Script', 'Caveat', cursive`;
+        ctx.fillStyle = `rgba(${inkRgb}, 0.55)`;
+        ctx.textAlign = 'right';
+        ctx.fillText(`Page ${targetPageIdx + 1} of ${pages.length}`, m.edLeft + m.edWidth - m.padRight, height - 98);
+        ctx.restore();
+
+        // Wrap and draw page body text
+        const lines = computeWrappedLines(ctx, pageText, m.fontSize, m.maxTextW);
+        const textStartX = m.edLeft + m.padLeft;
+        const baseOffsetY = m.edTop + m.padTop + m.lineHeight - 13;
+
+        if (targetPageIdx === currentPageIdx && pageIdxOverride === null) {
+          textLineBoxes = [];
+          lastCharPositions = new Array(pageText.length);
+        }
 
         ctx.save();
         ctx.beginPath();
-        ctx.rect(edLeft, 0, edWidth, height - 92);
+        ctx.rect(m.edLeft, m.edTop, m.edWidth, m.clipBottom - m.edTop);
         ctx.clip();
 
-        for (let i = 0; i < wrappedLines.length; i++) {
-          const line = wrappedLines[i];
-          const y = baseOffsetY + i * lineHeight;
-          if (y > 20 && y < height - 60) {
-            ctx.fillText(line, textStartX, y);
-            if (line.trim().length > 0) {
-              const w = ctx.measureText(line).width;
-              textLineBoxes.push({
-                x: textStartX,
-                y: y - fontSize * 0.78,
-                w,
-                h: fontSize * 0.95
-              });
+        ctx.font = `600 ${m.fontSize}px 'Dancing Script', 'Caveat', 'Brush Script MT', 'Segoe Script', cursive`;
+        ctx.textBaseline = 'alphabetic';
+
+        for (let li = 0; li < lines.length; li++) {
+          const lineObj = lines[li];
+          const y = baseOffsetY + li * m.lineHeight;
+          const lineStr = lineObj.text;
+
+          if (targetPageIdx === currentPageIdx && pageIdxOverride === null && lineStr.trim().length > 0 && y > m.edTop && y < m.clipBottom) {
+            textLineBoxes.push({
+              x: textStartX,
+              y: y - m.fontSize * 0.78,
+              w: ctx.measureText(lineStr).width,
+              h: m.fontSize * 0.95
+            });
+          }
+
+          let curX = textStartX;
+          for (let ci = 0; ci < lineStr.length; ci++) {
+            const globalIdx = lineObj.startIdx + ci;
+            const ch = lineStr[ci];
+            const chW = ctx.measureText(ch).width;
+
+            if (targetPageIdx === currentPageIdx && pageIdxOverride === null) {
+              lastCharPositions[globalIdx] = { ch, x: curX, y, fontSize: m.fontSize };
             }
+
+            if (y > m.edTop && y < m.clipBottom + 10) {
+              const p = (targetPageIdx === currentPageIdx && pageIdxOverride === null && charInks[globalIdx] !== undefined)
+                ? charInks[globalIdx]
+                : 1.0;
+
+              if (p < 0.999) {
+                const ease = 1.0 - Math.pow(1.0 - p, 2.5);
+                const settleY = (1.0 - ease) * -3.0;
+                ctx.save();
+                ctx.shadowColor = currentTheme === 'dark'
+                  ? `rgba(251, 191, 36, ${(1.0 - ease) * 0.45})`
+                  : `rgba(90, 46, 12, ${(1.0 - ease) * 0.45})`;
+                ctx.shadowBlur = (1.0 - ease) * 8;
+                ctx.fillStyle = `rgba(${inkRgb}, ${ease})`;
+                ctx.fillText(ch, curX, y + settleY);
+                ctx.restore();
+              } else {
+                ctx.fillStyle = `rgba(${inkRgb}, 1.0)`;
+                ctx.fillText(ch, curX, y);
+              }
+            }
+            curX += chW;
           }
         }
+
+        if (targetPageIdx === currentPageIdx && pageIdxOverride === null) {
+          for (let i = 0; i < burnGlyphs.length; i++) {
+            const bg = burnGlyphs[i];
+            const t = bg.age / bg.duration;
+            const alpha = Math.max(0, 1.0 - t);
+            ctx.save();
+            ctx.font = `600 ${bg.fontSize}px 'Dancing Script', 'Caveat', 'Brush Script MT', 'Segoe Script', cursive`;
+            ctx.shadowColor = `rgba(249, 115, 22, ${alpha * 0.95})`;
+            ctx.shadowBlur = 12 * (1.0 - t * 0.4);
+            const g = Math.floor(145 * (1.0 - t) + 40 * t);
+            ctx.fillStyle = `rgba(234, ${g}, 18, ${alpha})`;
+            ctx.fillText(bg.ch, bg.x, bg.y - t * 5);
+            ctx.restore();
+          }
+
+          for (let i = 0; i < smokeParticles.length; i++) {
+            const sp = smokeParticles[i];
+            const t = sp.age / sp.life;
+            const alpha = Math.sin(t * Math.PI) * (sp.isEmber ? 0.9 : 0.36);
+            if (alpha <= 0.01) continue;
+            ctx.save();
+            if (sp.isEmber) {
+              ctx.fillStyle = `rgba(251, 146, 60, ${alpha})`;
+              ctx.beginPath();
+              ctx.arc(sp.x, sp.y, sp.r * (1.0 - t * 0.5), 0, Math.PI * 2);
+              ctx.fill();
+            } else {
+              const smokeCol = currentTheme === 'dark' ? '180, 188, 204' : '74, 56, 40';
+              ctx.fillStyle = `rgba(${smokeCol}, ${alpha})`;
+              ctx.beginPath();
+              ctx.arc(sp.x, sp.y, sp.r * (1.0 + t * 2.2), 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.restore();
+          }
+        }
+
         ctx.restore();
         ctx.restore();
 
-        gl.bindTexture(gl.TEXTURE_2D, paperTex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, paperCanvas);
+        if (customScale === 1) {
+          gl.bindTexture(gl.TEXTURE_2D, paperTex);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, paperCanvas);
+        }
+      }
+
+      // --- Render Magic Overlay Particles & Page Flip Effect ---
+      function drawStar(ctx, r, points) {
+        ctx.beginPath();
+        for (let i = 0; i < points * 2; i++) {
+          const rad = i % 2 === 0 ? r : r * 0.36;
+          const ang = (i * Math.PI) / points;
+          if (i === 0) ctx.moveTo(Math.cos(ang) * rad, Math.sin(ang) * rad);
+          else ctx.lineTo(Math.cos(ang) * rad, Math.sin(ang) * rad);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function renderOverlayCanvas(timeSec, forceHideEffects = false) {
+        fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+
+        // 1. Magic particles (Dandelions, Stars, Glitters, Leaves)
+        if (!forceHideEffects && showBubbles && effectMode !== 'water' && magicParticles.length > 0) {
+          fxCtx.save();
+          fxCtx.scale(dpr, dpr);
+
+          for (let i = 0; i < magicParticles.length; i++) {
+            const p = magicParticles[i];
+            fxCtx.save();
+            fxCtx.translate(p.x, p.y);
+            fxCtx.rotate(p.rot);
+
+            if (effectMode === 'dandelions') {
+              fxCtx.strokeStyle = currentTheme === 'dark'
+                ? `rgba(255, 250, 235, ${p.alpha * 0.85})`
+                : `rgba(255, 255, 255, ${p.alpha * 0.90})`;
+              fxCtx.lineWidth = Math.max(0.9, p.size * 0.08);
+              fxCtx.beginPath();
+              fxCtx.moveTo(0, 0);
+              fxCtx.lineTo(0, p.size * 1.1);
+              fxCtx.stroke();
+              fxCtx.fillStyle = currentTheme === 'dark' ? '#fde68a' : '#5c3d22';
+              fxCtx.beginPath();
+              fxCtx.arc(0, p.size * 1.1, Math.max(1.2, p.size * 0.13), 0, Math.PI * 2);
+              fxCtx.fill();
+              for (let k = -3; k <= 3; k++) {
+                const ang = -Math.PI * 0.5 + k * 0.28;
+                fxCtx.beginPath();
+                fxCtx.moveTo(0, 0);
+                fxCtx.lineTo(Math.cos(ang) * p.size * 0.75, Math.sin(ang) * p.size * 0.75);
+                fxCtx.stroke();
+              }
+            } else if (effectMode === 'stars') {
+              const twinkle = 0.65 + 0.35 * Math.sin(timeSec * 3.5 + p.phase);
+              fxCtx.globalAlpha = p.alpha * twinkle;
+              fxCtx.fillStyle = p.color;
+              fxCtx.shadowColor = p.color;
+              fxCtx.shadowBlur = 8;
+              drawStar(fxCtx, p.size * 0.65, 5);
+            } else if (effectMode === 'glitters') {
+              const sparkle = 0.35 + 0.65 * Math.abs(Math.sin(timeSec * 5.0 + p.phase));
+              fxCtx.globalAlpha = p.alpha * sparkle;
+              fxCtx.fillStyle = p.color;
+              fxCtx.shadowColor = '#ffffff';
+              fxCtx.shadowBlur = 6;
+              drawStar(fxCtx, p.size * 0.55, 4);
+            } else if (effectMode === 'leaves') {
+              fxCtx.globalAlpha = p.alpha * 0.88;
+              fxCtx.fillStyle = p.color;
+              fxCtx.beginPath();
+              fxCtx.moveTo(0, -p.size * 0.7);
+              fxCtx.quadraticCurveTo(p.size * 0.65, 0, 0, p.size * 0.7);
+              fxCtx.quadraticCurveTo(-p.size * 0.65, 0, 0, -p.size * 0.7);
+              fxCtx.fill();
+              fxCtx.strokeStyle = 'rgba(40, 20, 10, 0.35)';
+              fxCtx.lineWidth = 0.9;
+              fxCtx.beginPath();
+              fxCtx.moveTo(0, -p.size * 0.55);
+              fxCtx.lineTo(0, p.size * 0.75);
+              fxCtx.stroke();
+            }
+
+            fxCtx.restore();
+          }
+          fxCtx.restore();
+        }
+
+        // 2. Realistic 3D Parchment Page Flip Animation
+        if (pageFlip.active) {
+          const t = pageFlip.progress;
+          const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+          const W = fxCanvas.width;
+          const H = fxCanvas.height;
+
+          fxCtx.save();
+          if (pageFlip.dir === 1) {
+            // Turning forward: old page folds from right to left
+            const foldX = W * (1 - ease);
+            const curlWidth = Math.sin(ease * Math.PI) * W * 0.22;
+
+            // Shadow cast onto the newly revealed page underneath
+            const underGrad = fxCtx.createLinearGradient(Math.max(0, foldX - curlWidth * 0.6), 0, Math.min(W, foldX + curlWidth * 1.4), 0);
+            underGrad.addColorStop(0, 'rgba(20, 10, 4, 0)');
+            underGrad.addColorStop(0.35, `rgba(20, 10, 4, ${0.42 * Math.sin(ease * Math.PI)})`);
+            underGrad.addColorStop(1, 'rgba(20, 10, 4, 0)');
+            fxCtx.fillStyle = underGrad;
+            fxCtx.fillRect(0, 0, W, H);
+
+            // Clipped shrinking old page on the left side of the crease
+            if (foldX > 2) {
+              fxCtx.save();
+              fxCtx.beginPath();
+              fxCtx.rect(0, 0, foldX, H);
+              fxCtx.clip();
+              fxCtx.drawImage(pageFlip.snapshot, 0, 0, W, H);
+
+              // Spine & crease shading on turning page
+              const shade = fxCtx.createLinearGradient(Math.max(0, foldX - curlWidth), 0, foldX, 0);
+              shade.addColorStop(0, 'rgba(0,0,0,0)');
+              shade.addColorStop(1, `rgba(28, 14, 4, ${0.35 * Math.sin(ease * Math.PI)})`);
+              fxCtx.fillStyle = shade;
+              fxCtx.fillRect(0, 0, foldX, H);
+              fxCtx.restore();
+            }
+
+            // Backside of the curling parchment leaf
+            if (curlWidth > 2) {
+              const leafLeft = Math.max(0, foldX - curlWidth);
+              const leafGrad = fxCtx.createLinearGradient(leafLeft, 0, foldX, 0);
+              if (currentTheme === 'dark') {
+                leafGrad.addColorStop(0, '#141923');
+                leafGrad.addColorStop(0.65, '#262f40');
+                leafGrad.addColorStop(1, '#0f131a');
+              } else if (currentTheme === 'bright') {
+                leafGrad.addColorStop(0, '#e2e8f0');
+                leafGrad.addColorStop(0.65, '#ffffff');
+                leafGrad.addColorStop(1, '#cbd5e1');
+              } else {
+                leafGrad.addColorStop(0, '#b38249');
+                leafGrad.addColorStop(0.65, '#e8c491');
+                leafGrad.addColorStop(1, '#996832');
+              }
+              fxCtx.fillStyle = leafGrad;
+              fxCtx.fillRect(leafLeft, 0, foldX - leafLeft, H);
+            }
+          } else {
+            // Turning backward: previous page unfolds from left to right
+            const foldX = W * ease;
+            const curlWidth = Math.sin(ease * Math.PI) * W * 0.22;
+
+            // Shadow cast onto current page underneath
+            const underGrad = fxCtx.createLinearGradient(foldX, 0, Math.min(W, foldX + curlWidth * 1.4), 0);
+            underGrad.addColorStop(0, `rgba(20, 10, 4, ${0.42 * Math.sin(ease * Math.PI)})`);
+            underGrad.addColorStop(1, 'rgba(20, 10, 4, 0)');
+            fxCtx.fillStyle = underGrad;
+            fxCtx.fillRect(foldX, 0, W - foldX, H);
+
+            // Backside curl flap
+            if (curlWidth > 2) {
+              const leafLeft = Math.max(0, foldX - curlWidth);
+              const leafGrad = fxCtx.createLinearGradient(leafLeft, 0, foldX, 0);
+              if (currentTheme === 'dark') {
+                leafGrad.addColorStop(0, '#141923');
+                leafGrad.addColorStop(0.65, '#262f40');
+                leafGrad.addColorStop(1, '#0f131a');
+              } else if (currentTheme === 'bright') {
+                leafGrad.addColorStop(0, '#e2e8f0');
+                leafGrad.addColorStop(0.65, '#ffffff');
+                leafGrad.addColorStop(1, '#cbd5e1');
+              } else {
+                leafGrad.addColorStop(0, '#b38249');
+                leafGrad.addColorStop(0.65, '#e8c491');
+                leafGrad.addColorStop(1, '#996832');
+              }
+              fxCtx.fillStyle = leafGrad;
+              fxCtx.fillRect(leafLeft, 0, foldX - leafLeft, H);
+            }
+          }
+          fxCtx.restore();
+        }
       }
 
       function resize() {
@@ -868,6 +1666,8 @@ And blurs the edge of night.</textarea>
         height = window.innerHeight;
         canvas.width = Math.floor(width * dpr);
         canvas.height = Math.floor(height * dpr);
+        fxCanvas.width = canvas.width;
+        fxCanvas.height = canvas.height;
         paperCanvas.width = canvas.width;
         paperCanvas.height = canvas.height;
         gl.viewport(0, 0, canvas.width, canvas.height);
@@ -882,7 +1682,6 @@ And blurs the edge of night.</textarea>
         }
       });
 
-      // --- Splash / Break Apart Physics ---
       function splashDrop(drop, impactX, impactY, intensity = 1.0) {
         const idx = drops.indexOf(drop);
         if (idx === -1) return;
@@ -919,7 +1718,6 @@ And blurs the edge of night.</textarea>
         }
       }
 
-      // --- Pointer & Editor Interaction ---
       function dismissHint() {
         if (!hasInteracted) {
           hasInteracted = true;
@@ -944,13 +1742,12 @@ And blurs the edge of night.</textarea>
         writeMode = enabled;
         btnWrite.classList.toggle('active', enabled);
         editor.classList.toggle('active-typing', enabled);
-        if (enabled) {
-          editor.focus();
-        }
+        if (enabled) editor.focus();
       }
 
       canvas.addEventListener('pointerdown', (e) => {
         dismissHint();
+        introTypingActive = false;
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -967,7 +1764,7 @@ And blurs the edge of night.</textarea>
         pointer.movedDist = 0;
         pointer.splashedThisPress = false;
 
-        const hit = findDropAt(x, y);
+        const hit = (showBubbles && effectMode === 'water') ? findDropAt(x, y) : null;
         if (hit) {
           canvas.setPointerCapture(e.pointerId);
           canvas.classList.add('pressing');
@@ -989,6 +1786,7 @@ And blurs the edge of night.</textarea>
       });
 
       canvas.addEventListener('dblclick', (e) => {
+        if (!showBubbles || effectMode !== 'water') return;
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -1024,14 +1822,14 @@ And blurs the edge of night.</textarea>
         const elapsed = performance.now() - pointer.downTime;
 
         if (!pointer.grabbedDrop && !pointer.splashedThisPress && pointer.movedDist < 10 && elapsed < 260) {
+          const titleRect = titleInput.getBoundingClientRect();
           const edRect = editor.getBoundingClientRect();
-          if (pointer.x >= edRect.left && pointer.x <= edRect.right && pointer.y <= edRect.bottom) {
+          if (pointer.x >= titleRect.left && pointer.x <= titleRect.right && pointer.y >= titleRect.top && pointer.y <= titleRect.bottom) {
+            titleInput.focus();
+          } else if (pointer.x >= edRect.left && pointer.x <= edRect.right && pointer.y >= edRect.top && pointer.y <= edRect.bottom) {
             setWriteMode(true);
-          } else if (drops.length < MAX_DROPS) {
-            const newR = 14 + Math.random() * 14;
-            const d = createDrop(pointer.x, pointer.y, newR, activeColor);
-            d.stretch = 1.18;
-            drops.push(d);
+          } else if (showBubbles) {
+            spawnItem(pointer.x, pointer.y);
           }
         }
 
@@ -1046,33 +1844,137 @@ And blurs the edge of night.</textarea>
         if (!pointer.isDown) pointer.active = false;
       });
 
-      editor.addEventListener('input', () => {
+      titleInput.addEventListener('input', () => {
+        introTypingActive = false;
         paperDirty = true;
-        // Typing ripples nearby droplets
-        for (const box of textLineBoxes) {
-          for (const d of drops) {
-            if (d.x > box.x - 20 && d.x < box.x + box.w + 20 && Math.abs(d.y - (box.y + box.h * 0.5)) < 45) {
-              d.vx += (Math.random() - 0.5) * 0.5;
-              d.vy += (Math.random() - 0.5) * 0.4;
-              d.stretchVel += 0.04;
-            }
-          }
+      });
+
+      editor.addEventListener('keydown', (e) => {
+        introTypingActive = false;
+        // Backspace on an empty page (when page > 0) returns to previous page
+        if (e.key === 'Backspace' && editor.selectionStart === 0 && editor.selectionEnd === 0 && currentPageIdx > 0) {
+          e.preventDefault();
+          const carryText = editor.value;
+          pages.splice(currentPageIdx, 1);
+          renderPaperTexture(currentPageIdx);
+          triggerPageFlip(-1);
+          currentPageIdx -= 1;
+          editor.value = pages[currentPageIdx].text + (carryText ? '\n' + carryText : '');
+          prevText = editor.value;
+          charInks = Array.from(prevText).map(() => 1.0);
+          updatePageControls();
+          paperDirty = true;
+          editor.selectionStart = editor.selectionEnd = pages[currentPageIdx].text.length;
         }
       });
 
-      editor.addEventListener('scroll', () => {
+      editor.addEventListener('input', () => {
+        introTypingActive = false;
+        const newText = editor.value;
+        const oldLen = prevText.length;
+        const newLen = newText.length;
+
+        let prefix = 0;
+        while (prefix < oldLen && prefix < newLen && prevText[prefix] === newText[prefix]) {
+          prefix++;
+        }
+        let suffix = 0;
+        while (
+          suffix < (oldLen - prefix) &&
+          suffix < (newLen - prefix) &&
+          prevText[oldLen - 1 - suffix] === newText[newLen - 1 - suffix]
+        ) {
+          suffix++;
+        }
+
+        const delEnd = oldLen - suffix;
+        for (let i = prefix; i < delEnd; i++) {
+          const pos = lastCharPositions[i];
+          if (pos && pos.ch.trim() !== '') {
+            burnGlyphs.push({
+              ch: pos.ch,
+              x: pos.x,
+              y: pos.y,
+              fontSize: pos.fontSize,
+              age: 0,
+              duration: 0.72
+            });
+            for (let s = 0; s < 3; s++) {
+              smokeParticles.push({
+                x: pos.x + 4 + (Math.random() - 0.5) * 8,
+                y: pos.y - 6 + (Math.random() - 0.5) * 6,
+                vx: (Math.random() - 0.5) * 14,
+                vy: -18 - Math.random() * 22,
+                r: 2.5 + Math.random() * 3.5,
+                age: 0,
+                life: 0.75 + Math.random() * 0.45,
+                isEmber: false
+              });
+            }
+            for (let e = 0; e < 2; e++) {
+              smokeParticles.push({
+                x: pos.x + 4 + (Math.random() - 0.5) * 6,
+                y: pos.y - 4,
+                vx: (Math.random() - 0.5) * 24,
+                vy: -28 - Math.random() * 26,
+                r: 1.6 + Math.random() * 1.4,
+                age: 0,
+                life: 0.45 + Math.random() * 0.25,
+                isEmber: true
+              });
+            }
+          }
+        }
+
+        const nextInks = new Array(newLen);
+        for (let i = 0; i < prefix; i++) {
+          nextInks[i] = charInks[i] !== undefined ? charInks[i] : 1.0;
+        }
+        const insEnd = newLen - suffix;
+        for (let i = prefix; i < insEnd; i++) {
+          nextInks[i] = 0.0;
+        }
+        for (let i = 0; i < suffix; i++) {
+          nextInks[newLen - 1 - i] = charInks[oldLen - 1 - i] !== undefined ? charInks[oldLen - 1 - i] : 1.0;
+        }
+        charInks = nextInks;
+
+        const inserted = newText.slice(prefix, insEnd);
+        if (/[\s\n]/.test(inserted) && showBubbles) {
+          spawnItem();
+          if (Math.random() < 0.6) spawnItem();
+        }
+
+        prevText = newText;
+        pages[currentPageIdx].text = newText;
         paperDirty = true;
+
+        // Auto page-break if current page overflows
+        checkAutoPageBreak();
       });
 
-      editor.addEventListener('blur', () => {
-        if (writeMode) setWriteMode(false);
-      });
-
+      editor.addEventListener('blur', () => { if (writeMode) setWriteMode(false); });
       window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && writeMode) {
           setWriteMode(false);
           editor.blur();
         }
+      });
+
+      // --- Page Button Events ---
+      btnPrevPage.addEventListener('click', () => {
+        dismissHint();
+        switchToPage(currentPageIdx - 1, true);
+      });
+
+      btnNextPage.addEventListener('click', () => {
+        dismissHint();
+        switchToPage(currentPageIdx + 1, true);
+      });
+
+      btnNewPage.addEventListener('click', () => {
+        dismissHint();
+        addNewPageAndGo('');
       });
 
       // --- UI Controls ---
@@ -1082,15 +1984,30 @@ And blurs the edge of night.</textarea>
         document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
         customPickerWrap.classList.remove('active');
         btn.classList.add('active');
-        const hex = btn.dataset.color;
-        activeColor = hexToRgb(hex);
-        customColorInput.value = hex;
+        activeHex = btn.dataset.color;
+        activeColor = hexToRgb(activeHex);
+        customColorInput.value = activeHex;
       });
 
       customColorInput.addEventListener('input', (e) => {
         document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
         customPickerWrap.classList.add('active');
-        activeColor = hexToRgb(e.target.value);
+        activeHex = e.target.value;
+        activeColor = hexToRgb(activeHex);
+      });
+
+      effectModeSelect.addEventListener('change', (e) => {
+        effectMode = e.target.value;
+        if (!showBubbles) {
+          showBubbles = true;
+          btnBubbles.classList.add('active');
+        }
+        initEffects();
+      });
+
+      btnBubbles.addEventListener('click', () => {
+        showBubbles = !showBubbles;
+        btnBubbles.classList.toggle('active', showBubbles);
       });
 
       btnWrite.addEventListener('click', () => {
@@ -1100,51 +2017,36 @@ And blurs the edge of night.</textarea>
 
       btnAdd.addEventListener('click', () => {
         dismissHint();
-        if (drops.length >= MAX_DROPS) {
-          drops.sort((a, b) => a.r - b.r);
-          drops.shift();
+        if (!showBubbles) {
+          showBubbles = true;
+          btnBubbles.classList.add('active');
         }
-        const r = 16 + Math.random() * 16;
-        const x = width * (0.22 + Math.random() * 0.56);
-        const y = height * (0.20 + Math.random() * 0.45);
-        const d = createDrop(x, y, r, activeColor, (Math.random() - 0.5) * 1.5, Math.random() * 1.5);
-        d.stretch = 1.15;
-        drops.push(d);
+        spawnItem();
       });
 
-      // Fountain rain sprinkle
-      function spawnFountainRaindrop() {
-        if (drops.length >= MAX_DROPS) {
-          let minIdx = 0;
-          for (let i = 1; i < drops.length; i++) {
-            if (drops[i].r < drops[minIdx].r) minIdx = i;
-          }
-          drops.splice(minIdx, 1);
-        }
-        // Fountain arcs from top-center / upper spray outward across the windshield
+      function spawnFountainSprinkle() {
         const originX = width * (0.35 + Math.random() * 0.30);
         const originY = height * 0.06;
         const spreadAngle = Math.PI * 0.5 + (Math.random() - 0.5) * 2.1;
         const spraySpeed = 4.0 + Math.random() * 8.5;
-        const r = 7 + Math.random() * 12;
-        const d = createDrop(
+        spawnItem(
           originX + (Math.random() - 0.5) * width * 0.35,
           originY + Math.random() * height * 0.25,
-          r,
-          activeColor,
           Math.cos(spreadAngle) * spraySpeed,
           Math.sin(spreadAngle) * spraySpeed * 0.65
         );
-        d.stretch = 1.22;
-        drops.push(d);
       }
 
       btnRain.addEventListener('click', () => {
         dismissHint();
+        if (!showBubbles) {
+          showBubbles = true;
+          btnBubbles.classList.add('active');
+        }
         rainActive = !rainActive;
         btnRain.classList.toggle('active', rainActive);
         if (rainActive) {
-          for (let i = 0; i < 10; i++) spawnFountainRaindrop();
+          for (let i = 0; i < 10; i++) spawnFountainSprinkle();
         }
       });
 
@@ -1169,9 +2071,7 @@ And blurs the edge of night.</textarea>
         const val = e.target.value;
         wiper.intervalSec = val === 'manual' ? 0 : parseFloat(val);
         wiper.timer = 0;
-        if (wiper.intervalSec > 0) {
-          triggerWiperSweep();
-        }
+        if (wiper.intervalSec > 0) triggerWiperSweep();
       });
 
       btnGravity.addEventListener('click', () => {
@@ -1179,19 +2079,160 @@ And blurs the edge of night.</textarea>
         btnGravity.classList.toggle('active', gravityEnabled);
       });
 
+      btnLines.addEventListener('click', () => {
+        showLines = !showLines;
+        btnLines.classList.toggle('active', showLines);
+        paperDirty = true;
+      });
+
+      themeSelect.addEventListener('change', (e) => {
+        currentTheme = e.target.value;
+        document.body.classList.remove('theme-bright', 'theme-dark');
+        if (currentTheme === 'bright') document.body.classList.add('theme-bright');
+        if (currentTheme === 'dark') document.body.classList.add('theme-dark');
+        paperDirty = true;
+      });
+
+      function getWrittenBounds() {
+        if (exportArea.value === 'full') {
+          return { x: 0, y: 0, w: width, h: height };
+        }
+        const edWidth = Math.min(760, width * 0.92);
+        const edLeft = (width - edWidth) * 0.5;
+        const edTop = 18;
+        const edHeight = Math.max(200, height - 104);
+        return { x: edLeft, y: edTop, w: edWidth, h: edHeight };
+      }
+
+      function enterZenFullscreen() {
+        document.body.classList.add('zen-mode');
+        btnZen.classList.add('active');
+        setWriteMode(true);
+        const docEl = document.documentElement;
+        if (!document.fullscreenElement && docEl.requestFullscreen) {
+          docEl.requestFullscreen().catch(() => {});
+        }
+      }
+
+      function exitZenFullscreen() {
+        document.body.classList.remove('zen-mode');
+        btnZen.classList.remove('active');
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+
+      btnZen.addEventListener('click', () => {
+        dismissHint();
+        if (document.body.classList.contains('zen-mode')) {
+          exitZenFullscreen();
+        } else {
+          enterZenFullscreen();
+        }
+      });
+
+      btnZenExit.addEventListener('click', () => {
+        exitZenFullscreen();
+      });
+
+      document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement && document.body.classList.contains('zen-mode')) {
+          document.body.classList.remove('zen-mode');
+          btnZen.classList.remove('active');
+        }
+      });
+
+      function getSafeFilename(ext) {
+        const rawTitle = (titleInput.value || 'Diary Entry')
+          .trim()
+          .replace(/[^a-zA-Z0-9\s-_]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '') || 'Diary-Entry';
+        return `${rawTitle}-${isoDate}.${ext}`;
+      }
+
+      function renderHighResPageSnapshot(pageIndex, cleanPrint, exportScale = 3) {
+        const prevW = paperCanvas.width;
+        const prevH = paperCanvas.height;
+
+        paperCanvas.width = Math.floor(width * dpr * exportScale);
+        paperCanvas.height = Math.floor(height * dpr * exportScale);
+        renderPaperTexture(pageIndex, exportScale);
+
+        const b = getWrittenBounds();
+        const sx = Math.floor(b.x * dpr * exportScale);
+        const sy = Math.floor(b.y * dpr * exportScale);
+        const sw = Math.floor(b.w * dpr * exportScale);
+        const sh = Math.floor(b.h * dpr * exportScale);
+
+        const out = document.createElement('canvas');
+        out.width = sw;
+        out.height = sh;
+        const octx = out.getContext('2d');
+        octx.imageSmoothingEnabled = true;
+        octx.imageSmoothingQuality = 'high';
+
+        if (cleanPrint || !showBubbles) {
+          octx.drawImage(paperCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
+        } else {
+          render();
+          renderOverlayCanvas(performance.now() * 0.001, false);
+          octx.drawImage(canvas, Math.floor(b.x * dpr), Math.floor(b.y * dpr), Math.floor(b.w * dpr), Math.floor(b.h * dpr), 0, 0, sw, sh);
+          octx.drawImage(fxCanvas, Math.floor(b.x * dpr), Math.floor(b.y * dpr), Math.floor(b.w * dpr), Math.floor(b.h * dpr), 0, 0, sw, sh);
+        }
+
+        paperCanvas.width = prevW;
+        paperCanvas.height = prevH;
+        paperDirty = true;
+
+        return { canvas: out, bounds: b };
+      }
+
       btnSave.addEventListener('click', () => {
-        if (paperDirty) renderPaperTexture();
-        render();
+        pages[currentPageIdx].text = editor.value;
+        const cleanPrint = chkCleanPrint.checked;
+        const res = renderHighResPageSnapshot(currentPageIdx, cleanPrint, 2.5);
         const link = document.createElement('a');
-        link.download = 'waterglass-poem.png';
-        link.href = canvas.toDataURL('image/png');
+        link.download = getSafeFilename('png');
+        link.href = res.canvas.toDataURL('image/png');
         link.click();
+      });
+
+      btnPdf.addEventListener('click', () => {
+        pages[currentPageIdx].text = editor.value;
+        const cleanPrint = chkCleanPrint.checked;
+        const exportScale = 3.0;
+
+        if (window.jspdf && window.jspdf.jsPDF) {
+          const firstRes = renderHighResPageSnapshot(0, cleanPrint, exportScale);
+          const b = firstRes.bounds;
+          const orientation = b.w >= b.h ? 'l' : 'p';
+          const pdf = new window.jspdf.jsPDF({
+            orientation,
+            unit: 'px',
+            format: [b.w, b.h],
+            compress: true
+          });
+
+          pdf.addImage(firstRes.canvas.toDataURL('image/png'), 'PNG', 0, 0, b.w, b.h, undefined, 'FAST');
+
+          for (let p = 1; p < pages.length; p++) {
+            const pageRes = renderHighResPageSnapshot(p, cleanPrint, exportScale);
+            pdf.addPage([b.w, b.h], orientation);
+            pdf.addImage(pageRes.canvas.toDataURL('image/png'), 'PNG', 0, 0, b.w, b.h, undefined, 'FAST');
+          }
+
+          pdf.save(getSafeFilename('pdf'));
+        } else {
+          window.print();
+        }
       });
 
       btnReset.addEventListener('click', () => {
         rainActive = false;
         btnRain.classList.remove('active');
-        initDrops();
+        initEffects();
       });
 
       // --- Physics Loop ---
@@ -1213,24 +2254,76 @@ And blurs the edge of night.</textarea>
         const targetPress = pointer.isDown ? 1.0 : 0.0;
         pointer.pressStrength += (targetPress - pointer.pressStrength) * (1.0 - Math.exp(-16.0 * dt));
 
-        // Fountain rain sprinkler
+        // Update Page Flip Animation
+        if (pageFlip.active) {
+          pageFlip.progress += dt * 2.5;
+          if (pageFlip.progress >= 1.0) {
+            pageFlip.active = false;
+            pageFlip.progress = 0;
+          }
+        }
+
+        // Intro auto-penning character-by-character
+        if (introTypingActive) {
+          introCharTimer += dt;
+          const charInterval = 0.055;
+          while (introTypingActive && introCharTimer >= charInterval) {
+            introCharTimer -= charInterval;
+            if (introCharIndex < initialPromptText.length) {
+              const ch = initialPromptText[introCharIndex];
+              editor.value += ch;
+              pages[currentPageIdx].text = editor.value;
+              prevText = editor.value;
+              charInks.push(0.0);
+              if (/[\s\n]/.test(ch) && showBubbles && Math.random() < 0.45) {
+                spawnItem();
+              }
+              introCharIndex++;
+              paperDirty = true;
+            } else {
+              introTypingActive = false;
+            }
+          }
+        }
+
+        for (let i = 0; i < charInks.length; i++) {
+          if (charInks[i] < 1.0) {
+            charInks[i] = Math.min(1.0, charInks[i] + dt * 2.1);
+            paperDirty = true;
+          }
+        }
+
+        for (let i = burnGlyphs.length - 1; i >= 0; i--) {
+          burnGlyphs[i].age += dt;
+          paperDirty = true;
+          if (burnGlyphs[i].age >= burnGlyphs[i].duration) burnGlyphs.splice(i, 1);
+        }
+
+        for (let i = smokeParticles.length - 1; i >= 0; i--) {
+          const sp = smokeParticles[i];
+          sp.age += dt;
+          sp.x += sp.vx * dt + Math.sin(timeSec * 4.0 + i) * 6.0 * dt;
+          sp.y += sp.vy * dt;
+          sp.vx *= 0.96;
+          paperDirty = true;
+          if (sp.age >= sp.life) smokeParticles.splice(i, 1);
+        }
+
+        if (!showBubbles) return;
+
         if (rainActive) {
           rainTimer += dt;
           if (rainTimer > 0.09) {
             rainTimer = 0;
-            spawnFountainRaindrop();
+            spawnFountainSprinkle();
           }
         }
 
-        // Scheduled wiper
         if (wiper.intervalSec > 0 && !wiper.sweeping) {
           wiper.timer += dt;
-          if (wiper.timer >= wiper.intervalSec) {
-            triggerWiperSweep();
-          }
+          if (wiper.timer >= wiper.intervalSec) triggerWiperSweep();
         }
 
-        // Wiper sweep kinematics & clearing drops
         const pivotX = width * 0.5;
         const pivotY = height - 44;
         const bladeLen = Math.hypot(width * 0.54, height * 0.85);
@@ -1245,20 +2338,16 @@ And blurs the edge of night.</textarea>
             wiper.angle = startAng;
           } else {
             const p = wiper.progress;
-            // Outward sweep (0 -> 0.5) and return sweep (0.5 -> 1.0)
             const t = p < 0.5 ? p * 2.0 : (1.0 - p) * 2.0;
             const eased = t * t * (3.0 - 2.0 * t);
-            wiper.prevAngle = wiper.angle;
             wiper.angle = startAng + (endAng - startAng) * eased;
 
             const sweepDir = p < 0.5 ? 1 : -1;
             const tipX = pivotX + Math.cos(wiper.angle) * bladeLen;
             const tipY = pivotY + Math.sin(wiper.angle) * bladeLen;
 
-            // Clear droplets touched by the wiper blade!
             for (let i = drops.length - 1; i >= 0; i--) {
               const d = drops[i];
-              // Distance from drop center to wiper segment
               const pax = d.x - pivotX;
               const pay = d.y - pivotY;
               const bax = tipX - pivotX;
@@ -1266,16 +2355,23 @@ And blurs the edge of night.</textarea>
               const h = Math.max(0, Math.min(1, (pax * bax + pay * bay) / (bax * bax + bay * bay)));
               const dist = Math.hypot(pax - bax * h, pay - bay * h);
               if (dist < d.r + 14) {
-                if (Math.random() < 0.72) {
-                  drops.splice(i, 1);
-                } else {
+                if (Math.random() < 0.72) drops.splice(i, 1);
+                else {
                   const tangentAng = wiper.angle + sweepDir * Math.PI * 0.5;
                   d.vx = Math.cos(tangentAng) * 14;
                   d.vy = Math.sin(tangentAng) * 14;
-                  d.r *= 0.85;
-                  d.targetR *= 0.85;
                 }
               }
+            }
+            for (let i = magicParticles.length - 1; i >= 0; i--) {
+              const m = magicParticles[i];
+              const pax = m.x - pivotX;
+              const pay = m.y - pivotY;
+              const bax = tipX - pivotX;
+              const bay = tipY - pivotY;
+              const h = Math.max(0, Math.min(1, (pax * bax + pay * bay) / (bax * bax + bay * bay)));
+              const dist = Math.hypot(pax - bax * h, pay - bay * h);
+              if (dist < m.size + 14) magicParticles.splice(i, 1);
             }
           }
           wiper.alpha = Math.min(1.0, wiper.alpha + dt * 10.0);
@@ -1283,7 +2379,47 @@ And blurs the edge of night.</textarea>
           wiper.alpha = Math.max(0.0, wiper.alpha - dt * 6.0);
         }
 
-        // Hold-press on a drop builds pressure and splashes it
+        if (effectMode !== 'water') {
+          const driftSpeed = 0.25 + waterSpeed * 1.4;
+          for (let i = 0; i < magicParticles.length; i++) {
+            const m = magicParticles[i];
+            m.vx += Math.sin(timeSec * 0.9 + m.phase) * 0.04 * driftSpeed;
+            if (gravityEnabled) {
+              m.vy += (effectMode === 'dandelions' ? 0.012 : 0.025) * driftSpeed;
+            } else {
+              m.vy += Math.cos(timeSec * 0.7 + m.phase) * 0.03 * driftSpeed;
+            }
+
+            if (pointer.active) {
+              const dx = m.x - pointer.x;
+              const dy = m.y - pointer.y;
+              const dist = Math.hypot(dx, dy);
+              if (dist < 65 && dist > 0.1) {
+                const push = (1.0 - dist / 65) * (pointer.isDown ? 1.8 : 0.45);
+                m.vx += (dx / dist) * push + pointer.vx * 0.12;
+                m.vy += (dy / dist) * push + pointer.vy * 0.12;
+              }
+            }
+
+            m.x += m.vx;
+            m.y += m.vy;
+            m.vx *= 0.95;
+            m.vy *= 0.95;
+            m.rot += m.rotSpeed * dt;
+
+            if (m.x < -20) m.x = width + 15;
+            if (m.x > width + 20) m.x = -15;
+            if (m.y < -20) m.y = height - 65;
+            if (m.y > height - 60) {
+              m.y = gravityEnabled ? -10 : height - 60;
+              if (!gravityEnabled) m.vy *= -0.6;
+            }
+          }
+          pointer.vx *= 0.8;
+          pointer.vy *= 0.8;
+          return;
+        }
+
         if (pointer.isDown && pointer.grabbedDrop && !pointer.splashedThisPress) {
           const heldMs = performance.now() - pointer.downTime;
           if (heldMs > 300 && pointer.movedDist < 14) {
@@ -1293,7 +2429,6 @@ And blurs the edge of night.</textarea>
           }
         }
 
-        // 1. Update each drop (windshield motion + text adhesion + gravity)
         const windDrive = waterSpeed * 0.24;
         for (let i = 0; i < drops.length; i++) {
           const d = drops[i];
@@ -1302,7 +2437,6 @@ And blurs the edge of night.</textarea>
           let isBeingPressed = false;
           const stickingToText = isOverText(d.x, d.y, d.r);
 
-          // Windshield airflow (pushes drops upward/diagonally as car runs) vs gravity
           const sway = Math.sin(timeSec * 0.7 + d.y * 0.01) * 0.03;
           d.vx += sway;
           if (waterSpeed > 0.05) {
@@ -1310,7 +2444,7 @@ And blurs the edge of night.</textarea>
             d.vx += Math.sin(timeSec * 0.4 + d.x * 0.005) * windDrive * 0.35;
           }
           if (gravityEnabled) {
-            const gravScale = Math.max(0.02, (d.r - 6) * 0.006);
+            const gravScale = Math.max(0.02, (d.r - 4) * 0.006);
             d.vy += gravScale;
           }
 
@@ -1346,7 +2480,6 @@ And blurs the edge of night.</textarea>
             }
           }
 
-          // Press / squish spring
           const targetDropPress = isBeingPressed ? 1.0 : 0.0;
           const pressForce = (targetDropPress - d.press) * 180.0 - d.pressVel * 14.0;
           d.pressVel += pressForce * dt;
@@ -1355,28 +2488,19 @@ And blurs the edge of night.</textarea>
           const pressedRadius = d.targetR * (1.0 + d.press * 0.24);
           d.r += (pressedRadius - d.r) * (1.0 - Math.exp(-18.0 * dt));
 
-          // Text adhesion: drops cling/stick more to written text lines
           let friction = d.r < 14 ? 0.90 : 0.94;
-          if (stickingToText && !isBeingPressed) {
-            friction *= 0.84;
-          }
+          if (stickingToText && !isBeingPressed) friction *= 0.84;
 
           d.x += d.vx;
           d.y += d.vy;
           d.vx *= friction;
           d.vy *= friction;
 
-          // Windshield edges
           const pad = d.r + 4;
-          if (d.x < pad) {
-            d.x = pad;
-            d.vx = Math.abs(d.vx) * 0.5;
-          } else if (d.x > width - pad) {
-            d.x = width - pad;
-            d.vx = -Math.abs(d.vx) * 0.5;
-          }
+          if (d.x < pad) { d.x = pad; d.vx = Math.abs(d.vx) * 0.5; }
+          else if (d.x > width - pad) { d.x = width - pad; d.vx = -Math.abs(d.vx) * 0.5; }
+
           if (d.y < -d.r && waterSpeed > 0.2) {
-            // Wrap from top to bottom when driving fast so windshield stays active
             d.y = height - 70;
             d.x = 30 + Math.random() * (width - 60);
           } else if (d.y < pad && waterSpeed <= 0.2) {
@@ -1396,14 +2520,12 @@ And blurs the edge of night.</textarea>
             d.angle += diff * 0.24;
           }
 
-          // Clean oval elongation (1.08 at rest -> up to 1.38 when streaming)
           const targetStretch = 1.08 + Math.min(0.30, speed * 0.025);
           const stretchForce = (targetStretch - d.stretch) * 200.0 - d.stretchVel * 12.0;
           d.stretchVel += stretchForce * dt;
           d.stretch = Math.max(0.85, Math.min(1.42, d.stretch + d.stretchVel * dt));
         }
 
-        // 2. Watercolor merging when raindrops collide
         for (let i = 0; i < drops.length; i++) {
           for (let j = i + 1; j < drops.length; j++) {
             const a = drops[i];
@@ -1451,11 +2573,9 @@ And blurs the edge of night.</textarea>
       }
 
       function render() {
-        if (paperDirty) {
-          renderPaperTexture();
-        }
+        if (paperDirty) renderPaperTexture();
 
-        const count = Math.min(drops.length, MAX_DROPS);
+        const count = (showBubbles && effectMode === 'water') ? Math.min(drops.length, MAX_DROPS) : 0;
         for (let i = 0; i < count; i++) {
           const d = drops[i];
           const i4 = i * 4;
@@ -1501,6 +2621,7 @@ And blurs the edge of night.</textarea>
         const tipY = pivotY + Math.sin(wiper.angle) * bladeLen;
         gl.uniform4f(uWiper, pivotX, pivotY, tipX, tipY);
         gl.uniform1f(uWiperActive, wiper.alpha);
+        gl.uniform1f(uIsParchment, currentTheme === 'riddle' ? 1.0 : 0.0);
 
         gl.drawArrays(gl.TRIANGLES, 0, 6);
       }
@@ -1509,13 +2630,17 @@ And blurs the edge of night.</textarea>
       function loop(now) {
         const dt = Math.min(0.033, (now - lastTime) / 1000);
         lastTime = now;
-        stepPhysics(dt, now * 0.001);
+        const timeSec = now * 0.001;
+        stepPhysics(dt, timeSec);
         render();
+        renderOverlayCanvas(timeSec, false);
         requestAnimationFrame(loop);
       }
 
+      buildPaperGrain();
       resize();
-      initDrops();
+      initEffects();
+      updatePageControls();
       if (document.fonts && document.fonts.ready) {
         document.fonts.ready.then(() => { paperDirty = true; });
       }
